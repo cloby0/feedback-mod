@@ -10,12 +10,14 @@ import dev.engine_room.flywheel.api.visual.DynamicVisual;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
 import dev.engine_room.flywheel.lib.instance.InstanceTypes;
 import dev.engine_room.flywheel.lib.instance.TransformedInstance;
-import dev.engine_room.flywheel.lib.model.Models;
+import dev.engine_room.flywheel.lib.model.baked.BakedModelBuilder;
 import dev.engine_room.flywheel.lib.visual.AbstractBlockEntityVisual;
 import dev.engine_room.flywheel.lib.visual.SimpleDynamicVisual;
 import dev.engine_room.flywheel.lib.visualization.SimpleBlockEntityVisualizer;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
 
 /**
@@ -36,7 +38,7 @@ import net.minecraft.core.Direction;
  * own shaders, which are not ours to take.
  *
  * <p>One class covers every spinning block because {@link Rotatable#getRotationAxis} and
- * {@link Models#block} between them answer everything a rotating visual needs to know: which way
+ * The baked model and the rotation axis between them answer everything a rotating visual needs to know: which way
  * it turns, and what it looks like. Nothing here is per-block, so nothing here should be.
  */
 public class RotatingVisual extends AbstractBlockEntityVisual<RotationNode> implements SimpleDynamicVisual {
@@ -48,10 +50,18 @@ public class RotatingVisual extends AbstractBlockEntityVisual<RotationNode> impl
         super(context, node, partialTick);
 
         this.axis = ((Rotatable) blockState.getBlock()).getRotationAxis(blockState);
-        // Models.block bakes the state's own model, blockstate rotation included, so the model
-        // already points along its axis and we only have to spin it about that axis.
-        this.instance = instancerProvider()
-                .instancer(InstanceTypes.TRANSFORMED, Models.block(blockState))
+        // NOT Models.block(state). Flywheel's baker runs the state through
+        // BakedModelBufferer, which checks getRenderShape() and only tessellates MODEL -- and
+        // these blocks report ENTITYBLOCK_ANIMATED precisely so the chunk mesh leaves them
+        // alone. The result was a visual that created fine and drew nothing: shafts were
+        // invisible with the backend on and appeared only via the fallback renderer.
+        //
+        // Building from the BakedModel directly skips that gate. The model that
+        // getBlockModel(state) returns already has the blockstate's variant rotation baked into
+        // it, so it points along its axis and only the spin is left to do.
+        BakedModel baked = Minecraft.getInstance().getBlockRenderer().getBlockModel(blockState);
+        instance = instancerProvider()
+                .instancer(InstanceTypes.TRANSFORMED, new BakedModelBuilder(baked).build())
                 .createInstance();
 
         instance.light(computePackedLight());

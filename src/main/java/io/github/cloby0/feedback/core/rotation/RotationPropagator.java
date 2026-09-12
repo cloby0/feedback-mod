@@ -117,6 +117,13 @@ public class RotationPropagator {
         network.inheritSpeed(inheritedRpm);
         network.setTargetRpm(strongest != null ? strongest.getGeneratedRpm() : 0);
         network.recalculate();
+
+        // Tell every client unconditionally. A rebuild often settles on exactly the speed the
+        // run was already at, and the tick loop only syncs on a CHANGE -- so without this the
+        // client never hears the speed at all, and a perfectly good shaft sits there reporting
+        // its RPM while refusing to turn.
+        for (RotationNode node : component)
+            node.syncSpeedNow();
     }
 
     /**

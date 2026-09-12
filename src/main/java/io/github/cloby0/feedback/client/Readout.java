@@ -72,7 +72,7 @@ public final class Readout {
         if (DebugHelmetItem.wornBy(player))
             return true;
         return switch (quantity) {
-            case WORK -> CalipersItem.heldBy(player);
+            case WORK -> CalipersItem.carriedBy(player);
             case SPEED, LOAD -> false;
         };
     }

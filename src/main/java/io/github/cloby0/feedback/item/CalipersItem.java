@@ -31,10 +31,20 @@ public class CalipersItem extends Item {
         super(properties);
     }
 
-    /** Either hand counts. Which hand a tool is in is not a decision worth modelling. */
-    public static boolean heldBy(Player player) {
+    /**
+     * Whether the player has calipers on them at all.
+     *
+     * <h3>Carried, not held</h3>
+     * Reading is passive and costs no hands: you glance at a workpiece and you either own the
+     * means to put a number on it or you do not. Requiring them in hand would mean swapping tools
+     * to look at something, which is friction with no decision inside it (§3).
+     * <p>
+     * Holding is for <em>acting</em> on the world — measuring a machine in place, when something
+     * eventually needs that. The distinction is worth keeping: what you can perceive is a
+     * property of your kit, what you can do is a property of your hands.
+     */
+    public static boolean carriedBy(Player player) {
         return player != null
-                && (player.getMainHandItem().getItem() instanceof CalipersItem
-                || player.getOffhandItem().getItem() instanceof CalipersItem);
+                && player.getInventory().contains(stack -> stack.getItem() instanceof CalipersItem);
     }
 }

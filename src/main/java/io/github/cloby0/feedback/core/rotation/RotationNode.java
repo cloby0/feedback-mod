@@ -166,6 +166,22 @@ public abstract class RotationNode extends BlockEntity {
      */
     public static final float DEGREES_PER_TICK_PER_RPM = 0.3f;
 
+    /**
+     * Push this node's speed to clients whether or not it changed.
+     *
+     * <h3>Why this is not the same as {@link #onNetworkSpeedChanged()}</h3>
+     * That one only syncs once the speed has moved a noticeable amount, which is right while a
+     * network is spinning up and wrong immediately after a rebuild. A rebuild can hand a node a
+     * speed identical to the one its old network had -- adding a shaft to a line that is already
+     * turning, say -- and then nothing ever changes, nothing ever syncs, and the client goes on
+     * believing the run is stopped while the server turns it. It reads as a shaft that reports
+     * 12 RPM and refuses to animate.
+     */
+    public void syncSpeedNow() {
+        syncedRpm = getRpm();
+        sync();
+    }
+
     public void tickClient() {
         visualAngle = (visualAngle + getRpm() * DEGREES_PER_TICK_PER_RPM) % 360f;
     }
