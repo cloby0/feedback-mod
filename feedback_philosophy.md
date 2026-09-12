@@ -1069,6 +1069,14 @@ Both outcomes are on the card, and which one the player gets depends on the cran
 
 A machine therefore has no single strength. Satisfying a *hardness 15* requirement means **re-gearing the drive**, not buying a stronger machine — and the same hammer is a delicate planisher or a forging press depending only on how it is driven. That is not a metaphor: light blows for finishing and heavy blows for drawing out is how smithing actually works.
 
+**Overshoot can skip a state entirely, and that is the best version of the lesson.** Copper is soft enough that a short throw carries it past *plate* and into *foil* in a single blow — the intermediate is not merely quick to pass, it is unreachable at that setting. The two throws therefore do not make the same product at different speeds. They make **different products**, selected by how the machine is geared and not by any recipe chooser. A short-throw hammer is a foil machine.
+
+There is a law hiding in that, and it is worth stating because it constrains every future process:
+
+> **The reaction window is the strength ratio.** For a hard setting to skip a state, that state must cost less than one hard blow — which caps the gentle setting's slack at the ratio between the two, measured in blows.
+
+A `12 / 3 St` machine can never give more than four blows of grace on a state its strong setting skips. Widening the gap widens the window. So "how forgiving is this material" and "how different are the two cranks" are not two design questions; they are one number seen from either end.
+
 **Neither throw may dominate the other.** This was got wrong once, and the failure is worth recording because it is easy to repeat. When throw changed `St` alone, the short throw was strictly stronger at identical speed, so nobody would ever have fitted the long one — and a dominated option is worse than no option, because it costs the player a decision and gives nothing back. The fix was not to invent a compensating bonus but to notice that work per blow was never a machine stat in the first place. With work derived from hardness, the short throw is **power** and the long throw is **precision**: the strong setting reaches the goal in fewer blows and blows past it in fewer too.
 
 Note that throw is deliberately **not** a scalar (§3). Two named options make this a decision; a numeric throw would make it an optimization problem with a right answer.

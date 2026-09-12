@@ -31,6 +31,11 @@ import net.minecraft.world.phys.BlockHitResult;
  */
 public class CrankLinkageBlock extends Block implements EntityBlock, Rotatable {
 
+    // A new linkage is the LONG throw -- the gentle one. A player who has not yet met the idea
+    // of overrun should be able to make the thing they were aiming for; discovering that a
+    // harder setting exists, is faster, and ruins the workpiece is a better order to learn in
+    // than starting with a machine that only ever produces foil and no explanation.
+
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
     public static final EnumProperty<Throw> THROW = EnumProperty.create("throw", Throw.class);
 
@@ -38,7 +43,7 @@ public class CrankLinkageBlock extends Block implements EntityBlock, Rotatable {
         super(properties);
         registerDefaultState(defaultBlockState()
                 .setValue(FACING, Direction.NORTH)
-                .setValue(THROW, Throw.SHORT));
+                .setValue(THROW, Throw.LONG));
     }
 
     @Override

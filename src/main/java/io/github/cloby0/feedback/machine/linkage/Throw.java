@@ -14,10 +14,18 @@ import net.minecraft.util.StringRepresentable;
  * does <em>not</em> change how fast a hammer flattens anything -- it changes only how hard each
  * blow lands, which matters when a material has a minimum force below which nothing happens.
  * <p>
- * That is why copper is the teaching material: it yields to almost nothing, so both throws work
- * identically and the player can install the wrong one and never find out. It is also why the
- * same part reads backwards on a bellows, where the useful output is displaced air rather than
- * work, and a long stroke moves more of it.
+ * <h2>Why this is the slice's sharpest lesson</h2>
+ * Copper is soft enough that a short throw <em>overshoots a whole stage</em>: one blow leaves an
+ * ingot, the second carries it past plate and straight into foil. Plate is not merely quick to
+ * pass, it is unreachable at that setting. The long throw reaches plate in five and gives three
+ * blows to grab it.
+ * <p>
+ * So the two settings do not make the same product faster or slower -- they make
+ * <em>different products</em>, chosen by how the machine is geared rather than by any recipe
+ * selector. A short-throw hammer is a foil machine.
+ * <p>
+ * It is also why the same part reads backwards on a bellows, where the useful output is
+ * displaced air rather than work, and a longer stroke simply moves more of it.
  */
 public enum Throw implements StringRepresentable {
 
