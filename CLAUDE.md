@@ -102,7 +102,9 @@ These are settled and constrain any proposal:
 - **The controller is a switch, never a dial** (§13). Its only output is starting or stopping a supply — no proportional control exists. Oscillation is fixed with physical mass, not a better algorithm. Capability never tiers; only iteration cost and how many sources it can read.
 - **"Which axis does this advance?"** (§14) is the question to ask of any proposed technology — progression is a profile across ten axes, not a rank.
 - **`feedback_philosophy.md` §19 lists explicit non-conclusions** — tier names, first machines, first materials, numbers, chemistry implementation, separator mapping, progression boundaries, control block implementation. Treat these as deliberately open. ("McGuffnium" appears in the old notes as a metaphor only; it is not a material.)
-- These are the user's own documents and a live design conversation. Propose and argue for changes; don't rewrite settled sections unprompted.
+- **`feedback_philosophy.md` is revised as the mod gets built, and that is expected.** Building finds errors reasoning does not — §17's force/work model was wrong until a hammer existed to be wrong about. When implementation contradicts the document, update the document in the same change rather than leaving it stale or filing a note. Record *why* the old version was tempting; the error is usually the reusable part.
+- **The exception is identity.** §1 and §2 say what the mod *is*; changing those means making a different mod, so raise it rather than edit it. Everything else is fair game with a stated reason.
+- These are the user's own documents and a live design conversation. Argue for changes as you make them.
 
 ## Outstanding work
 

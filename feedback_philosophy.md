@@ -11,6 +11,10 @@
 > This document supersedes `feedback_notes_i.md` and `feedback_notes_ii.md`, which were write-ups of earlier design conversations. Where those two disagreed, the disagreements are resolved here.
 >
 > **Status:** the principles below are settled enough to constrain decisions. The numbers, names, and rosters are not, and mostly do not exist yet. Questions still genuinely open are marked **[OPEN]** inline and collected in the final sections. Adding an `[OPEN]` is a legitimate outcome of design work; quietly resolving one is not.
+>
+> **This document is revised as the mod is built, and that is the intended behaviour.** A model that survived a year of playtesting unchanged would mean either that it was imagined perfectly before anything existed, or that nobody was paying attention to what the thing actually felt like. Building reveals errors that no amount of reasoning finds — §17's treatment of force and work was wrong until a hammer existed to be wrong about — so when implementation contradicts this document, the document changes. What does not change casually is the **identity** in §1 and §2: those are what the mod *is*, and revising them means making a different mod.
+>
+> Corrections are recorded rather than tidied away. A section that says *this was got wrong once, and here is why it was tempting* is more useful than one that was always right, because the error is usually the reusable part.
 
 ---
 
@@ -1013,7 +1017,7 @@ The third clause is the one that does the most work, and it is §3 applied to vo
 | Temperature | `Tu` | A **state**, not an amount of heat. See below. |
 | Pressure | `Pu` | |
 | Cumulative mechanical work | `Fu` | Total mechanical application a process demands. |
-| Mechanical application strength | `St` | How strong each individual application is. |
+| Mechanical application strength | `St` | How strong each individual application is. What that strength *accomplishes* is not a machine stat — see below. |
 | Mechanical stress / load | `Su` | Create's meaning, deliberately. **Never** speed. |
 | Rotational speed | `RPM` | Don't invent a fictional speed unit. |
 | Fluid volume | `mB` | Millibuckets. |
@@ -1033,17 +1037,27 @@ Rates derive rather than being invented: `Tu/t`, `Eu/t`, `mB/t`. There is no rea
 
 This separation is deliberate and it is what makes §8's "rates matter as much as amounts" mean anything. If temperature and quantity-of-heat were the same number, a process that needs a *sustained* condition would be indistinguishable from one that needs a large burst — and the entire thermal-mass, preheat, and insulation layer in §9 would collapse into a single efficiency stat.
 
-### Fu and St: total work versus instantaneous force
+### Fu and St: force is the machine's, work is the material's
 
-This pairing carries a real design idea rather than just a measurement. A process can demand *both* a total quantity of work and a **minimum strength per application**.
+`Fu` is total work and `St` is the force of one application, and the tempting mistake — made once already and corrected — is to treat them as two independent numbers a machine publishes.
 
-> 30 Fu total, minimum 1 St — anything can eventually finish this, given enough taps.
+They are not independent, because **nothing is strong enough to dent steel yet fails to slam copper.** A machine states only the force it can deliver. What that force *accomplishes* is a property of the material being hit:
+
+> **Fu per application = St ÷ hardness**
+
+**Hardness is one number doing both jobs.** It is the floor below which nothing happens at all — §7's hard gate, a genuine impossibility rather than a slow version of the process — and it is the divisor for how much of a larger blow actually lands. Copper's hardness is low, so a heavy blow dumps a great deal of work into it; steel's is high, so the same blow does nothing whatsoever.
+
+> 30 Fu total, hardness 1 — anything can finish this eventually, given enough taps.
 >
-> 60 Fu total, minimum 30 St — no number of weak taps will ever substitute.
+> 60 Fu total, hardness 15 — no number of weak taps will ever substitute.
 
-That second form is a physical gate in the sense of §7. And the reason it is interesting rather than arbitrary is *where `St` comes from.*
+The second form is the hard gate. The first has a subtler consequence that turns out to matter more.
 
-**The machine defines a pair; the linkage selects from it.** A crank converts rotation into reciprocation (§10), and its throw comes in exactly two flavours — a short throw concentrating torque into greater force over a shorter stroke, or a long throw spreading it into a gentler, longer one.
+**A hard blow on a soft material overshoots.** If force over hardness is large, a single application can carry the workpiece past the state you wanted and into the next one — and surplus work carries through rather than stopping politely at the finish line. The strongest available setup is therefore not the best one, because §6's overrun arrives sooner and there is less time to intervene.
+
+That is the whole mod in one line of arithmetic, and it arrived by itself: it was not designed, it fell out of refusing to let force and work be two separate numbers.
+
+**The machine defines a pair; the linkage selects from it.** A crank converts rotation into reciprocation (§10). Its **throw** is how far the crankpin sits off the axis of rotation, and it sets two things at once: the stroke is twice the throw, and the force available at the ram is the torque divided by the throw. A short throw therefore concentrates torque into greater force over a shorter stroke, and a long throw spreads it into a gentler, longer one. One stroke per revolution either way — throw does not change how often the hammer falls, only how hard.
 
 So a machine's `St` is written as two numbers rather than one:
 
@@ -1053,9 +1067,13 @@ MECHANICAL HAMMER     12 / 3 St     (short throw / long throw)
 
 Both outcomes are on the card, and which one the player gets depends on the crank they installed. `RPM` still sets how often strokes happen; `Su` still says whether the network can drive the thing at all.
 
-A machine therefore has no single strength. Satisfying a *minimum 15 St* requirement means **re-gearing the drive**, not buying a stronger machine — and the same hammer is a delicate planisher or a forging press depending only on how it is driven.
+A machine therefore has no single strength. Satisfying a *hardness 15* requirement means **re-gearing the drive**, not buying a stronger machine — and the same hammer is a delicate planisher or a forging press depending only on how it is driven. That is not a metaphor: light blows for finishing and heavy blows for drawing out is how smithing actually works.
+
+**Neither throw may dominate the other.** This was got wrong once, and the failure is worth recording because it is easy to repeat. When throw changed `St` alone, the short throw was strictly stronger at identical speed, so nobody would ever have fitted the long one — and a dominated option is worse than no option, because it costs the player a decision and gives nothing back. The fix was not to invent a compensating bonus but to notice that work per blow was never a machine stat in the first place. With work derived from hardness, the short throw is **power** and the long throw is **precision**: the strong setting reaches the goal in fewer blows and blows past it in fewer too.
 
 Note that throw is deliberately **not** a scalar (§3). Two named options make this a decision; a numeric throw would make it an optimization problem with a right answer.
+
+The same component reads differently on a machine whose product is *displacement* rather than work. A bellows moves air in proportion to how far its plates travel, so there the long throw is the useful one and the figures run the other way. One lever, two figures of merit, and no rule needed for either — which is §5's composition test passing on a single part.
 
 This is close to the ideal shape for a mod mechanic, because none of it had to be invented. It is the trade real machinery already makes, it is expressed entirely in quantities the mod had already defined, and it converts a number printed on a block into a decision the player makes.
 
