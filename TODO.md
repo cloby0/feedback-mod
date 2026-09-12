@@ -43,6 +43,7 @@ Dev environment currently loads **JEI**, **PonderLib** and **Flywheel** (transit
 - [x] **GeckoLib** — **no.** It plays authored keyframe animations; our motion must be procedural, because a machine's visible state is a readout the player reasons from. A fixed-length animation decouples the visual from the mechanics, and a machine that visually lies contradicts §8
 - [x] **Cloth Config** — **no.** NeoForge's built-in config is sufficient, and our config surface should stay small: numbers here are design decisions, not user preferences
 - [x] **Registrate** — **no.** Saves registration boilerplate but hides what registration says. Legibility beats brevity on this project
+- [x] **Jade** in the dev environment (15.10.6). Compat not written yet — see below
 - [ ] **Jade / TheOneProbe** — *probably yes, done carefully.* A HUD that prints `1247 Tu` on a bare crucible gives away the thermometer and guts §8. One that shows *"really hot!!!"* until an instrument is installed, and figures after, is the adjectives rule on a HUD. Design it, don't just enable it
 - [x] **Mixin** — ships with NeoForge. The route for reworking the vanilla furnace/smoker/blast furnace (§15) without replacing the blocks
 
@@ -87,6 +88,7 @@ Built and compiling: rotation engine (`RotationNode` / `RotationNetwork` / `Rota
 - [x] **The `Fu` process** — 30 Fu to a plate, then plate → foil → scrap, as a datapack table
 - [x] **Workpiece progress is visible, in adjectives** — "Barely marked" → "Taking shape" → "Visibly worked" → "Nearly there". No figures: that is what calipers are for. The exact `Fu` is on the stack and deliberately not shown
 - [ ] **Workpiece should be visible in the machine too** — a block entity renderer showing what is on the anvil. The tooltip covers the lesson, but you currently cannot see that the hammer is occupied without clicking it
+- [ ] **Jade + JEI compat, written together.** They are the same design problem from two sides: what is this mod allowed to tell you for free? Jade must obey the adjectives rule — *"really hot!!!"* with no instrument, figures once one is installed — and JEI genuinely has nothing to show for a machine with no recipe list, which is correct and should be stated rather than papered over. A machine's own card (`12 / 3 St`, `80 Su`) is fair game on both: that is printed on the block in §17, not measured
 - [ ] **Timer** — the slice's only automation before instruments
 - [ ] **Calipers** — `16 / 20 Fu`, and deliberately *after* the timer
 - [ ] Flywheel-based rendering for spinning shafts; currently the model does not visibly turn

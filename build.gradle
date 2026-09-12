@@ -90,6 +90,13 @@ dependencies {
     // Pulls Flywheel in transitively; that is Ponder's own runtime dependency.
     compileOnly "net.createmod.ponder:ponder-neoforge:${ponder_version}"
     devMods "net.createmod.ponder:ponder-neoforge:${ponder_version}"
+
+    // Jade -- development only for now, but this one is headed for real compat.
+    // A HUD that prints "1247 Tu" on a bare crucible hands out the thermometer for free and
+    // guts philosophy 8. A HUD that says "really hot!!!" until an instrument is installed, and
+    // figures afterwards, IS that rule, on a HUD. Worth doing deliberately rather than by
+    // enabling it -- see TODO.
+    devMods "maven.modrinth:jade:${jade_version}"
 }
 
 // neoforge.mods.toml needs the version numbers that only gradle.properties knows.
@@ -146,5 +153,10 @@ repositories {
     maven {
         name = 'Fuzss'               // NeoForge Config API port, a Ponder runtime dep
         url = 'https://raw.githubusercontent.com/Fuzss/modresources/main/maven'
+    }
+    maven {
+        name = 'Modrinth'            // Jade
+        url = 'https://api.modrinth.com/maven'
+        content { includeGroup 'maven.modrinth' }
     }
 }

@@ -166,19 +166,25 @@ public class MechanicalHammerBlockEntity extends BlockEntity implements Reciproc
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
     }
 
+    /**
+     * The key is written even when the hammer is empty, and that is load-bearing.
+     * <p>
+     * NeoForge's {@code onDataPacket} discards an update tag that is completely empty:
+     * <pre>if (!compoundtag.isEmpty()) self().loadWithComponents(...)</pre>
+     * Omitting the key when there is nothing to save produced exactly that -- an empty tag -- so
+     * the packet announcing "the workpiece is gone" was thrown away and the client went on
+     * rendering an item that no longer existed.
+     */
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
-        if (!workpiece.isEmpty())
-            tag.put("Workpiece", workpiece.save(registries));
+        tag.put("Workpiece", workpiece.saveOptional(registries));
     }
 
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
-        workpiece = tag.contains("Workpiece")
-                ? ItemStack.parse(registries, tag.getCompound("Workpiece")).orElse(ItemStack.EMPTY)
-                : ItemStack.EMPTY;
+        workpiece = ItemStack.parseOptional(registries, tag.getCompound("Workpiece"));
     }
 
     @Override
