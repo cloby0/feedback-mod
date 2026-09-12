@@ -137,4 +137,32 @@ public final class FTuning {
      * asymptotically and machines tick forever at 0.0001 RPM.
      */
     public static final float STOPPED_RPM_THRESHOLD = 0.05f;
+
+    // --- readouts -------------------------------------------------------------------------
+
+    // Where the free, qualitative speed bands fall. Philosophy 8 says a player standing next to
+    // a shaft can see roughly how fast it is going and nothing more precise than that, so these
+    // are the only speed figures the game exposes without an instrument -- as words.
+    //
+    // The boundaries are set against what beat 1 can actually produce: a water wheel makes 4 RPM
+    // per flowing side (4 to 16), a hand crank 32. So a one-sided wheel reads slow, a well sited
+    // one reads as turning, and only the crank spins fast. Bands that all collapsed onto one
+    // adjective would tell the player nothing.
+
+    /** Below this a turning run reads as "turning slowly". */
+    public static final float TURNING_RPM = 8f;
+    /** At or above this a run reads as "spinning fast". */
+    public static final float SPINNING_FAST_RPM = 24f;
+
+    /**
+     * Fraction of capacity above which a network reads as "straining".
+     *
+     * <h3>Why a warning band exists at all</h3>
+     * Acceleration is surplus torque over inertia, so a network at 98% of capacity is not
+     * slightly worse than one at 80% -- it takes eighty seconds to reach speed instead of two.
+     * That is a real and useful behaviour, and it was completely invisible: the factory simply
+     * felt broken. An adjective is the right granularity to fix that with, because it says
+     * <em>where to look</em> without handing over the Su figures that calipers are for.
+     */
+    public static final float STRAINING_LOAD_FRACTION = 0.9f;
 }

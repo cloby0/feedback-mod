@@ -91,11 +91,15 @@ dependencies {
     compileOnly "net.createmod.ponder:ponder-neoforge:${ponder_version}"
     devMods "net.createmod.ponder:ponder-neoforge:${ponder_version}"
 
-    // Jade -- development only for now, but this one is headed for real compat.
+    // Jade -- a written compat plugin now, but still not a shipped dependency.
     // A HUD that prints "1247 Tu" on a bare crucible hands out the thermometer for free and
     // guts philosophy 8. A HUD that says "really hot!!!" until an instrument is installed, and
-    // figures afterwards, IS that rule, on a HUD. Worth doing deliberately rather than by
-    // enabling it -- see TODO.
+    // figures afterwards, IS that rule, on a HUD -- so the plugin exists and reports in
+    // adjectives.
+    // Jade publishes no separate API artifact, so the whole mod is the compile dependency.
+    // compileOnly keeps it out of the jar: our plugin class is only ever loaded by Jade's own
+    // annotation scan, so nothing touches those classes when Jade is absent.
+    compileOnly "maven.modrinth:jade:${jade_version}"
     devMods "maven.modrinth:jade:${jade_version}"
 }
 
