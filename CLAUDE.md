@@ -38,6 +38,9 @@ These are settled and constrain any proposal:
 - **No identity checks.** Nothing in the mod may route or sort on item identity ("if item == iron ingot"). All sorting exploits physical properties — density, magnetism, particle size, optical/reflectivity — each with real, exploitable weaknesses.
 - **Electricity is not the universal currency.** Mechanical, Thermal, and Chemical are natively consumable and never *have* to convert to Electrical. This is the explicit point of departure from GregTech, where everything funnels to EU.
 - **Machines define physical operations, not recipes.** A machine says "I apply this operation to whatever is here," never "I know how to make Copper Plate."
+- **Discrete options, not continuous knobs** (§3). Where a setting would be a free scalar, it is a small set of named choices instead — crank throw is short or long, never 1–64. A scalar has a correct answer in it; that leaves only grinding for it or knowingly playing suboptimally. Depth comes from stacking choices, never from tuning one finely.
+- **A problem with one answer is not a problem** (§5). Any automation problem should have at least two correct approaches that cost different things — capital against attention, throughput against reliability, capability against walking away.
+- **Workpieces carry state too** (§9). A heated item is hot wherever it is, cooling toward ambient in hand, in a chest, in transit. Machine adjacency is physical, not cosmetic, and consequences of an item being hot are allowed to follow anywhere.
 - **Upgrades are physical components** you could point at — larger vessel, thicker insulation, flywheel, finer screen, better seal. "+50% throughput" is not a design concept; the question is what physical change causes it.
 - **Measurement, control, and actuation are separate systems** the player wires together. A sensor controls nothing; an actuator knows nothing; the controller has no built-in target. Precision is emergent from the whole loop, never a machine stat.
 - **Precision is never a hard gate.** Hard gates are genuine physical impossibilities (insufficient temperature, strength, work, pressure, material limits). Anything precision-limited stays *possible* — just unreliable and uneconomical. The shorthand: *the recipe is not locked, the process is difficult.*
@@ -62,6 +65,7 @@ These are settled and constrain any proposal:
 
 ## Outstanding work
 
-1. **Write document 2 (mechanics).** Not started. `feedback_philosophy.md` defers to it by name throughout — unit arithmetic, per-energy sensor/actuator pairings, the thermal model, overrun band tuning, vanilla furnace rework-vs-removal.
+1. **Write document 2 (mechanics).** Not started. `feedback_philosophy.md` defers to it by name throughout — unit arithmetic, per-energy sensor/actuator pairings, the thermal model, overrun band tuning, the vanilla vessel thermal bands.
 2. **Write document 3 (content).** Not started, and downstream of 2.
-3. **Slice 1 is drafted** in `feedback_slice_01.md` and has five open decisions listed at its end — the biggest being whether the vanilla furnace survives the slice (§15). Slice 2 opens on tempering, which `feedback_slice_01.md` deliberately leaves dangling.
+3. **Slice 1 is fully drafted** in `feedback_slice_01.md` and every open decision at its end is now closed. The next choice is build-vs-spec — implement the slice, or write document 2 first. Slice 2 opens on tempering, damper and controller, which `feedback_slice_01.md` deliberately leaves dangling.
+4. **`TODO.md` is the working checklist** — source of truth for *what's next*, where `feedback_philosophy.md` stays source of truth for *why*. Keep it current as items close.

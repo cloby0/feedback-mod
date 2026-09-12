@@ -62,21 +62,22 @@ Converting one into the other is a separate component the player places:
 
 ```
 CRANK LINKAGE
-Converts rotation to reciprocation
-Throw        short / long  (set by which crank is installed)
-Stroke rate  from RPM
-Force        from torque ÷ throw
+Converts rotation to reciprocation.
+Two variants: short throw, long throw.
 ```
 
 ```
 MECHANICAL HAMMER
-Applies      whatever the linkage delivers
-Load         80 Su
+Strength   12 / 3 St      (short throw / long throw)
+Stroke     one blow per cycle; resets between blows
+Load       80 Su
 ```
 
-**The hammer has no strength of its own.** A short throw gives few hard blows, a long throw gives many gentle ones, and the player chooses which by choosing a crank (§17). This is the slice's first real gearing decision, and it arrives about ninety seconds after the first machine.
+A hammer strikes **discretely**. Between blows it is travelling back up and applying nothing at all. That dead time is free early on and becomes expensive later, for reasons that only show up in the convergence.
 
-Feed it a copper ingot and drive it. Copper needs only 1 St, so any linkage works — which is exactly why copper is the teaching material. The player can install the wrong crank and still succeed, and only find out later that the choice mattered.
+Both outcomes are printed on the machine. Which one the player gets is decided by the crank they bolted to it (§17), and the choice is binary — there is no throw number to tune, deliberately (§3).
+
+Feed it a copper ingot and drive it. Copper needs only 1 St, so **either crank works** — which is exactly why copper is the teaching material. The player can install the wrong one and still succeed, and only discover much later that the choice was ever meaningful.
 
 After about 8 ticks, there is a plate.
 
@@ -213,11 +214,13 @@ A **Bellows** driven by the mechanical network — the first place the two beats
 
 ```
 POWERED BELLOWS
-Effect    air per stroke × stroke rate  →  Tu/t into the firebox
-Load      40 Su
+Air per stroke   10 / 30      (short throw / long throw)
+Load             40 Su
 ```
 
-Here the throw choice reads differently than it did on the hammer: a long throw moves more air per stroke. The player has already met this component and now finds it means something else entirely, which is the first time in the slice that one part composes two ways.
+Note the numbers run the other way. On the hammer, the short throw was the strong option; on the bellows, the **long** throw is the useful one, because a bellows wants to move air, not to hit something.
+
+The player has already met this component and now finds it means the opposite thing. That is the first time in the slice that one part composes two ways, and it is the moment a crank stops being a required adapter and starts being a choice.
 
 It has no target temperature. It has no thermometer. Given power it blows air; given none it stops. That is the entire device.
 
@@ -358,13 +361,45 @@ Output         1 × Steel Plate
 Below 900 Tu → too cold, work does nothing, hammer wears
 ```
 
-Cold steel cannot be worked at all — 15 St is beyond the primitive hammer regardless — so the player must keep the workpiece hot *while* hammering it. Temperature and mechanical work, coupled, in one process.
+Nothing heats the anvil. The **workpiece carries its own heat** (§9).
+
+```
+HOT STEEL INGOT
+Temperature   set when it leaves the crucible, decays toward ambient
+Below 900 Tu  reverts to a plain Steel Ingot — heat wasted, material intact
+```
+
+So the player heats the ingot in the crucible, pulls it out glowing, and carries it to the hammer with a clock running. That is what forging is, and it is the most physical thing in the slice: **you are not only the controller now, you are the conveyor.**
+
+Three things fall out of it immediately, none of which needed designing.
+
+**Placement becomes a decision.** A hammer across the workshop from the crucible loses the heat in transit. The player will move the hammer next to the fire, and they will work out why without being told.
+
+**Speed matters as well as force.** Sixty Fu has to land before the ingot drops out of the window, so the player needs a high stroke rate *and* the short crank — and short throw at high `RPM` is the heaviest load the mechanical network has ever been asked for. The convergence squeezes force, speed, and `Su` budget simultaneously.
+
+**Failure stays honest.** Falling out of the window wastes the heat and returns the ingot, matching beat 2's asymmetry exactly (§6). The player loses a trip to the fire, not the steel.
+
+Temperature and mechanical work, coupled, in one process.
+
+### The strategy nobody designed
+
+Between blows, the hammer is resetting and the steel is cooling. That dead time was invisible until the workpiece started carrying a clock, and now it is the most expensive thing in the build.
+
+The obvious answer is brute force: short throw, high `RPM`, enough `Su` to sustain it. Buy your way out.
+
+The other answer is **two hammers.** Strike in one, move the ingot to the second, strike again while the first resets, move it back. The player interleaves the strokes by hand and works at roughly twice the rate — on a mechanical network that never had to grow at all.
+
+Nothing in the mod was built for this. It is a consequence of three separate facts — strokes take time, workpieces cool, and items can be moved — meeting in a way nobody arranged. That is §5's composition test paying out inside the first slice.
+
+And notice what the two routes actually cost. The brute-force route spends **capital**: a bigger wheel, more shafting, more `Su`. The two-hammer route spends **attention**: a second cheap machine and a player willing to stand between them shuffling hot metal. Which is exactly the trade §15 put between the crucible and the blast furnace, arriving here on its own, in a completely different system, because nobody stopped it.
 
 This is the first **coupled** difficulty in the game (§7), and it is the slice's graduation: the player is no longer running two independent systems. They are operating a process.
 
-And it is where the linkage stops being a curiosity. Steel demands 15 St, and the long-throw crank that has been perfectly adequate for copper since beat 1 **cannot deliver it at any speed.** No amount of RPM substitutes for force (§17).
+And it is where the linkage stops being a curiosity. Steel demands 15 St. The hammer delivers **12 / 3** — so the long throw is hopeless, and the short throw is *still not enough.* No amount of RPM substitutes for force (§17).
 
-The fix is not a better hammer. It is a **shorter crank** — the player re-gears the machine they already own, and the same hammer that was making copper plates becomes a forging press. That is §14's difficulty curve in one component: the new material did not require new equipment, it required understanding the equipment.
+The player needs both the short crank **and** a better hammer, and they will almost certainly try the hammer first, because that is what every other mod has trained them to do. Discovering that the expensive new machine also needs re-gearing is the lesson landing properly: **the equipment was never the whole answer.**
+
+That is §14's difficulty curve in one component. The new material did not demand new equipment so much as it demanded understanding the equipment.
 
 ---
 
@@ -408,10 +443,12 @@ Mapped to the philosophy, because if a beat teaches nothing it should be cut:
 | Revealing beats refining | Calipers refine; the thermometer reveals | §8 |
 | You are the controller until something replaces you | No logic block in the whole slice | §13 |
 | Motion has a shape, and force is geared not bought | Crank throw sets St on hammer and bellows | §10, §17 |
+| Material carries state between machines | Hot ingot cooling in transit | §9 |
+| Attention and capital are interchangeable | Two hammers vs. a bigger wheel | §5, §15 |
 | Specialization is emergent, not declared | Smoker ceiling, blast furnace floor | §15 |
 | Automation buys attention, not capability | Crucible vs. blast furnace | §7, §15 |
 
-Twenty lessons, twelve items, seven new machines, one actuator, and no controller. Every one of the philosophy's load-bearing ideas appears at least once, in play, without a single tooltip explaining it.
+Twenty-two lessons, twelve items, seven new machines, one actuator, and no controller. Every one of the philosophy's load-bearing ideas appears at least once, in play, without a single tooltip explaining it.
 
 ---
 

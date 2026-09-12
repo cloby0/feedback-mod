@@ -112,6 +112,7 @@ This constraint has teeth, because the mod's premise makes it very easy to accid
 - **No derivative-unit sprawl.** Derive rather than invent: `Tu/t` and `mB/t` are sufficient. Do not coin a bespoke unit for every rate.
 - **No physics homework.** The player should never need to do arithmetic on paper to operate a machine.
 - **No chores wearing a decision's clothes.** A mechanic that is real, well-precedented, and simply **not fun** gets cut anyway.
+- **Discrete options, not continuous knobs.** Where a setting would otherwise be a free scalar, make it a small set of named choices instead. See below.
 
 That last one needs its own statement, because it is the clause most likely to be argued around:
 
@@ -120,6 +121,18 @@ That last one needs its own statement, because it is the clause most likely to b
 **Electrical resistance is the standing example.** It is real, it is fundamental, several mods model it — and reasoning about it is tedious every single time. It does not exist here (§17). Path-checking data links is the same call: routing a cable around a wall is busywork, so links pass through walls (§13), while the range limit stays because *placement* is a genuine choice.
 
 Be careful not to over-apply this. It is a test about **decisions, not about categories.** Shafts and pipes are still real blocks the player places, because laying out a mechanical network is a genuine spatial and budgetary puzzle (§10). What gets cut is not the physical infrastructure — it is the unfun *behaviour* that could be simulated inside it. Keep the shaft. Skip the fluid dynamics.
+
+### Options, not micro-optimization
+
+A related trap, and one this mod is unusually exposed to: a mechanic can create a genuine decision and still be ruined by being *continuous*.
+
+> **Prefer a small set of named options to a free scalar.**
+
+A crank throw that is **short or long** is a decision. A crank throw that is any number from 1 to 64 is a spreadsheet. The difference is not depth — both offer the player control over the same physical quantity — it is that the scalar version has a *correct answer* sitting somewhere in it, and the discrete version does not.
+
+That correct answer is the problem, because it leaves only two ways to play. Grind out the optimum and feel the time was wasted on a tenth of a second, or skip it and play on **knowing** the factory is needlessly suboptimal. Both are worse than simply not having the knob.
+
+This mod already works this way almost everywhere — thermal mass is small or large, insulation is present or absent, instruments come in tiers, controllers come in tiers — and naming the rule makes that deliberate rather than accidental. Depth should come from **stacking choices** (§5), never from tuning one of them finely.
 
 The goal is not to simulate reality. It is to make Minecraft's physical processes **coherent enough that players can reason about them and construct their own solutions.**
 
@@ -210,6 +223,26 @@ This also supplies a test for whether a new mechanic earns its place, and it is 
 > **The more choices each system offers, the more they stack into things nobody designed. That is the difference between a tech mod and a science mod.**
 
 A tech mod hands the player a sequence of better machines. A science mod hands them parts whose interactions it never fully enumerated, and lets them find the combinations. Every mechanic should therefore be judged partly on how many other mechanics it can be stacked with — a system that composes with three others is worth more than one twice as deep that composes with none.
+
+### A problem with one answer is not a problem
+
+> **An automation problem with a single correct answer is not a problem. It is a request that the player build somebody else's design.**
+
+This is the sharpest form of everything above. A puzzle with one solution is a construction manual with the steps hidden, and solving it teaches the player nothing except what the designer was thinking. The interesting question is never *what is the answer* — it is **what do you value more.**
+
+Feedback should therefore keep producing situations where two approaches are both correct and cost different things: capital against attention, throughput against reliability, capability against the ability to walk away. Not because balance demands it, but because that is the only kind of question worth asking someone who is building a factory.
+
+### Emergent trades are the design's own test
+
+The best of those situations are the ones nobody placed.
+
+The crucible and the Crude Blast Furnace trade capital against attention because that trade was deliberately designed (§15). Two hammers versus a bigger water wheel make **the same trade**, and nobody designed it at all — it falls out of strokes taking time, workpieces cooling, and items being movable, three unrelated rules meeting somewhere nobody was looking.
+
+That gives the project a check it can actually run:
+
+> **When a trade the mod already believes in shows up somewhere it was never installed, the systems are right. When every interesting choice has to be placed by hand, they are not yet.**
+
+It is worth watching for deliberately as more systems are added. A mechanic that produces one of these is worth more than its own depth suggests, and a mechanic that never does — however elaborate — is probably sitting alone.
 
 Three players making the same material:
 
@@ -507,9 +540,15 @@ A process that needs a sustained condition is not satisfied by a large burst. 10
 
 ---
 
-## 9. Machines Remember
+## 9. Machines Remember — and So Do Workpieces
 
 Not all machine state is transient. Machines carry persistent or semi-persistent state between runs, none of it readable without the matching sensor.
+
+**State is not confined to machines.** A workpiece that has been heated is *hot*, and stays hot as it is carried, stored, or dropped — cooling toward ambient the entire time. Material carries its own history between machines, which means the gap between two machines is part of the process rather than a free teleport.
+
+The consequences are large for something so small. Machine adjacency starts to matter physically rather than aesthetically. A process can be lost in transit. And the player acquires a genuine reason to care where they put things, which no amount of throughput tuning would have produced.
+
+It should also be allowed to compose messily. A glowing ingot is a glowing ingot wherever it happens to be — in a hand, in a wooden chest, next to something flammable. Consequences that follow obviously from an item being hot should be permitted to follow, rather than being suppressed because the item is "supposed" to be in a machine.
 
 - **Thermal charge.** A cold machine runs its first process slower while it heats; a preheated one runs faster. This creates a genuine standing decision: idle the machine hot and waste energy, or let it cool and pay the startup cost. Related: a large thermal mass is slow to heat but easy to stabilize, while a small one responds fast but is hard to hold steady.
 - **Contamination / residue (fouling).** Running different materials through a shared vessel leaves residue that affects later runs unless cleaned, or unless the machine is dedicated to one recipe family. This is the direct consequence of §11 — with no identity checks, there is nothing to "filter out." One cheap multipurpose machine fouls; N dedicated machines never contaminate but cost more space and capital. A real factory-layout tradeoff, not a lore excuse. It also explains reactor behavior cleanly: a dedicated reactor only ever sees one intermediate, so nothing lingers to interfere with the next batch.
@@ -971,13 +1010,19 @@ This pairing carries a real design idea rather than just a measurement. A proces
 
 That second form is a physical gate in the sense of §7. And the reason it is interesting rather than arbitrary is *where `St` comes from.*
 
-**`St` lives in the linkage, not the machine.** A crank converts rotation into reciprocation (§10), and a shorter throw concentrates the same torque into greater force over a shorter stroke, while a longer throw spreads it into a gentler, longer one:
+**The machine defines a pair; the linkage selects from it.** A crank converts rotation into reciprocation (§10), and its throw comes in exactly two flavours — a short throw concentrating torque into greater force over a shorter stroke, or a long throw spreading it into a gentler, longer one.
 
-- **Short throw** — fewer, harder blows. High `St`.
-- **Long throw** — gentler, longer strokes. Low `St`.
-- **Torque** sets the work each stroke carries; **`RPM`** sets how often strokes happen.
+So a machine's `St` is written as two numbers rather than one:
 
-A machine therefore has no fixed strength. It has whatever strength the player geared into it. Satisfying a *minimum 15 St* requirement means **re-gearing the drive**, not buying a stronger machine — and the same hammer is a delicate planisher or a forging press depending only on how it is driven.
+```
+MECHANICAL HAMMER     12 / 3 St     (short throw / long throw)
+```
+
+Both outcomes are on the card, and which one the player gets depends on the crank they installed. `RPM` still sets how often strokes happen; `Su` still says whether the network can drive the thing at all.
+
+A machine therefore has no single strength. Satisfying a *minimum 15 St* requirement means **re-gearing the drive**, not buying a stronger machine — and the same hammer is a delicate planisher or a forging press depending only on how it is driven.
+
+Note that throw is deliberately **not** a scalar (§3). Two named options make this a decision; a numeric throw would make it an optimization problem with a right answer.
 
 This is close to the ideal shape for a mod mechanic, because none of it had to be invented. It is the trade real machinery already makes, it is expressed entirely in quantities the mod had already defined, and it converts a number printed on a block into a decision the player makes.
 
