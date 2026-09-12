@@ -8,8 +8,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * A relay. Generates nothing, but is not free: every shaft charges its bearing friction to the
- * network, so a sprawling layout costs real Su that a compact one does not.
+ * A relay. Generates nothing and demands nothing while stopped, but drags once it turns: every
+ * shaft charges bearing friction to the network in proportion to speed.
+ * <p>
+ * So a sprawling layout costs Su that a compact one does not, and a long run cannot be driven as
+ * fast as a short one -- not because anything forbids it, but because friction runs out of
+ * torque first.
  */
 public class ShaftBlockEntity extends RotationNode {
 
@@ -18,8 +22,8 @@ public class ShaftBlockEntity extends RotationNode {
     }
 
     @Override
-    public float getLoadSu() {
-        return FTuning.SHAFT_LOSS_SU;
+    public float getDragSuPerRpm() {
+        return FTuning.SHAFT_DRAG_SU_PER_RPM;
     }
 
     @Override

@@ -39,17 +39,30 @@ public final class FTuning {
     // --- transmission ---------------------------------------------------------------------
 
     /**
-     * Invented. Bearing friction, charged as Su against the network.
+     * Invented. Bearing friction per shaft, in Su per RPM.
+     *
+     * <h3>Why loss is Su, and why it scales with speed</h3>
+     * Loss is Su rather than RPM because a rigid shaft turns at one speed along its whole length
+     * -- a difference between its ends is torsion, not loss -- and what friction consumes is
+     * torque. Because Su sums network-wide, loss is automatically distance-independent: moving a
+     * machine nearer the generator saves nothing, since every bearing in the run turns either
+     * way, including those on a branch nobody uses. Sprawl costs; distance does not.
      * <p>
-     * Loss is Su rather than RPM on purpose. A rigid shaft turns at one speed along its whole
-     * length -- a speed difference between its ends is torsion, not loss. What friction actually
-     * consumes is torque, and torque is Su.
-     * <p>
-     * Because Su sums network-wide, this is automatically distance-independent: moving a machine
-     * closer to the generator saves nothing, because every bearing in the run is turning either
-     * way, including the ones on a branch nobody is using. Sprawl is what costs, not distance.
+     * Scaling with speed is what makes it interesting rather than a tax. Three things follow,
+     * none of which had to be designed:
+     * <ul>
+     *   <li><b>A stopped shaft costs nothing.</b> An idle network is free, and an unpowered one
+     *       is not "overstressed" -- it simply has no load.</li>
+     *   <li><b>The network finds its own top speed.</b> It accelerates until surplus torque runs
+     *       out, at {@code capacity = drag x rpm}. A long run does not hit a wall and refuse; it
+     *       just turns more slowly, because friction ate the torque. This is deliberately unlike
+     *       a hard per-shaft Su cap, which produces the absurdity of a generator being <em>too
+     *       good</em> for its own shafting.</li>
+     *   <li><b>Slow and wide becomes a real alternative to fast and narrow</b>, because speed is
+     *       now something you pay for by the block.</li>
+     * </ul>
      */
-    public static final float SHAFT_LOSS_SU = 1f;
+    public static final float SHAFT_DRAG_SU_PER_RPM = 0.1f;
 
     /**
      * Invented. How much a shaft resists a change in speed.
@@ -68,8 +81,8 @@ public final class FTuning {
 
     /** Invented. A generator is a lump of mass too; without this a bare source has no momentum. */
     public static final float HAND_CRANK_INERTIA = 4f;
-    /** Invented, and deliberately huge -- this is why a water wheel coasts for so long. */
-    public static final float WATER_WHEEL_INERTIA = 1200f;
+    /** Invented, and deliberately large -- this is why a water wheel coasts so visibly. */
+    public static final float WATER_WHEEL_INERTIA = 400f;
 
     /**
      * Floor on total network inertia, so a network of one weightless block still takes a moment
@@ -86,6 +99,12 @@ public final class FTuning {
      * is wrong with it.
      */
     public static final float INERTIA_RESPONSE = 1f;
+
+    /**
+     * Floor on braking force, so an utterly frictionless network still eventually stops rather
+     * than coasting for the rest of the save.
+     */
+    public static final float MINIMUM_BRAKING_SU = 0.5f;
 
     /**
      * Below this, a coasting network is called stopped. Without a floor, speed approaches zero

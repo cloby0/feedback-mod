@@ -70,8 +70,18 @@ public abstract class RotationNode extends BlockEntity {
         return 0;
     }
 
-    /** Su this node demands from its network, including its own bearing friction. */
+    /**
+     * Su this node demands regardless of speed -- a machine's working draw.
+     * <p>
+     * Split from {@link #getDragSuPerRpm()} so the network can hold one figure for each and
+     * recompute live load from speed without walking every member each tick.
+     */
     public float getLoadSu() {
+        return 0;
+    }
+
+    /** Su this node demands per RPM: friction, which costs nothing while stopped. */
+    public float getDragSuPerRpm() {
         return 0;
     }
 
@@ -167,12 +177,20 @@ public abstract class RotationNode extends BlockEntity {
      * exists -- until then there is no other way to see whether the network works.
      */
     public void debugReport(Player player) {
-        String momentum = network == null ? "" : String.format("  |  target %.0f  inertia %.0f",
-                network.getTargetRpm(), network.getInertia());
+        if (network == null) {
+            player.displayClientMessage(Component.literal("[debug] no network"), false);
+            return;
+        }
+        float terminal = network.getDragSuPerRpm() <= 0 ? Float.POSITIVE_INFINITY
+                : Math.max(0, network.getCapacitySu() - network.getStaticLoadSu()) / network.getDragSuPerRpm();
+        String note = network.isOverstressed() ? "  |  OVERSTRESSED"
+                : Math.abs(network.getTargetRpm()) > terminal
+                        ? String.format("  |  friction-limited to %.1f", terminal)
+                        : "";
         player.displayClientMessage(Component.literal(
-                String.format("[debug] %.1f RPM  |  %.0f / %.0f Su%s%s",
-                        getRpm(), networkLoadSu, networkCapacitySu,
-                        isOverstressed() ? "  |  OVERSTRESSED" : "", momentum)), false);
+                String.format("[debug] %.1f RPM  |  %.1f / %.0f Su  |  target %.0f  inertia %.0f%s",
+                        getRpm(), network.getLoadSu(), network.getCapacitySu(),
+                        network.getTargetRpm(), network.getInertia(), note)), false);
     }
 
     // --- lifecycle --------------------------------------------------------------------------

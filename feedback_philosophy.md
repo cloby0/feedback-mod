@@ -134,6 +134,14 @@ That correct answer is the problem, because it leaves only two ways to play. Gri
 
 This mod already works this way almost everywhere — thermal mass is small or large, insulation is present or absent, instruments come in tiers, controllers come in tiers — and naming the rule makes that deliberate rather than accidental. Depth should come from **stacking choices** (§5), never from tuning one of them finely.
 
+Put in plain words, so it can be applied without re-deriving it:
+
+> **A good choice is a design decision — where to put it, how hard to run it, what to spend. A bad choice is sitting and tuning a number.**
+
+And the best ones are not presented at all. A choice the game *offers* is a menu; a choice that is a **consequence of the system** is something the player worked out. Friction rising with speed is not a difficulty setting and no screen mentions it — but it quietly means a long shaft run cannot turn as fast as a short one, so *slow and wide* and *fast and narrow* become two real answers to the same problem. Nobody was asked to pick. The choice was there to be noticed.
+
+That is also the difference between this and a **hard limit**, which is the same idea done badly. A per-component cap on throughput produces the absurdity of a generator being *too good* for the parts downstream of it, and turns an engineering question into a shopping question. A cost that scales produces the same caution without ever refusing anything.
+
 The goal is not to simulate reality. It is to make Minecraft's physical processes **coherent enough that players can reason about them and construct their own solutions.**
 
 ---

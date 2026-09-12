@@ -89,6 +89,7 @@ Built and compiling: rotation engine (`RotationNode` / `RotationNetwork` / `Rota
 - [ ] **Calipers** — `16 / 20 Fu`, and deliberately *after* the timer
 - [ ] Flywheel-based rendering for spinning shafts; currently the model does not visibly turn
 - [ ] Real textures
+- [ ] **Shaft placement QoL** — clicking a shaft while holding a shaft extends the run along its axis, the way Create does. Not required for anything; it is just far nicer than walking backwards holding right click. Small, maybe 20 lines. Worth doing before any long playtest, because laying shafts is most of what testing the rotation network involves
 - [ ] **Delete the temporary debug readout** (`RotationNode#debugReport`, sneak-right-click). It hands out exact figures with no instrument, which is §8 backwards. It exists only because nothing visibly turns yet
 
 ### Decisions taken while building, worth revisiting
@@ -101,8 +102,9 @@ Built and compiling: rotation engine (`RotationNode` / `RotationNetwork` / `Rota
 ### Found by building, not by designing
 
 - **Headroom became a real decision.** A network at 98% of capacity (three hammers on a 256 Su wheel) takes **81 seconds** to reach speed, because acceleration is surplus torque over inertia and there is almost no surplus. Two hammers reach speed in two seconds. Nobody installed this — it falls out of the acceleration relationship — and it is §5's test passing: the same capital-vs-attention trade, in a third unrelated place. **Keep it.** Possibly soften the magnitude; do not remove the shape.
-- **[OPEN] Does shaft loss scale with RPM?** Real friction partly does. If it does, fast networks cost more and "run slow and wide" becomes a genuine alternative to "run fast and narrow" — which pairs well with inertia, since heavy networks already favour steady running. Currently flat.
-- **[OPEN] Is a 48-second coast too long?** An almost-unloaded water wheel takes that to wind down. Nothing can cut a wheel's power yet, so it does not bite until slice 2's clutch.
+- **Shaft loss scales with RPM.** Resolved, and it turned out to fix two bugs at the root. A stopped shaft costs nothing, so an unpowered run is no longer reported as overstressed. And a network now accelerates until surplus torque runs out, so it **finds its own top speed**: a hand crank rated 32 RPM drives 3 shafts at 32, 5 shafts at 24, 10 shafts at 12. Deliberately unlike a hard per-shaft Su cap, which produces the absurdity of a generator being *too good* for its own shafting.
+- **Overstress means something narrower now.** Only when a source is present *and* static load exceeds capacity before anything turns. A run with no source is unpowered, not overloaded; a run that merely cannot reach its target speed is not faulty, it is just slow.
+- **Accelerating force deliberately ignores friction**, with the terminal speed applied as a clamp instead. Using live surplus is more literal but behaves badly — surplus reaches zero exactly at terminal speed, so a run creeps the last revolution for fifteen seconds.
 - **Bearings are the obvious first physical upgrade** — a bushed or greased shaft with lower `Su` cost. Fits "upgrades are physical components" exactly. Not built.
 - **Water wheel speed scales with how many sides have flowing water**, so siting it is a decision rather than a placement. Not from the slice doc — an invention, and cheap to remove.
 

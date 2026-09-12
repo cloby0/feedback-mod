@@ -48,7 +48,10 @@ public class RotationNetwork {
     private final Map<RotationNode, Float> members = new HashMap<>();
 
     private float capacitySu;
-    private float loadSu;
+    /** Demand that does not depend on speed: machines doing work. */
+    private float staticLoadSu;
+    /** Demand per RPM: friction. Costs nothing while stopped. */
+    private float dragSuPerRpm;
     private float inertia = FTuning.MINIMUM_INERTIA;
 
     /** Speed the sources are asking for. Set by {@link RotationPropagator}. */
@@ -89,6 +92,16 @@ public class RotationNetwork {
         recalculate();
     }
 
+    /**
+     * Su actually being demanded right now: working draw plus friction at the current speed.
+     * <p>
+     * Held as two figures rather than recomputed from the members each tick, so a long run costs
+     * no more to simulate than a short one.
+     */
+    public float getLoadSu() {
+        return staticLoadSu + dragSuPerRpm * Math.abs(currentRpm);
+    }
+
     public void setTargetRpm(float targetRpm) {
         this.targetRpm = targetRpm;
     }
@@ -114,6 +127,17 @@ public class RotationNetwork {
      */
     public void tick() {
         float effectiveTarget = isOverstressed() ? 0 : targetRpm;
+        float liveLoad = getLoadSu();
+
+        // Friction rises with speed, so a run can be unable to reach the speed its source is
+        // asking for. It is not blocked from trying -- it simply runs out of surplus torque
+        // first and settles there. That settling point is the whole of "shaft loss".
+        if (effectiveTarget != 0 && dragSuPerRpm > 0) {
+            float terminal = Math.max(0, capacitySu - staticLoadSu) / dragSuPerRpm;
+            if (Math.abs(effectiveTarget) > terminal)
+                effectiveTarget = Math.signum(effectiveTarget) * terminal;
+        }
+
         if (currentRpm == effectiveTarget)
             return;
 
@@ -124,9 +148,14 @@ public class RotationNetwork {
 
         // Accelerating is paid for out of spare power; slowing is driven by whatever is dragging.
         // A reversal has to brake to a stop first, so it is charged like slowing down.
+        // Accelerating force ignores friction and the terminal clamp above handles it instead.
+        // Using live surplus here is more literal but behaves badly: surplus goes to zero exactly
+        // at terminal speed, so a run approaches its own top speed asymptotically and spends
+        // fifteen seconds creeping the last revolution. Constant drive up to a hard ceiling is
+        // both more readable and far easier to reason about.
         float force = (speedingUp && !reversing)
-                ? Math.max(0, capacitySu - loadSu)
-                : Math.max(loadSu, FTuning.SHAFT_LOSS_SU);
+                ? Math.max(0, capacitySu - staticLoadSu)
+                : Math.max(liveLoad, FTuning.MINIMUM_BRAKING_SU);
 
         float step = force / Math.max(inertia, FTuning.MINIMUM_INERTIA) * FTuning.INERTIA_RESPONSE;
 
@@ -149,7 +178,8 @@ public class RotationNetwork {
      */
     public void recalculate() {
         float newCapacity = 0;
-        float newLoad = 0;
+        float newStaticLoad = 0;
+        float newDrag = 0;
         float newInertia = 0;
 
         dropStale(sources);
@@ -157,19 +187,21 @@ public class RotationNetwork {
             newCapacity += entry.getValue();
 
         dropStale(members);
-        for (Map.Entry<RotationNode, Float> entry : members.entrySet()) {
-            newLoad += entry.getValue();
-            newInertia += entry.getKey().getInertia();
+        for (RotationNode member : members.keySet()) {
+            newStaticLoad += member.getLoadSu();
+            newDrag += member.getDragSuPerRpm();
+            newInertia += member.getInertia();
         }
 
         inertia = newInertia;
 
-        if (newCapacity == capacitySu && newLoad == loadSu)
+        if (newCapacity == capacitySu && newStaticLoad == staticLoadSu && newDrag == dragSuPerRpm)
             return;
         capacitySu = newCapacity;
-        loadSu = newLoad;
+        staticLoadSu = newStaticLoad;
+        dragSuPerRpm = newDrag;
         for (RotationNode member : members.keySet())
-            member.onNetworkChanged(capacitySu, loadSu);
+            member.onNetworkChanged(capacitySu, getLoadSu());
     }
 
     /**
@@ -185,16 +217,32 @@ public class RotationNetwork {
         }
     }
 
+    /**
+     * True only when something is driving the network and it still cannot turn.
+     * <p>
+     * Two things are deliberately <em>not</em> overstress. A network with no source is not
+     * overloaded, it is unpowered -- an idle shaft reporting OVERSTRESSED because its own
+     * friction exceeds a capacity of zero is nonsense. And a network that simply cannot reach
+     * the speed asked of it is not faulty either; it settles at a lower speed, which is what
+     * friction is supposed to feel like.
+     * <p>
+     * What remains is the real fault: machines demanding more than the supply can give even
+     * before anything starts turning.
+     */
     public boolean isOverstressed() {
-        return loadSu > capacitySu;
+        return capacitySu > 0 && staticLoadSu > capacitySu;
     }
 
     public float getCapacitySu() {
         return capacitySu;
     }
 
-    public float getLoadSu() {
-        return loadSu;
+    public float getStaticLoadSu() {
+        return staticLoadSu;
+    }
+
+    public float getDragSuPerRpm() {
+        return dragSuPerRpm;
     }
 
     public float getInertia() {
