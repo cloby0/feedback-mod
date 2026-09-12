@@ -35,7 +35,7 @@ public class WorkpieceTooltip {
         if (worked <= 0 || required <= 0)
             return;
 
-        if (Readout.instrumented()) {
+        if (Readout.instrumented(Readout.Quantity.WORK)) {
             event.getToolTip().add(Component.translatable("feedback.readout.work",
                     worked, required).withStyle(ChatFormatting.AQUA));
             return;

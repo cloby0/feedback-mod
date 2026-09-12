@@ -52,7 +52,7 @@ public class RotationComponent implements IBlockComponentProvider {
         float capacitySu = data.getFloat(RotationServerData.CAPACITY_SU);
         float loadSu = data.getFloat(RotationServerData.LOAD_SU);
 
-        if (Readout.instrumented()) {
+        if (Readout.instrumented(Readout.Quantity.SPEED)) {
             exact(tooltip, "feedback.readout.rpm", Readout.number(rpm));
             if (networked) {
                 exact(tooltip, "feedback.readout.su", Readout.number(loadSu), Readout.number(capacitySu));

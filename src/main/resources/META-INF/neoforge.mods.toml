@@ -22,3 +22,13 @@ type = "required"
 versionRange = "${minecraft_version_range}"
 ordering = "NONE"
 side = "BOTH"
+
+# Rendering only, so the dedicated server neither needs it nor loads it. Required rather than
+# optional on the client: without instancing a shaft run does not turn, and a factory that looks
+# identical running and stopped is the one thing philosophy 8 cannot survive.
+[[dependencies.${mod_id}]]
+modId = "flywheel"
+type = "required"
+versionRange = "${flywheel_version_range}"
+ordering = "AFTER"
+side = "CLIENT"

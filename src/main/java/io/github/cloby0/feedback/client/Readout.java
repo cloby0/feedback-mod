@@ -3,6 +3,7 @@ package io.github.cloby0.feedback.client;
 import java.util.Locale;
 
 import io.github.cloby0.feedback.core.FTuning;
+import io.github.cloby0.feedback.item.CalipersItem;
 import io.github.cloby0.feedback.item.DebugHelmetItem;
 
 import org.jetbrains.annotations.Nullable;
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Player;
 
 /**
  * The only place the mod turns a simulated figure into something a player is allowed to read.
@@ -39,13 +41,40 @@ public final class Readout {
     }
 
     /**
-     * Whether the player may see exact figures instead of adjectives.
+     * A kind of measurement, because instruments are specific.
+     *
+     * <h3>Why this is not one boolean</h3>
+     * A thermometer tells you nothing about how flattened an ingot is, and calipers tell you
+     * nothing about how fast a shaft is turning. Precision is never a general property a player
+     * accumulates -- it is bought one quantity at a time, and owning one instrument must not
+     * quietly sharpen every readout in the game.
+     */
+    public enum Quantity {
+        /** Mechanical work beaten into a workpiece. Calipers. */
+        WORK,
+        /** How fast a run is turning. No instrument for this exists yet. */
+        SPEED,
+        /** What a network is carrying. No instrument for this exists yet. */
+        LOAD
+    }
+
+    /**
+     * Whether the player may read this quantity as a figure rather than an adjective.
      * <p>
      * Reads the local player rather than taking one, because every caller is a client display and
      * there is only ever one player looking.
+     * <p>
+     * The debug helmet answers yes to everything — it is perfect instrumentation, which §8 says a
+     * player may never actually buy, and it is a creative-only cheat precisely so that stays true.
      */
-    public static boolean instrumented() {
-        return DebugHelmetItem.wornBy(Minecraft.getInstance().player);
+    public static boolean instrumented(Quantity quantity) {
+        Player player = Minecraft.getInstance().player;
+        if (DebugHelmetItem.wornBy(player))
+            return true;
+        return switch (quantity) {
+            case WORK -> CalipersItem.heldBy(player);
+            case SPEED, LOAD -> false;
+        };
     }
 
     /**

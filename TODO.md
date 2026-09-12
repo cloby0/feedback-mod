@@ -110,7 +110,9 @@ Governed by §8's *what you need is free, what you have is a cost*. Write these 
   It is a better dev tool than sneak-clicking every block, and it is thematically exact: the helmet is *perfect instrumentation*, the one thing §8 says a player may never actually buy. Keep it out of the normal creative tab so it never reads as a tier of thermometer.
 - [x] Refine the workpiece tooltip once this exists: *needs 14 Fu* is a requirement and may be stated for free; *has 9 Fu* is state and waits for calipers.
 - [x] **Clutch + Timer** — two blocks, not one. Stopping a shaft and deciding when are different jobs (§13), so the Timer is crude control and the Clutch is the mechanical actuator. Costs one block over the slice's budget and buys two things: the player can throw the clutch by hand before building any control at all, and slice 2's controller *replaces* the Timer instead of being a new idea. Disengaging splits the run, so the far side coasts — "clutches coast" needed no code, it falls out of the inertia model
-- [ ] **Calipers** — `16 / 20 Fu`, and deliberately *after* the timer
+- [x] **Calipers** — held tool; turns the workpiece adjective into `9 / 14 Fu`, on the item and on the hammer through Jade. No right-click to take a reading: applying calipers is a real action but as a mechanic it is a keystroke with no decision in it, and §3 cuts mechanics that are real, well-precedented and simply not fun
+- [x] **The instrument seam is per-quantity now** — `Readout.instrumented(Quantity)`. Calipers answer for `WORK` only; owning one instrument must not sharpen every readout in the game. Still not per-*resolution*, which §8 eventually wants ("each tier buys significant figures") — the call sites are shaped for it
+- [ ] **[OPEN] Calipers on an untouched ingot show nothing**, because an unworked item carries no `WORK_REQUIRED`. The client now has the deformation table (JEI sync), so they *could* read `0 / 14 Fu`. Low value — that figure is a requirement and JEI already gives it away for free
 - [ ] Flywheel-based rendering for spinning shafts; currently the model does not visibly turn
 - [ ] Real textures
 - [x] **Shaft placement QoL** — clicking a shaft while holding a shaft extends the run along its axis, the way Create does. Clicking an end face grows that way; clicking a side grows away from the player. Sneak to suppress it and place normally
@@ -126,6 +128,8 @@ Governed by §8's *what you need is free, what you have is a cost*. Write these 
 - **The Debug Helmet implements `Equipable` rather than extending `ArmorItem`.** ArmorItem would demand a registered armour material and an armour-layer texture, then render a missing-texture helmet, all to describe an item that gives no protection and should be invisible.
 - **Sneak-clicking the Mechanical Hammer now extracts** rather than printing a report. Placing a block against its face while sneaking never worked and still does not; nothing regressed, but it is a behaviour change worth knowing about.
 - **Not built, deliberately: any instrument.** There are still no calipers and no thermometer. `Readout.instrumented()` is a boolean standing where a per-quantity, per-resolution question belongs; the call sites are already shaped for the real answer.
+
+- [ ] **No crafting recipes exist at all yet.** Every block and item is creative-only. Worth doing as one pass rather than piecemeal, once the roster stops moving
 
 ### Slice discrepancies — reconciled
 

@@ -156,15 +156,35 @@ public abstract class RotationNode extends BlockEntity {
         }
     }
 
+    /**
+     * Degrees of rotation per tick, per RPM. One revolution is 360 degrees and RPM counts
+     * revolutions per 60 seconds of 20 ticks, so one RPM is 360/1200 = 0.3 degrees per tick.
+     * <p>
+     * Named because the renderer has to extrapolate with exactly this figure to place the shaft
+     * between ticks. If the two ever disagreed the shaft would lurch back and forth around the
+     * angle the simulation actually holds.
+     */
+    public static final float DEGREES_PER_TICK_PER_RPM = 0.3f;
+
     public void tickClient() {
-        // One revolution is 360 degrees and RPM counts revolutions per 60 seconds of 20 ticks,
-        // so one RPM is 360/1200 = 0.3 degrees per tick.
-        visualAngle = (visualAngle + getRpm() * 0.3f) % 360f;
+        visualAngle = (visualAngle + getRpm() * DEGREES_PER_TICK_PER_RPM) % 360f;
     }
 
     /** Accumulated rotation in degrees. Client-side; the server never renders anything. */
     public float getVisualAngle() {
         return visualAngle;
+    }
+
+    /**
+     * Rotation in degrees at a point partway through the current tick.
+     * <p>
+     * Frames are far shorter than ticks, so drawing {@link #getVisualAngle()} directly makes a
+     * slow shaft step twenty times a second -- which reads as a machine stuttering rather than a
+     * machine turning slowly. Extrapolating forward from the last tick at the current speed is
+     * exact here, because speed is constant within a tick by construction.
+     */
+    public float getVisualAngle(float partialTick) {
+        return visualAngle + getRpm() * DEGREES_PER_TICK_PER_RPM * partialTick;
     }
 
     // --- lifecycle --------------------------------------------------------------------------

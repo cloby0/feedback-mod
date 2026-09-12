@@ -76,6 +76,20 @@ tasks.named('runClient') {
 dependencies {
     compileOnly 'org.jetbrains:annotations:26.0.1'
 
+    // Flywheel -- shipped, and the only one of these that is.
+    // A spinning shaft is the mod's main sensory channel (philosophy 8: the player's own senses
+    // are free), and one draw call per shaft is not a price a shaft run can pay. The API is
+    // compileOnly because nothing on a dedicated server may touch it; the implementation is
+    // jarJar'd so a player never has to install it by hand. It arrives in the dev run through
+    // Ponder's devMods entry, which is why this was easy to forget to declare.
+    compileOnlyApi "dev.engine-room.flywheel:flywheel-neoforge-api-${minecraft_version}:${flywheel_version}"
+    jarJar(runtimeOnly("dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}") {
+        version {
+            strictly flywheel_version_range
+            prefer flywheel_version
+        }
+    })
+
     // JEI -- development only, never shipped.
     // The API is compileOnly in case we ever write a plugin; the full mod goes in
     // devMods so it actually loads. Feedback's machines have no recipe list to show,
@@ -87,7 +101,8 @@ dependencies {
     // Philosophy 8, "Documentation is a free sense", makes Ponder the designated
     // explanation channel. No scenes exist yet, so this is here to experiment with,
     // not to depend on. Promoting it to a real dependency is a deliberate later step.
-    // Pulls Flywheel in transitively; that is Ponder's own runtime dependency.
+    // Also pulls Flywheel in transitively, which is how the dev run gets it; we declare it
+    // above in its own right so a shipped jar does not depend on Ponder being present.
     compileOnly "net.createmod.ponder:ponder-neoforge:${ponder_version}"
     devMods "net.createmod.ponder:ponder-neoforge:${ponder_version}"
 
@@ -117,6 +132,7 @@ tasks.named('processResources', ProcessResources).configure {
             mod_version            : mod_version,
             mod_authors            : mod_authors,
             mod_description        : mod_description,
+            flywheel_version_range : flywheel_version_range,
     ]
     inputs.properties props
     filesMatching(['META-INF/neoforge.mods.toml', 'pack.mcmeta']) {

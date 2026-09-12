@@ -27,6 +27,7 @@ public class FCreativeTabs {
                         output.accept(FItems.MECHANICAL_HAMMER.get());
                         output.accept(FItems.CLUTCH.get());
                         output.accept(FItems.TIMER.get());
+                        output.accept(FItems.CALIPERS.get());
                         output.accept(FItems.COPPER_PLATE.get());
                         output.accept(FItems.COPPER_FOIL.get());
                         output.accept(FItems.COPPER_SCRAP.get());

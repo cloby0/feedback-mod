@@ -1,6 +1,7 @@
 package io.github.cloby0.feedback.registry;
 
 import io.github.cloby0.feedback.Feedback;
+import io.github.cloby0.feedback.item.CalipersItem;
 import io.github.cloby0.feedback.item.DebugHelmetItem;
 
 import net.minecraft.world.item.BlockItem;
@@ -22,6 +23,14 @@ public class FItems {
 
     public static final DeferredItem<BlockItem> CLUTCH = ITEMS.registerSimpleBlockItem(FBlocks.CLUTCH);
     public static final DeferredItem<BlockItem> TIMER = ITEMS.registerSimpleBlockItem(FBlocks.TIMER);
+
+    /**
+     * The slice's first instrument. Registered here with the blocks rather than off in a tools
+     * section, because §7 insists an instrument is a yield technology and not a tier -- it sits
+     * alongside the machinery it improves, not above it.
+     */
+    public static final DeferredItem<Item> CALIPERS =
+            ITEMS.registerItem("calipers", CalipersItem::new, new Item.Properties().stacksTo(1));
 
     // Beat 1's overrun chain. Every step is a real item, and only the last one is a mistake:
     // foil is a genuine sidegrade that beat 2's thermometer needs. See slice 1, "Overrun".
