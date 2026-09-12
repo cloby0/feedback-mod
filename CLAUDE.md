@@ -33,8 +33,8 @@ Root package `io.github.cloby0.feedback`. The package tree follows the mod's **s
 | Package | Holds |
 | --- | --- |
 | `registry/` | every `DeferredRegister` — one place to look |
-| `core/unit/` | the units of §17 as types, not loose floats |
-| `core/energy/` | the four networks; mechanical and thermal first |
+| `core/unit/` | the units of §17 as types. **Not built** — rotation uses named floats (`rpm`, `loadSu`). Worth doing once thermal lands and two units can be confused |
+| `core/rotation/` | the mechanical network — `RotationNode`, `RotationNetwork`, `RotationPropagator` |
 | `machine/` | physical operations. A machine class never names a recipe |
 | `process/` | operation definitions, completion, and overrun behaviour |
 | `instrument/` | sensors. Read-only by construction — an instrument has no way to act |
@@ -44,6 +44,14 @@ Root package `io.github.cloby0.feedback`. The package tree follows the mod's **s
 | `client/` | renderers and screens |
 
 Create a package when there is something to put in it; don't scaffold empty ones.
+
+**Datagen is not written yet.** `src/generated/resources` is a resource root and is committed, but blockstates, models, loot tables and lang are hand-authored under `src/main/resources` for now. Convert when the roster is big enough that hand-editing starts going wrong — not before.
+
+**All art is placeholder.** Every texture currently referenced is a vanilla one. No Create asset may ever be used here: Create's *code* is MIT, its *assets* are All Rights Reserved. `THIRD-PARTY-LICENSES.md` records what we owe and to whom.
+
+### The rotation network, in one paragraph
+
+A `RotationNode` is a block entity that knows its own speed and which neighbour drives it. It cannot tell on its own whether it is overloaded — that is a whole-network question, answered by `RotationNetwork` (the Su ledger) and pushed down. When anything changes, `RotationPropagator` **rebuilds the entire connected run**: flood fill, find the strongest source, walk outward assigning speeds. Create propagates incrementally instead, and needs a "flicker score" to break blocks caught in propagation loops; a rebuild visits each node once and cannot loop, so we don't. Overstress reads as zero speed everywhere, but propagation deliberately uses *theoretical* speed — otherwise an overloaded network would tear itself down and rebuild the instant the load came off.
 
 ## The documents
 
