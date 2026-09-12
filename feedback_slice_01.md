@@ -16,6 +16,8 @@ Two beats, one gimmick each.
 >
 > **Beat 2 — heat.** *You cannot control what you cannot see.*
 
+Neither beat contains a controller. The player is the controller, until a bent strip of metal takes over the one job simple enough to hand off.
+
 **One energy network, two process variables.** Mechanical power is the only distributed energy system in the slice — shafts, one generator, one consumer. Temperature is a *process variable*, not a network: heat comes from burning something in a firebox directly under the vessel. This satisfies §20's "one energy system" honestly while still allowing beat 2, and it defers the entire thermal-transport layer.
 
 **Explicitly out of scope:** electricity, chemistry, spatial, fluids as a system, separation, covers as a general mechanism, the node-based controller from §13, multiblocks, and any second energy network.
@@ -54,15 +56,29 @@ This is §7's *possible* column, introduced in the first ten minutes and never t
 
 ### The machine that does not stop
 
-The **Mechanical Hammer** takes rotation and applies it to whatever is inside.
+The **Mechanical Hammer** strikes whatever is inside. It does not take rotation — it takes **strokes**, because a hammer goes up and down and a shaft goes round and round.
+
+Converting one into the other is a separate component the player places:
+
+```
+CRANK LINKAGE
+Converts rotation to reciprocation
+Throw        short / long  (set by which crank is installed)
+Stroke rate  from RPM
+Force        from torque ÷ throw
+```
 
 ```
 MECHANICAL HAMMER
-Applies      4 Fu/t at 2 St
+Applies      whatever the linkage delivers
 Load         80 Su
 ```
 
-Feed it a copper ingot and rotation. After about 8 ticks, there is a plate.
+**The hammer has no strength of its own.** A short throw gives few hard blows, a long throw gives many gentle ones, and the player chooses which by choosing a crank (§17). This is the slice's first real gearing decision, and it arrives about ninety seconds after the first machine.
+
+Feed it a copper ingot and drive it. Copper needs only 1 St, so any linkage works — which is exactly why copper is the teaching material. The player can install the wrong crank and still succeed, and only find out later that the choice mattered.
+
+After about 8 ticks, there is a plate.
 
 At tick 9 it is still hammering.
 
@@ -74,6 +90,12 @@ ingot → plate → thin plate → foil → scrap
 
 Only past foil does it become scrap. The punishment exists, but it is not the introduction.
 
+### Reading the workpiece
+
+A part-worked ingot **looks** part-worked. It is visibly flattening, the player can see roughly how far along it is, and they can see when it has gone too far. Mechanical deformation announces itself, and the player needs no instrument to avoid ruining an ingot (§8).
+
+So beat 1 deliberately ships **no measuring tool at all.** The player's eyes are sufficient for the problem beat 1 poses, and handing them an instrument here would teach the wrong lesson about what instruments are for.
+
 ### The timer
 
 The obvious fix. Power the hammer, wait, cut power.
@@ -82,12 +104,25 @@ And it works — **automation arrives before precision does**, which is worth th
 
 The player's first instinct — set the timer short and accept a few under-worked ingots — is correct, and it is their first encounter with trading yield for safety.
 
+### Calipers, and what they are actually for
+
+Late in beat 1 — **after** the timer, not before — the player wants something their eyes cannot give them: not to avoid scrap, but to hit **foil deliberately and every time.**
+
+```
+CALIPERS
+Held tool. Measuring a workpiece reports  16 / 20 Fu
+```
+
+That is the distinction §8 draws between an instrument that *reveals* and one that *refines*. Calipers refine. The player could always see the ingot flattening; what they could not do was aim. Hitting the narrow sidegrade band on purpose (§6) is the first thing in the game that requires a number rather than a glance.
+
+It matters that this is the **weaker** of the slice's two instruments and arrives first. When the thermometer shows up in beat 2, the player already understands what an instrument is — and then meets a quantity they cannot see at all, which is a much bigger event. Calipers make the thermometer land harder by being the small version of it.
+
 ### Mechanical infrastructure
 
 Rotation has to come from somewhere and travel through something.
 
 ```
-HAND CRANK      12 Su     while the player holds it
+HAND CRANK      12 Su     while the player holds Right Click
 WATER WHEEL    256 Su     continuous, needs flowing water
 SHAFT / GEARBOX           transmits, with loss
 ```
@@ -130,7 +165,7 @@ So they do the only thing available: guess, wait, pull it out, look at it. Six s
 
 ### The Crude Blast Furnace gets them most of the way there
 
-The vanilla blocks are real thermal vessels now (§15), and one of them is genuinely good at this. The Crude Blast Furnace has a high floor, a high ceiling, and enough thermal mass to sit near a temperature on its own.
+The vanilla blocks are real thermal vessels now (§15), and one of them is genuinely good at this. The Crude Blast Furnace (from vanilla, given the word crude now to make space for a more sophisticated multiblock later down the line) has a high floor, a high ceiling, and enough thermal mass to sit near a temperature on its own.
 
 So the player *can* make steel here, by hand, before owning a single instrument. It takes standing there, watching the glow, and accepting a poor conversion rate — but it works, and it should feel like a real accomplishment rather than a stopgap.
 
@@ -174,17 +209,21 @@ The crucible is not an upgrade. It is **worse at the thing the blast furnace is 
 
 ### The actuator
 
-A **Bellows** driven by the mechanical network — the first place the two beats touch.
+A **Bellows** driven by the mechanical network — the first place the two beats touch. It squeezes, so like the hammer it wants strokes rather than rotation, and it needs a linkage of its own.
 
 ```
 POWERED BELLOWS
-Effect    +30 Tu/t to the firebox while powered
+Effect    air per stroke × stroke rate  →  Tu/t into the firebox
 Load      40 Su
 ```
 
+Here the throw choice reads differently than it did on the hammer: a long throw moves more air per stroke. The player has already met this component and now finds it means something else entirely, which is the first time in the slice that one part composes two ways.
+
 It has no target temperature. It has no thermometer. Given power it blows air; given none it stops. That is the entire device.
 
-Paired with it, a **Damper** — a vent that bleeds heat off, because §10 says thermal stops slowly and the player needs *some* way to come down faster than ambient cooling allows.
+And that is the **only** actuator in the slice. Nothing removes heat. The bellows is the player's single verb and it points one way.
+
+This is deliberate, and it is the slice's most productive frustration. Overshoot the window and there is nothing to do but wait, on a vessel chosen for stability and therefore equally stubborn about coming back down (§10 — thermal stops slowly whether or not you want it to). The player cannot ask for cooling. They can only stop asking for heat.
 
 ### Closing the loop
 
@@ -192,12 +231,18 @@ Paired with it, a **Damper** — a vent that bleeds heat off, because §10 says 
 Thermometer → Controller → Bellows
 ```
 
-The **Controller** here is deliberately primitive — not the node editor from §13, just a box with two thresholds:
+There is **no controller in this slice.** There does not need to be one, and putting one here would waste it.
+
+Beat 2 has exactly one condition to watch, and a single condition needs no logic. A **bimetallic strip** — a sensor cover that trips at one fixed temperature — wired straight to the bellows is a thermostat, and it closes the loop with no programmable block anywhere:
 
 ```
-below 1420 Tu   →  bellows on
-above 1470 Tu   →  bellows off
+below its trip point   →  bellows on
+above it               →  bellows off
 ```
+
+The trip point is set by the strip the player crafted. Changing it means crafting a different one.
+
+This is the honest first automation, and it keeps the real controller in reserve for the moment it is genuinely needed — when one condition stops being enough (§13). Until then, and for the whole of the slice before this point, **the player is the controller.** That is the job every later tier is trying to take off their hands.
 
 The temperature now oscillates in a band. Nothing in the system knows that 1450 Tu matters. The furnace does not, the bellows does not, the thermometer does not. **The player built the only thing that knows** (§8).
 
@@ -225,10 +270,10 @@ This is §4's rule in its purest available form. The upgrade is not *Crucible Mk
 
 Once the loop is running, the player owns two ways to make steel, and neither one wins (§15).
 
-| | Crucible + loop | Crude Blast Furnace |
-| :--- | :--- | :--- |
-| Speed | slow | fast |
-| Batch | large | small |
+|       | Crucible + loop | Crude Blast Furnace |
+| :---  | :---            |                :--- |
+| Speed | slow            | fast                |
+| Batch | large           | small               |
 | Costs | capital, infrastructure, a control loop | **standing there** |
 
 A minute of AFK, or thirty seconds of full attention. The right answer changes depending on what else the player is doing, and it keeps changing for the rest of the game.
@@ -254,7 +299,7 @@ The *same ingot* at the *same final temperature* is a different item depending o
 
 This is §7's history-sensitivity, and it is the first requirement in the slice that cannot be satisfied by getting a number right. It is also real metallurgy, which is the point of §2 — the mod did not invent this rule, it noticed it.
 
-**Deliberately left dangling:** hardened steel is brittle, and brittleness is a problem. The fix is tempering, which is a *third* controlled thermal step. That is the next slice's opening, and the player should be able to feel it coming.
+**Deliberately left dangling:** hardened steel is brittle, and brittleness is a problem.
 
 ---
 
@@ -268,11 +313,31 @@ Every heat source the player meets is also a small anomaly, and none of them are
 
 **Lava** — the player has seen it since day one and never asked. It is 1200 Tu and **it does not cool.** Not slowly. At all. A bucket of it under a crucible is an infinite, perfectly stable heat source that is too cool for steel and too hot to turn off. No explanation is offered. The player just notices that the most stable thermal environment available to them is a rock that should have frozen centuries ago.
 
-**Blaze Rod** — a solid object, room temperature to hold, that releases more heat than its mass can account for. It burns hotter than charcoal, it burns *steadier* than charcoal, and it is the first thing in the game that the player's growing physical intuition flatly cannot accommodate.
+Lava carries this thread alone, and that is enough, because the payoff is the slice's exit.
 
-None of these are characterized. There is no Blaze research, no lore entry, no analysis machine. There is only a player who now owns a thermometer, and has started pointing it at things.
+None of it is characterized. There is no lore entry and no analysis machine. There is only a player who now owns a thermometer and has started pointing it at things — which is the correct first step of §2's sequence, **observe → exploit**, and the entire rest of the chain is somebody else's slice.
 
-That is the correct first step of §2's sequence — **observe → exploit** — and the entire rest of the chain is somebody else's slice.
+### The slice ends at the Nether door
+
+Flint and steel takes **steel**. Steel is beat 2. So the Nether is not reachable until the player has done everything above, which gives the slice a diegetic ending rather than an arbitrary one: *you have learned to control heat, and the reward is a door.*
+
+On the other side is a **Blaze Rod** — a solid object, cool to hold, that releases more heat than its mass can account for. It burns hotter than charcoal and, far more disturbingly, it burns *steadier*. It is the first thing the player's newly-built physical intuition flatly cannot accommodate, and they now own exactly the instrument required to confirm that it makes no sense.
+
+That belongs to slice 2. It is named here only so the slice is built to arrive at it.
+
+---
+
+## What slice 2 opens on
+
+Three things arrive together, and each one makes the others necessary. That is why none of them are here.
+
+**Tempering.** Hardened steel is brittle and the fix is a third controlled thermal step — but tempering is not a *hold*, it is a **controlled cool**. The player needs to bring a temperature down deliberately, at a rate, which is the first thing in the game they have no way to ask for.
+
+**The damper.** Which is the way to ask for it. A vent that bleeds heat off on demand, and the slice's one-way bellows finally gets an opposite.
+
+**The controller.** Because a bellows and a damper are two actuators and two conditions — *heat when low, vent when high* — and a bimetallic strip cannot express that. One condition has stopped being enough, which is exactly the moment §13 says a controller should arrive.
+
+Slice 1 earns all three by withholding them. The player ends it able to hold a temperature and unable to steer one, and they should feel precisely which of those they are missing.
 
 ---
 
@@ -297,16 +362,19 @@ Cold steel cannot be worked at all — 15 St is beyond the primitive hammer rega
 
 This is the first **coupled** difficulty in the game (§7), and it is the slice's graduation: the player is no longer running two independent systems. They are operating a process.
 
-It also demonstrates §14 in a single line of arithmetic: the primitive hammer applies 2 St and cannot touch steel. A later hammer applying 20 St works steel easily — **and turns copper plates from fifteen swings into one.** The old work got trivial. Nothing about copper's recipe changed.
+And it is where the linkage stops being a curiosity. Steel demands 15 St, and the long-throw crank that has been perfectly adequate for copper since beat 1 **cannot deliver it at any speed.** No amount of RPM substitutes for force (§17).
+
+The fix is not a better hammer. It is a **shorter crank** — the player re-gears the machine they already own, and the same hammer that was making copper plates becomes a forging press. That is §14's difficulty curve in one component: the new material did not require new equipment, it required understanding the equipment.
 
 ---
 
 ## Budget check
 
-**Items (12):** Copper Plate · Copper Foil · Copper Scrap · Steel Ingot · Burnt Iron · Hardened Steel · Steel Plate · Hammer · Thermometer · Controller · Timer · Shaft
-*(Copper Ingot, Iron Ingot, Charcoal, Lava, Blaze Rod are vanilla.)*
+**Items (12):** Copper Plate · Copper Foil · Copper Scrap · Steel Ingot · Burnt Iron · Hardened Steel · Steel Plate · Hammer · Calipers · Thermometer · Bimetallic Strip · Shaft
+*(Copper Ingot, Iron Ingot, Charcoal and Lava are vanilla. Blaze Rod is slice 2.)*
 
-**Machines (7 new):** Hand Crank · Water Wheel · Mechanical Hammer · Crucible (small/large/insulated) · Firebox · Powered Bellows · Damper
+**Machines (7 new):** Hand Crank · Water Wheel · Crank Linkage (short/long throw) · Mechanical Hammer · Crucible (small/large/insulated) · Firebox · Powered Bellows · Timer
+*(No controller and no damper. One actuator, one condition — see §13 and "What slice 2 opens on".)*
 *(Furnace, Smoker and Crude Blast Furnace are reworked vanilla blocks, not additions — see §15.)*
 
 **Process variables (2):** `Fu`/`St` mechanical work · `Tu` temperature
@@ -335,18 +403,28 @@ Mapped to the philosophy, because if a beat teaches nothing it should be cut:
 | Process history matters, not just state | Quenching | §7 |
 | Infrastructure has real limits | 256 Su, 80 Su per hammer | §10 |
 | Noise is real and learnable | Charcoal quality | §8 |
-| Strange things are useful before understood | Lava, Blaze Rod | §2 |
+| Strange things are useful before understood | Lava | §2 |
+| Senses give adjectives; numbers cost instruments | Glow vs. thermometer, flattening vs. calipers | §8 |
+| Revealing beats refining | Calipers refine; the thermometer reveals | §8 |
+| You are the controller until something replaces you | No logic block in the whole slice | §13 |
+| Motion has a shape, and force is geared not bought | Crank throw sets St on hammer and bellows | §10, §17 |
 | Specialization is emergent, not declared | Smoker ceiling, blast furnace floor | §15 |
 | Automation buys attention, not capability | Crucible vs. blast furnace | §7, §15 |
 
-Seventeen lessons, twelve items, seven new machines. Every one of the philosophy's load-bearing ideas appears at least once, in play, without a single tooltip explaining it.
+Twenty lessons, twelve items, seven new machines, one actuator, and no controller. Every one of the philosophy's load-bearing ideas appears at least once, in play, without a single tooltip explaining it.
 
 ---
 
 ## Open decisions
 
-- ~~Does vanilla's furnace still exist during this slice?~~ **Resolved** (§15) and beat 2 rewritten around it. The Crude Blast Furnace makes steel by hand before the player owns an instrument, refuses covers forever, and stays competitive after the loop exists. The crucible's reason to exist is no longer stability — it is **being attachable at all.**
-- **Where does the Controller come from?** It is the one component in the slice with no obvious primitive ancestor. A bimetallic strip that physically trips at a fixed temperature would be a good pre-electrical answer, and would make sensor tiering (§13) concrete — the cheap one is a boolean because it is *literally a piece of bent metal*.
-- **Does the player ever see a number, or only a needle?** A dial that must be read against a scale is more honest to the era and makes resolution physical rather than a stat. It is also significantly more annoying, and that tradeoff should be decided deliberately.
-- **How is `Fu` progress displayed mid-process?** The player needs to know an ingot is *partially* worked, or the hammer's overrun is unreadable rather than instructive.
-- **Blaze Rod availability.** The Nether is a real gate on the slice's best heat source. Either the slice ends before the Nether and Blaze belongs to slice 2, or the Nether opens earlier than the rest of this content implies.
+- ~~Vanilla furnace~~ **Resolved** (§15) — reworked, not removed; beat 2 rebuilt around it.
+- ~~Where the Controller comes from~~ **Resolved** (§13) — a tape writer and a tape reader, punched card in the early game. The cheap sensor being a boolean is now concrete too: it is a piece of bent metal that trips at one temperature.
+- ~~Number or needle~~ **Resolved** (§8) — free senses report adjectives, instruments report figures, and each tier buys significant figures.
+- ~~`Fu` progress display~~ **Resolved** (§8) — visibly flattened for free, `16 / 20 Fu` with calipers.
+- ~~Blaze Rod availability~~ **Resolved** — flint and steel takes steel, so the Nether closes the slice and Blaze opens slice 2.
+
+Still open:
+
+- ~~What does a punched tape hold?~~ **Resolved** (§13) — everything a late-game controller can. Capability never tiers; only iteration cost and source count do.
+- ~~Does the slice need a controller?~~ **No.** A bimetallic strip wired to the bellows carries beat 2; the tape pair belongs to slice 2.
+- ~~Does the damper survive?~~ **No.** It is a second actuator, and a second actuator is what a controller is for. Both move to slice 2.

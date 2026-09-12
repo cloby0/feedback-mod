@@ -6,7 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is the repository for **Feedback**, a Minecraft technology mod. The mod has not been written yet — right now the repo contains only design documentation. The eventual mod source will live here alongside these documents.
 
-There is therefore **no build system, no test suite, and no code to run yet**. Do not invent build/run instructions. When implementation begins, the loader (Forge / NeoForge / Fabric), Minecraft version, and project layout are all still undecided — ask rather than assume.
+There is therefore **no build system, no test suite, and no code to run yet**. Do not invent build/run instructions.
+
+**Platform is decided: NeoForge on Minecraft 1.21.1.** Chosen over a newer version deliberately — the newer backend's data-driven item work suits a mod built on "properties and tags matter more than the id," but 1.21.1 is where the players are. Project layout is still undecided; ask rather than assume.
 
 Until then, the work is design: reasoning about mechanics, filling in open questions, and turning the documents below into a concrete specification.
 
@@ -21,7 +23,7 @@ The design is intended to live in **three documents on a spectrum from idea to i
 | *(document 3 — content)* | **Does not exist yet.** The roster: every item, material, machine, cover and process, and what each does. |
 | `feedback_slice_01.md` | **Working document, not one of the three.** The first playable vertical slice, built by `feedback_philosophy.md` §20's method — two beats (mechanical repetition, then thermal control), copper then steel. Concrete but explicitly placeholder-numbered. Its rules feed document 2; its objects feed document 3. Where it and the philosophy disagree, the philosophy wins. |
 | `speculative_physics_inspo_doc.md` | *A Speculative Physics and Biochemistry Compendium of Minecraft (Vanilla and Modded)* — the user's own worldbuilding document, ~2800 lines. Explicitly **not canon**. A **mindset reference** (how to reason about Minecraft phenomena scientifically) and a parts bin — the Liquid Teleportant chain and the "flagged exception" treatment of Redstone were already lifted from it. |
-| `feedback_notes_i.md`, `feedback_notes_ii.md` | **Superseded.** Write-ups of earlier design conversations the user had with a different AI. `feedback_philosophy.md` merges both and resolves their conflicts. Consult only for provenance; do not cite them as current design. |
+| *(`feedback_notes_i.md`, `feedback_notes_ii.md`)* | **Deleted in `4020934`**, recoverable from `404a0c3`. Write-ups of earlier design conversations with a different AI, fully merged into `feedback_philosophy.md` with their conflicts resolved. Don't restore them; don't cite them as current design. |
 
 ## The core pitch — state it precisely
 
@@ -53,6 +55,7 @@ These are settled and constrain any proposal:
 - **There is an irreducible noise floor** (§8). No apparatus reaches zero variance, deliberately: if a factory could become fully deterministic, the optimal endgame is timers and the whole sensing layer becomes a discardable scaffold. Better equipment narrows the distribution, never collapses it. Model a variable only where the player can act on it; the rest is honest noise, not a simulated stand-in for noise.
 - **Difficulty stays flat; novelty goes up** (§14). Tolerances tighten, but tools improve in step — difficulty is the *ratio* of required to achievable precision, held roughly constant. What changes is the *kind* of hard (narrow → coupled → unstable → path-dependent), not the amount. A proposal that makes old work harder is wrong.
 - **Specialization should be emergent, never enforced** (§15). The vanilla Smoker and Crude Blast Furnace keep their traditional niches purely through thermal behavior — the recipe-type whitelists come off. If a proposal needs a whitelist to produce the right outcome, the physics isn't doing its job.
+- **The controller is a switch, never a dial** (§13). Its only output is starting or stopping a supply — no proportional control exists. Oscillation is fixed with physical mass, not a better algorithm. Capability never tiers; only iteration cost and how many sources it can read.
 - **"Which axis does this advance?"** (§14) is the question to ask of any proposed technology — progression is a profile across ten axes, not a rank.
 - **`feedback_philosophy.md` §19 lists explicit non-conclusions** — tier names, first machines, first materials, numbers, chemistry implementation, separator mapping, progression boundaries, control block implementation. Treat these as deliberately open. ("McGuffnium" appears in the old notes as a metaphor only; it is not a material.)
 - These are the user's own documents and a live design conversation. Propose and argue for changes; don't rewrite settled sections unprompted.
