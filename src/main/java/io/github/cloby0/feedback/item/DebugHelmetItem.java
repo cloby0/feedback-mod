@@ -2,6 +2,10 @@ package io.github.cloby0.feedback.item;
 
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
+import io.github.cloby0.feedback.instrument.Instrument;
+import io.github.cloby0.feedback.instrument.Quantity;
+
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Equipable;
@@ -35,7 +39,7 @@ import net.minecraft.world.level.Level;
  * texture, and would then render a missing-texture helmet on the player -- all to describe an item
  * that provides no protection and should be invisible anyway.
  */
-public class DebugHelmetItem extends Item implements Equipable {
+public class DebugHelmetItem extends Item implements Equipable, Instrument {
 
     public DebugHelmetItem(Properties properties) {
         super(properties);
@@ -54,5 +58,28 @@ public class DebugHelmetItem extends Item implements Equipable {
     /** Whether this player is currently reading exact figures instead of adjectives. */
     public static boolean wornBy(Player player) {
         return player != null && player.getItemBySlot(EquipmentSlot.HEAD).getItem() instanceof DebugHelmetItem;
+    }
+
+    /**
+     * Reads everything, exactly. That is what makes it a cheat rather than a tier: §8 says no
+     * purchasable apparatus reaches zero variance, so perfect instrumentation is the one thing a
+     * player may never actually buy.
+     * <p>
+     * Answering for every quantity by construction is also the point of the interface — a
+     * quantity added tomorrow is covered today, with no edit here.
+     */
+    @Override
+    public boolean canRead(Quantity quantity) {
+        return true;
+    }
+
+    @Override
+    public float resolution(Quantity quantity) {
+        return 0f;
+    }
+
+    @Override
+    public Component label() {
+        return Component.translatable("feedback.instrument.debug");
     }
 }

@@ -1,5 +1,6 @@
 package io.github.cloby0.feedback.compat.jade;
 
+import io.github.cloby0.feedback.instrument.Quantity;
 import io.github.cloby0.feedback.Feedback;
 import io.github.cloby0.feedback.client.Readout;
 import io.github.cloby0.feedback.core.rotation.RotationNode;
@@ -52,7 +53,7 @@ public class RotationComponent implements IBlockComponentProvider {
         float capacitySu = data.getFloat(RotationServerData.CAPACITY_SU);
         float loadSu = data.getFloat(RotationServerData.LOAD_SU);
 
-        if (Readout.instrumented(Readout.Quantity.SPEED)) {
+        if (Readout.instrumented(Quantity.SPEED)) {
             exact(tooltip, "feedback.readout.rpm", Readout.number(rpm));
             if (networked) {
                 exact(tooltip, "feedback.readout.su", Readout.number(loadSu), Readout.number(capacitySu));
@@ -71,7 +72,7 @@ public class RotationComponent implements IBlockComponentProvider {
     }
 
     private static void exact(ITooltip tooltip, String key, Object... args) {
-        tooltip.add(Readout.reading(Readout.Quantity.SPEED, key, args));
+        tooltip.add(Readout.reading(Quantity.SPEED, key, args));
     }
 
     @Override

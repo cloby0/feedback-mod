@@ -1,5 +1,6 @@
 package io.github.cloby0.feedback.client;
 
+import io.github.cloby0.feedback.instrument.Quantity;
 import io.github.cloby0.feedback.Feedback;
 import io.github.cloby0.feedback.registry.FDataComponents;
 
@@ -35,8 +36,8 @@ public class WorkpieceTooltip {
         if (worked <= 0 || required <= 0)
             return;
 
-        if (Readout.instrumented(Readout.Quantity.WORK)) {
-            event.getToolTip().add(Readout.reading(Readout.Quantity.WORK,
+        if (Readout.instrumented(Quantity.WORK)) {
+            event.getToolTip().add(Readout.reading(Quantity.WORK,
                     "feedback.readout.work", worked, required));
             return;
         }

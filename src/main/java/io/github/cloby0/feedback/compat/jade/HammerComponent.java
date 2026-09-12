@@ -1,5 +1,6 @@
 package io.github.cloby0.feedback.compat.jade;
 
+import io.github.cloby0.feedback.instrument.Quantity;
 import io.github.cloby0.feedback.Feedback;
 import io.github.cloby0.feedback.client.Readout;
 import io.github.cloby0.feedback.machine.hammer.MechanicalHammerBlockEntity;
@@ -58,8 +59,8 @@ public class HammerComponent implements IBlockComponentProvider {
         if (worked <= 0 || required <= 0)
             return;
 
-        if (Readout.instrumented(Readout.Quantity.WORK))
-            tooltip.add(Readout.reading(Readout.Quantity.WORK, "feedback.readout.work", worked, required));
+        if (Readout.instrumented(Quantity.WORK))
+            tooltip.add(Readout.reading(Quantity.WORK, "feedback.readout.work", worked, required));
         else
             tooltip.add(Readout.progress(worked, required));
     }

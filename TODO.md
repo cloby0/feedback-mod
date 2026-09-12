@@ -91,7 +91,8 @@ Built and compiling: rotation engine (`RotationNode` / `RotationNetwork` / `Rota
 ### Information layer — Jade, JEI, and the debug helmet
 
 - [x] **Every reading is signed by the instrument that took it** — `Calipers: 9 / 14 Fu`. A bare figure is unfalsifiable, and §8 promises instruments never lie while saying nothing about them being *accurate*. Once drift and recalibration are real, a player looking at a bad batch must know which instrument to distrust, and two tiers disagreeing has to read as informative rather than broken
-- [ ] **The `Instrument` interface is still not built.** `Readout.source(Quantity)` hardcodes calipers and the helmet. The agreed shape: an item declares `canRead(Quantity)`, `resolution(Quantity)`, `label()`, and `Instruments.best(player, quantity)` finds the finest one carried — so a thermometer is one declaration and touches no display code. Do this before the thermometer, not after
+- [x] **The `Instrument` interface** — `instrument/{Quantity,Instrument,Instruments}`. An item declares `canRead(Quantity)`, `resolution(Quantity)`, `label()`; `Instruments.best(player, quantity)` finds the finest one carried. Calipers and the Debug Helmet are declarations now. **A thermometer is one class and touches no display code.** `Instruments.quantise()` applies resolution, which is the whole of what a tier buys
+- [ ] ~~The `Instrument` interface is still not built.~~ `Readout.source(Quantity)` hardcodes calipers and the helmet. The agreed shape: an item declares `canRead(Quantity)`, `resolution(Quantity)`, `label()`, and `Instruments.best(player, quantity)` finds the finest one carried — so a thermometer is one declaration and touches no display code. Do this before the thermometer, not after
 
 
 Governed by §8's *what you need is free, what you have is a cost*. Write these together; they are one design, not three features.
@@ -184,6 +185,20 @@ Downstream of doc 2. The roster: every item, material, machine, cover, process.
 - [ ] Then slice 2
 
 ---
+
+## 4b. Next session — start here
+
+Everything below is verified working in game: rotation network with inertia and coasting, shafts that visibly turn (Flywheel, jar-in-jar), Clutch + Timer, Mechanical Hammer with the overrun chain, Calipers, JEI process cards, Jade in adjectives, Debug Helmet.
+
+### Cogs and a gearbox — the agreed next job
+
+**Most of this already exists.** `RotationPropagator.ratioBetween(level, from, to)` returns a `float` and every downstream piece — `assignRatios`, `RotationNode.ratio`, the visual, phase — was written for arbitrary ratios including negative ones. Today it only ever returns `1` (shaft to shaft) or `0` (not coupled). Cogs are mostly *content*, not engine work.
+
+- [ ] **Small and large cog**, Create's ratios: small↔small `-1` (meshing reverses), large↔small `-2`, small↔large `-0.5`. A negative ratio already means "turns the other way" everywhere.
+- [ ] **Gearbox** — cross-axis transfer. Needs `ratioBetween` to stop requiring a shared axis, which is the one genuine engine change.
+- [ ] Decide whether gearing costs `Su` beyond a shaft's drag. A gear train that is free makes speed conversion a non-decision
+- [ ] **[OPEN] Does a ratio change the `St` a hammer delivers?** §17 says force is geared, not bought, and gearing down for torque is the most basic mechanical trade there is. If yes, a gear train becomes an alternative to the short crank throw — and that is a *second answer* to the steel problem, which §5 says is the mark of the systems being right
+- Taking Create's two cog sizes wholesale is fine and deliberate — the rotation layer is openly Create-inspired, their code is MIT, and the mod's originality is in overrun and instrumentation rather than in inventing a third cog. **Their assets are All Rights Reserved: models and textures must be ours.**
 
 ## 5. Slice 2
 

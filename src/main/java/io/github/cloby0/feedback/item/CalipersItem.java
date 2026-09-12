@@ -1,6 +1,9 @@
 package io.github.cloby0.feedback.item;
 
-import net.minecraft.world.entity.player.Player;
+import io.github.cloby0.feedback.instrument.Instrument;
+import io.github.cloby0.feedback.instrument.Quantity;
+
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 
 /**
@@ -25,26 +28,24 @@ import net.minecraft.world.item.Item;
  * a keystroke with no decision inside it, and §3 cuts mechanics that are real, well-precedented
  * and simply not fun. Holding them is the same information at the same price.
  */
-public class CalipersItem extends Item {
+public class CalipersItem extends Item implements Instrument {
 
     public CalipersItem(Properties properties) {
         super(properties);
     }
 
-    /**
-     * Whether the player has calipers on them at all.
-     *
-     * <h3>Carried, not held</h3>
-     * Reading is passive and costs no hands: you glance at a workpiece and you either own the
-     * means to put a number on it or you do not. Requiring them in hand would mean swapping tools
-     * to look at something, which is friction with no decision inside it (§3).
-     * <p>
-     * Holding is for <em>acting</em> on the world — measuring a machine in place, when something
-     * eventually needs that. The distinction is worth keeping: what you can perceive is a
-     * property of your kit, what you can do is a property of your hands.
-     */
-    public static boolean carriedBy(Player player) {
-        return player != null
-                && player.getInventory().contains(stack -> stack.getItem() instanceof CalipersItem);
+    @Override
+    public boolean canRead(Quantity quantity) {
+        return quantity == Quantity.WORK;
+    }
+
+    @Override
+    public float resolution(Quantity quantity) {
+        return 1f;   // Fu is whole numbers; there is nothing finer to resolve.
+    }
+
+    @Override
+    public Component label() {
+        return Component.translatable("feedback.instrument.calipers");
     }
 }

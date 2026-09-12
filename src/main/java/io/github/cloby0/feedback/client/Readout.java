@@ -3,8 +3,9 @@ package io.github.cloby0.feedback.client;
 import java.util.Locale;
 
 import io.github.cloby0.feedback.core.FTuning;
-import io.github.cloby0.feedback.item.CalipersItem;
-import io.github.cloby0.feedback.item.DebugHelmetItem;
+import io.github.cloby0.feedback.instrument.Instrument;
+import io.github.cloby0.feedback.instrument.Instruments;
+import io.github.cloby0.feedback.instrument.Quantity;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -41,24 +42,6 @@ public final class Readout {
     }
 
     /**
-     * A kind of measurement, because instruments are specific.
-     *
-     * <h3>Why this is not one boolean</h3>
-     * A thermometer tells you nothing about how flattened an ingot is, and calipers tell you
-     * nothing about how fast a shaft is turning. Precision is never a general property a player
-     * accumulates -- it is bought one quantity at a time, and owning one instrument must not
-     * quietly sharpen every readout in the game.
-     */
-    public enum Quantity {
-        /** Mechanical work beaten into a workpiece. Calipers. */
-        WORK,
-        /** How fast a run is turning. No instrument for this exists yet. */
-        SPEED,
-        /** What a network is carrying. No instrument for this exists yet. */
-        LOAD
-    }
-
-    /**
      * Whether the player may read this quantity as a figure rather than an adjective.
      * <p>
      * Reads the local player rather than taking one, because every caller is a client display and
@@ -86,15 +69,8 @@ public final class Readout {
      */
     @Nullable
     public static Component source(Quantity quantity) {
-        Player player = Minecraft.getInstance().player;
-        if (DebugHelmetItem.wornBy(player))
-            return Component.translatable("feedback.instrument.debug");
-        return switch (quantity) {
-            case WORK -> CalipersItem.carriedBy(player)
-                    ? Component.translatable("feedback.instrument.calipers")
-                    : null;
-            case SPEED, LOAD -> null;
-        };
+        Instrument instrument = Instruments.best(Minecraft.getInstance().player, quantity);
+        return instrument == null ? null : instrument.label();
     }
 
     /**
