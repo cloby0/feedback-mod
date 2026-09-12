@@ -1,0 +1,11 @@
+{
+  "itemGroup.feedback": "Feedback",
+
+  "block.feedback.shaft": "Shaft",
+  "block.feedback.hand_crank": "Hand Crank",
+  "block.feedback.water_wheel": "Water Wheel",
+
+  "item.feedback.copper_plate": "Copper Plate",
+  "item.feedback.copper_foil": "Copper Foil",
+  "item.feedback.copper_scrap": "Copper Scrap"
+}

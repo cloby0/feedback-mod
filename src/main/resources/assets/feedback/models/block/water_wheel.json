@@ -1,0 +1,34 @@
+{
+  "parent": "block/block",
+  "textures": {
+    "wheel": "minecraft:block/spruce_planks",
+    "hub": "minecraft:block/stripped_spruce_log",
+    "particle": "minecraft:block/spruce_planks"
+  },
+  "elements": [
+    {
+      "from": [0, 0, 6],
+      "to": [16, 16, 10],
+      "faces": {
+        "north": { "texture": "#wheel" },
+        "south": { "texture": "#wheel" },
+        "west":  { "texture": "#wheel" },
+        "east":  { "texture": "#wheel" },
+        "up":    { "texture": "#wheel" },
+        "down":  { "texture": "#wheel" }
+      }
+    },
+    {
+      "from": [6, 6, 4],
+      "to": [10, 10, 12],
+      "faces": {
+        "north": { "texture": "#hub" },
+        "south": { "texture": "#hub" },
+        "west":  { "texture": "#hub" },
+        "east":  { "texture": "#hub" },
+        "up":    { "texture": "#hub" },
+        "down":  { "texture": "#hub" }
+      }
+    }
+  ]
+}

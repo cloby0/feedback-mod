@@ -1,0 +1,21 @@
+{
+  "parent": "block/block",
+  "textures": {
+    "shaft": "minecraft:block/stripped_oak_log",
+    "particle": "minecraft:block/stripped_oak_log"
+  },
+  "elements": [
+    {
+      "from": [6, 0, 6],
+      "to": [10, 16, 10],
+      "faces": {
+        "north": { "texture": "#shaft" },
+        "south": { "texture": "#shaft" },
+        "west":  { "texture": "#shaft" },
+        "east":  { "texture": "#shaft" },
+        "up":    { "texture": "#shaft" },
+        "down":  { "texture": "#shaft" }
+      }
+    }
+  ]
+}

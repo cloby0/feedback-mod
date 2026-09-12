@@ -1,0 +1,45 @@
+{
+  "parent": "block/block",
+  "textures": {
+    "body": "minecraft:block/oak_planks",
+    "handle": "minecraft:block/stripped_oak_log",
+    "particle": "minecraft:block/oak_planks"
+  },
+  "elements": [
+    {
+      "from": [4, 0, 4],
+      "to": [12, 5, 12],
+      "faces": {
+        "north": { "texture": "#body" },
+        "south": { "texture": "#body" },
+        "west":  { "texture": "#body" },
+        "east":  { "texture": "#body" },
+        "up":    { "texture": "#body" },
+        "down":  { "texture": "#body" }
+      }
+    },
+    {
+      "from": [7, 5, 7],
+      "to": [9, 11, 9],
+      "faces": {
+        "north": { "texture": "#handle" },
+        "south": { "texture": "#handle" },
+        "west":  { "texture": "#handle" },
+        "east":  { "texture": "#handle" },
+        "up":    { "texture": "#handle" }
+      }
+    },
+    {
+      "from": [9, 9, 7],
+      "to": [13, 11, 9],
+      "faces": {
+        "north": { "texture": "#handle" },
+        "south": { "texture": "#handle" },
+        "west":  { "texture": "#handle" },
+        "east":  { "texture": "#handle" },
+        "up":    { "texture": "#handle" },
+        "down":  { "texture": "#handle" }
+      }
+    }
+  ]
+}

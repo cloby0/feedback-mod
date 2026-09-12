@@ -78,6 +78,28 @@ Not started. Philosophy defers to it **by name** in these places; each is a debt
 
 ---
 
+## 3b. Beat 1 — in progress
+
+Built and compiling: rotation engine (`RotationNode` / `RotationNetwork` / `RotationPropagator`), Shaft, Hand Crank, Water Wheel, and the three copper overrun items. Placeholder art throughout (vanilla textures).
+
+- [ ] **Mechanical Hammer** — 80 Su, `12 / 3 St`, one blow per cycle
+- [ ] **Crank Linkage** — short/long throw variants; rotation to reciprocation
+- [ ] **The `Fu` process** — 30 Fu to a plate, then plate → foil → scrap on continued striking
+- [ ] **Timer** — the slice's only automation before instruments
+- [ ] **Calipers** — `16 / 20 Fu`, and deliberately *after* the timer
+- [ ] Flywheel-based rendering for spinning shafts; currently the model does not visibly turn
+- [ ] Real textures
+
+### Decisions taken while building, worth revisiting
+
+- **Propagation is a full rebuild, not Create's incremental update.** Flood fill the run, find the strongest source, walk outward. O(n) per change instead of O(change), which is worse on paper and fine at our scale — and it removes the need for Create's "flicker score", because a rebuild cannot loop. Revisit only if a profiler complains.
+- **No rotational inertia.** **[OPEN]** Create has none either — its network snaps to a new speed instantly. But §13 says oscillation is fixed with physical mass, and the energy-cutoff rule says clutches *coast*. Both need spin-up and spin-down time. Nothing in beat 1 needs it; slice 2's actuators probably do.
+- **Shafts are lossless.** **[OPEN]** Slice 1 says "SHAFT / GEARBOX — transmits, **with loss**". Not implemented. Needs deciding what is lost: `RPM`, `Su`, or both, and whether loss is per block or per run. A per-block loss makes layout matter; a flat loss is just a tax.
+- **RPM figures are invented.** Slice 1 fixes `Su` for every machine and never fixes a speed. Hand Crank 32 RPM, Water Wheel 4 RPM per flowing side. Placeholders, flagged as such in the code.
+- **Water wheel speed scales with how many sides have flowing water**, so siting it is a decision rather than a placement. Not from the slice doc — an invention, and cheap to remove.
+
+---
+
 ## 4. Document 3 — content
 
 Downstream of doc 2. The roster: every item, material, machine, cover, process.

@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "axis=y": { "model": "feedback:block/shaft" },
+    "axis=z": { "model": "feedback:block/shaft", "x": 90 },
+    "axis=x": { "model": "feedback:block/shaft", "x": 90, "y": 90 }
+  }
+}
