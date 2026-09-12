@@ -1102,6 +1102,18 @@ A `12 / 3 St` machine can never give more than four blows of grace on a state it
 
 **Neither throw may dominate the other.** This was got wrong once, and the failure is worth recording because it is easy to repeat. When throw changed `St` alone, the short throw was strictly stronger at identical speed, so nobody would ever have fitted the long one — and a dominated option is worse than no option, because it costs the player a decision and gives nothing back. The fix was not to invent a compensating bonus but to notice that work per blow was never a machine stat in the first place. With work derived from hardness, the short throw is **power** and the long throw is **precision**: the strong setting reaches the goal in fewer blows and blows past it in fewer too.
 
+**Gearing changes `St` too, and a machine has a ceiling.** Gearing down trades speed for force — that is the oldest trade in machinery and the mod should not pretend otherwise — so a gear train multiplies the force each blow lands and divides how often blows fall. Work per second is unchanged; what changes is whether any single blow is hard enough to matter at all, which for a material with a hardness floor is the difference between working and doing nothing.
+
+But force cannot be geared without limit, because **the machine itself has to survive transmitting it**:
+
+> **Every machine states the most `St` it can deliver, whatever is driving it.** A paper blade at a million RPM still will not cut steel.
+
+That ceiling is a property of construction, not of the drive, and it is what keeps a better machine worth buying once gearing exists. Gearing gets you to a machine's ceiling; only a better machine raises it. Without the cap, one long gear train would make every hammer in the game equivalent and reduce the entire force axis to how many cogs you were willing to place.
+
+It also gives the force problem a **second answer**, which §5 asks for. Re-gear the drive, or fit a shorter throw: both buy force, and they cost differently. A shorter throw is free but spends precision — the same hard blow that reaches the threshold also overshoots past the state you wanted. A gear train keeps the gentler blow's control and spends capital and space instead. Neither dominates, and a player who understands only one of them can still get there.
+
+> **[OPEN]** Whether gearing down needs an *ongoing* cost or whether capital plus the ceiling is enough. Gearing preserves work per second, so on paper a gear train buys force for free once built. That may be correct — a real gearbox does exactly that, and the cogs, the space and the machine's own ceiling are genuine costs. But if gearing turns out to be strictly better than every other route to force, it needs one.
+
 Note that throw is deliberately **not** a scalar (§3). Two named options make this a decision; a numeric throw would make it an optimization problem with a right answer.
 
 The same component reads differently on a machine whose product is *displacement* rather than work. A bellows moves air in proportion to how far its plates travel, so there the long throw is the useful one and the figures run the other way. One lever, two figures of merit, and no rule needed for either — which is §5's composition test passing on a single part.
