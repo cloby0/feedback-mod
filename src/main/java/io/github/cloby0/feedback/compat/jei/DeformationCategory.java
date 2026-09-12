@@ -48,6 +48,18 @@ public class DeformationCategory implements IRecipeCategory<Deformation> {
     private static final int LABEL_X = 24;
     private static final int VALUE_X = 76;
 
+    /**
+     * Colours for JEI's light grey recipe background.
+     * <p>
+     * Worth stating because it was got wrong once: these were first written as near-white on the
+     * assumption of a dark panel, and the whole card came out washed out and hard to read. The
+     * background belongs to JEI, not to us, and it is light.
+     */
+    private static final int TITLE_COLOUR = 0xFF3F3F3F;
+    private static final int LABEL_COLOUR = 0xFF7A7A7A;
+    private static final int VALUE_COLOUR = 0xFF262626;
+    private static final int RULE_COLOUR = 0x40000000;
+
     private final IDrawable icon;
 
     public DeformationCategory(IGuiHelper guiHelper) {
@@ -89,18 +101,21 @@ public class DeformationCategory implements IRecipeCategory<Deformation> {
     public void draw(Deformation recipe, IRecipeSlotsView slots, GuiGraphics graphics, double mouseX, double mouseY) {
         Font font = Minecraft.getInstance().font;
         graphics.drawString(font, recipe.result().getHoverName().getString().toUpperCase(java.util.Locale.ROOT),
-                1, 1, 0xFFFFFFFF, false);
+                1, 1, TITLE_COLOUR, false);
+        // A hairline under the title so the card reads as a headed entry rather than five
+        // loose lines of text.
+        graphics.fill(1, 11, WIDTH - 1, 12, RULE_COLOUR);
 
         ItemStack[] accepted = recipe.input().getItems();
-        row(graphics, font, 17, "feedback.jei.input", quantity(accepted.length == 0 ? ItemStack.EMPTY : accepted[0]));
-        row(graphics, font, 29, "feedback.jei.work", recipe.work() + " Fu");
-        row(graphics, font, 41, "feedback.jei.hardness", Readout.number(recipe.hardness()));
-        row(graphics, font, 53, "feedback.jei.output", quantity(recipe.result()));
+        row(graphics, font, 18, "feedback.jei.input", quantity(accepted.length == 0 ? ItemStack.EMPTY : accepted[0]));
+        row(graphics, font, 30, "feedback.jei.work", recipe.work() + " Fu");
+        row(graphics, font, 42, "feedback.jei.hardness", Readout.number(recipe.hardness()));
+        row(graphics, font, 54, "feedback.jei.output", quantity(recipe.result()));
     }
 
     private static void row(GuiGraphics graphics, Font font, int y, String labelKey, String value) {
-        graphics.drawString(font, Component.translatable(labelKey), LABEL_X, y, 0xFF808080, false);
-        graphics.drawString(font, value, VALUE_X, y, 0xFFE0E0E0, false);
+        graphics.drawString(font, Component.translatable(labelKey), LABEL_X, y, LABEL_COLOUR, false);
+        graphics.drawString(font, value, VALUE_X, y, VALUE_COLOUR, false);
     }
 
     private static String quantity(ItemStack stack) {
