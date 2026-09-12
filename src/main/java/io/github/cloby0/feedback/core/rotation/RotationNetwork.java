@@ -6,6 +6,13 @@ import java.util.Map;
 
 import io.github.cloby0.feedback.core.FTuning;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.level.Level;
+
 /**
  * One connected run of rotating blocks: its Su ledger, its momentum, and its speed.
  *
@@ -40,6 +47,10 @@ import io.github.cloby0.feedback.core.FTuning;
  */
 public class RotationNetwork {
 
+    /** Ticks between complaints. An overloaded network is more insistent than a strained one. */
+    private static final int OVERLOADED_INTERVAL = 40;
+    private static final int STRAINING_INTERVAL = 80;
+
     public final long id;
 
     /** Nodes that drive the network, mapped to the Su each can supply. */
@@ -58,6 +69,9 @@ public class RotationNetwork {
     private float targetRpm;
     /** Speed the network is actually turning at. */
     private float currentRpm;
+
+    /** Counts down to the next complaint, so a labouring network does not smoke every tick. */
+    private int ticksUntilComplaint;
 
     public RotationNetwork(long id) {
         this.id = id;
@@ -126,6 +140,11 @@ public class RotationNetwork {
      * to the network, and letting each block nudge it would advance it once per member.
      */
     public void tick() {
+        // Before the early-out below: a network that is stuck at zero because it is overloaded is
+        // exactly the case worth complaining about, and it never changes speed.
+        if (!members.isEmpty())
+            complainIfLabouring(members.keySet().iterator().next().getLevel());
+
         float effectiveTarget = isOverstressed() ? 0 : targetRpm;
         float liveLoad = getLoadSu();
 
@@ -169,6 +188,48 @@ public class RotationNetwork {
 
         for (RotationNode member : members.keySet())
             member.onNetworkSpeedChanged();
+    }
+
+    /**
+     * Let a labouring network be seen and heard.
+     *
+     * <h2>Why this is not optional polish</h2>
+     * An overloaded network simply fails to turn, and a network near its limit takes a minute and
+     * a half to reach speed instead of two seconds. Both were completely silent -- the factory
+     * just did not work, with nothing to look at and nowhere to start. That is the same failure
+     * as a linkage facing the wrong way: no error, it just quietly does nothing.
+     * <p>
+     * Philosophy 8 permits this for free because it is an <em>adjective</em>. Smoke and a creak
+     * say "this one, and it is struggling" without handing over the Su figures an instrument is
+     * supposed to sell. A player learns where to look; they still cannot read the ledger.
+     */
+    private void complainIfLabouring(Level level) {
+        if (!(level instanceof ServerLevel server) || members.isEmpty())
+            return;
+
+        boolean overloaded = isOverstressed();
+        boolean straining = !overloaded && capacitySu > 0
+                && getLoadSu() > capacitySu * FTuning.STRAINING_LOAD_FRACTION;
+        if (!overloaded && !straining) {
+            ticksUntilComplaint = 0;
+            return;
+        }
+
+        if (--ticksUntilComplaint > 0)
+            return;
+        ticksUntilComplaint = overloaded ? OVERLOADED_INTERVAL : STRAINING_INTERVAL;
+
+        // Complain at the sources. They are where a person would put their hand to feel a machine
+        // labouring, there are far fewer of them than members, and it points at the half of the
+        // problem the player can actually do something about.
+        for (RotationNode source : sources.keySet()) {
+            BlockPos pos = source.getBlockPos();
+            server.sendParticles(ParticleTypes.SMOKE,
+                    pos.getX() + 0.5, pos.getY() + 0.9, pos.getZ() + 0.5,
+                    overloaded ? 4 : 1, 0.2, 0.1, 0.2, 0.01);
+            server.playSound(null, pos, SoundEvents.WOODEN_TRAPDOOR_OPEN, SoundSource.BLOCKS,
+                    overloaded ? 0.35f : 0.2f, overloaded ? 0.45f : 0.6f);
+        }
     }
 
     /**
