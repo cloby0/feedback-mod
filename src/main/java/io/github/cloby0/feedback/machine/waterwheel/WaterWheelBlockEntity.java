@@ -1,5 +1,6 @@
 package io.github.cloby0.feedback.machine.waterwheel;
 
+import io.github.cloby0.feedback.core.FTuning;
 import io.github.cloby0.feedback.core.rotation.RotationNode;
 import io.github.cloby0.feedback.core.rotation.RotationPropagator;
 import io.github.cloby0.feedback.registry.FBlockEntities;
@@ -17,12 +18,6 @@ import net.minecraft.world.level.material.FluidState;
  */
 public class WaterWheelBlockEntity extends RotationNode {
 
-    public static final float RPM_PER_FLOW = 4f;
-    public static final float CAPACITY_SU = 256f;
-
-    /** Rechecking flow every tick is wasted work; water does not change that often. */
-    private static final int FLOW_CHECK_INTERVAL = 20;
-
     private int flowingSides;
     private int ticksUntilFlowCheck;
 
@@ -35,7 +30,7 @@ public class WaterWheelBlockEntity extends RotationNode {
             return;
         if (--ticksUntilFlowCheck > 0)
             return;
-        ticksUntilFlowCheck = FLOW_CHECK_INTERVAL;
+        ticksUntilFlowCheck = FTuning.WATER_WHEEL_FLOW_CHECK_INTERVAL;
 
         int previous = flowingSides;
         flowingSides = countFlowingSides();
@@ -61,12 +56,17 @@ public class WaterWheelBlockEntity extends RotationNode {
     }
 
     @Override
+    public float getInertia() {
+        return FTuning.WATER_WHEEL_INERTIA;
+    }
+
+    @Override
     public float getGeneratedRpm() {
-        return flowingSides * RPM_PER_FLOW;
+        return flowingSides * FTuning.WATER_WHEEL_RPM_PER_FLOW;
     }
 
     @Override
     public float getCapacitySu() {
-        return CAPACITY_SU;
+        return FTuning.WATER_WHEEL_CAPACITY_SU;
     }
 }

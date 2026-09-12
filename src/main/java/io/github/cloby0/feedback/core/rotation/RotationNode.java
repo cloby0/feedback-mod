@@ -1,45 +1,55 @@
 package io.github.cloby0.feedback.core.rotation;
 
+import io.github.cloby0.feedback.core.FTuning;
+
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtUtils;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * Base block entity for anything on a rotation network: shafts, cranks, wheels, machines.
- * <p>
- * Derived in design from Create's {@code KineticBlockEntity} (MIT), but deliberately much
- * smaller. Create's carries goggle tooltips, sound scapes, a behaviour framework and a
- * rendering bridge; this carries speed, ownership and Su, and nothing else.
  *
  * <h2>What a node knows</h2>
- * A node knows its own speed and which neighbour drives it. It does not know the shape of the
- * network, and it cannot decide on its own whether it is overstressed -- that is a whole-network
- * question, answered by {@link RotationNetwork} and pushed down via
- * {@link #onNetworkChanged(float, float)}.
+ * Very little, deliberately. A node knows its <em>ratio</em> -- how its own speed relates to the
+ * network's -- and the Su it supplies or demands. It does not store a speed: the whole run turns
+ * as one object, so speed belongs to {@link RotationNetwork} and a node just scales it.
+ * <p>
+ * That split is what makes momentum possible. Inertia is a property of the entire spinning mass
+ * and cannot live in any single block.
+ * <p>
+ * Derived in design from Create's {@code KineticBlockEntity} (MIT), but much smaller: Create's
+ * also carries a behaviour framework, goggle tooltips, sound scapes and a rendering bridge.
  */
 public abstract class RotationNode extends BlockEntity {
 
-    /** Signed: magnitude is speed, sign is direction of rotation about the axis. */
-    protected float rpm;
-
-    /** Position of the neighbour driving this node, or null if nothing is. */
-    @Nullable
-    protected BlockPos source;
+    /**
+     * This node's speed as a multiple of the network's. 1 for a plain shaft; gearing makes it
+     * something else, and a negative ratio means it turns the other way.
+     */
+    protected float ratio = 1f;
 
     @Nullable
     protected RotationNetwork network;
 
     protected float networkCapacitySu;
     protected float networkLoadSu;
+
+    /**
+     * Speed as the client last heard it. The server recomputes speed every tick while a network
+     * is spinning up, and sending that to clients every tick for every block would be absurd, so
+     * a node only syncs once its speed has moved a noticeable amount.
+     */
+    protected float syncedRpm;
 
     /** Client-side only: accumulated rotation in degrees, for rendering. */
     protected float visualAngle;
@@ -60,47 +70,40 @@ public abstract class RotationNode extends BlockEntity {
         return 0;
     }
 
-    /** Su this node demands from its network. */
+    /** Su this node demands from its network, including its own bearing friction. */
     public float getLoadSu() {
         return 0;
+    }
+
+    /** How much this node resists a change in the network's speed. */
+    public float getInertia() {
+        return FTuning.SHAFT_INERTIA;
     }
 
     public boolean isSource() {
         return getGeneratedRpm() != 0;
     }
 
-    // --- speed and ownership ----------------------------------------------------------------
-
-    public float getRpm() {
-        return isOverstressed() ? 0 : rpm;
-    }
+    // --- speed ------------------------------------------------------------------------------
 
     /**
-     * The speed this node would run at if the network were not overloaded.
+     * This node's actual speed.
      * <p>
-     * Propagation must use this rather than {@link #getRpm()}: an overstressed network reads
-     * zero everywhere, and a propagation that believed that would tear itself down and rebuild
-     * the moment the load came off.
+     * On the server this is the network's live speed scaled by this node's ratio. On the client
+     * there is no network, so it is whatever the server last told us.
      */
-    public float getTheoreticalRpm() {
-        return rpm;
+    public float getRpm() {
+        if (level != null && level.isClientSide)
+            return syncedRpm;
+        return network == null ? 0 : network.getCurrentRpm() * ratio;
     }
 
-    public void setRpm(float rpm) {
-        this.rpm = rpm;
+    public float getRatio() {
+        return ratio;
     }
 
-    public boolean hasSource() {
-        return source != null;
-    }
-
-    @Nullable
-    public BlockPos getSource() {
-        return source;
-    }
-
-    public void setSource(@Nullable BlockPos source) {
-        this.source = source;
+    public void setRatio(float ratio) {
+        this.ratio = ratio;
     }
 
     @Nullable
@@ -124,18 +127,52 @@ public abstract class RotationNode extends BlockEntity {
         return networkLoadSu;
     }
 
-    /** Called by the network whenever the Su ledger moves. */
+    // --- callbacks from the network -----------------------------------------------------------
+
+    /** The Su ledger moved. */
     public void onNetworkChanged(float capacitySu, float loadSu) {
-        boolean wasOverstressed = this.networkLoadSu > this.networkCapacitySu;
         this.networkCapacitySu = capacitySu;
         this.networkLoadSu = loadSu;
-        if (wasOverstressed != (loadSu > capacitySu))
-            sync();
+        setChanged();
     }
 
-    /** Called after this node's speed changes, for subclasses that care. */
-    public void onSpeedChanged(float previousRpm) {
-        setChanged();
+    /**
+     * The network's speed moved. Called every tick while spinning up or down, so this must stay
+     * cheap and must not sync unconditionally.
+     */
+    public void onNetworkSpeedChanged() {
+        float rpm = getRpm();
+        if (Math.abs(rpm - syncedRpm) >= 1f || (rpm == 0 && syncedRpm != 0)) {
+            syncedRpm = rpm;
+            sync();
+        }
+    }
+
+    public void tickClient() {
+        // One revolution is 360 degrees and RPM counts revolutions per 60 seconds of 20 ticks,
+        // so one RPM is 360/1200 = 0.3 degrees per tick.
+        visualAngle = (visualAngle + getRpm() * 0.3f) % 360f;
+    }
+
+    /** Accumulated rotation in degrees. Client-side; the server never renders anything. */
+    public float getVisualAngle() {
+        return visualAngle;
+    }
+
+    /**
+     * TEMPORARY. Prints this node's state to chat on a sneak-right-click.
+     * <p>
+     * Development scaffolding, not a feature: it breaks philosophy 8 outright by handing out
+     * exact figures with no instrument. Delete it once shafts visibly turn and a real gauge
+     * exists -- until then there is no other way to see whether the network works.
+     */
+    public void debugReport(Player player) {
+        String momentum = network == null ? "" : String.format("  |  target %.0f  inertia %.0f",
+                network.getTargetRpm(), network.getInertia());
+        player.displayClientMessage(Component.literal(
+                String.format("[debug] %.1f RPM  |  %.0f / %.0f Su%s%s",
+                        getRpm(), networkLoadSu, networkCapacitySu,
+                        isOverstressed() ? "  |  OVERSTRESSED" : "", momentum)), false);
     }
 
     // --- lifecycle --------------------------------------------------------------------------
@@ -154,50 +191,24 @@ public abstract class RotationNode extends BlockEntity {
         super.setRemoved();
     }
 
-    public void tickClient() {
-        // Degrees per tick: one revolution is 360 degrees, and RPM is revolutions per 60 seconds
-        // of 20 ticks each, so 1 RPM is 360/1200 degrees per tick.
-        visualAngle = (visualAngle + getRpm() * 0.3f) % 360f;
-    }
-
-    /** Accumulated rotation in degrees. Client-side; the server never renders anything. */
-    public float getVisualAngle() {
-        return visualAngle;
-    }
-
-    /**
-     * TEMPORARY. Prints this node's state to chat on a sneak-right-click.
-     * <p>
-     * This is scaffolding for development, not a feature, and it breaks 8 outright by handing
-     * out exact figures with no instrument. Delete it once shafts visibly turn and a real
-     * gauge exists -- until then there is no other way to tell whether the network works.
-     */
-    public void debugReport(net.minecraft.world.entity.player.Player player) {
-        player.displayClientMessage(net.minecraft.network.chat.Component.literal(
-                String.format("[debug] %.0f RPM  |  %.0f / %.0f Su%s",
-                        getRpm(), networkLoadSu, networkCapacitySu,
-                        isOverstressed() ? "  |  OVERSTRESSED" : "")), false);
-    }
-
     // --- persistence ------------------------------------------------------------------------
 
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
-        tag.putFloat("Rpm", rpm);
+        tag.putFloat("Rpm", syncedRpm);
+        tag.putFloat("Ratio", ratio);
         tag.putFloat("CapacitySu", networkCapacitySu);
         tag.putFloat("LoadSu", networkLoadSu);
-        if (source != null)
-            tag.put("Source", NbtUtils.writeBlockPos(source));
     }
 
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
-        rpm = tag.getFloat("Rpm");
+        syncedRpm = tag.getFloat("Rpm");
+        ratio = tag.contains("Ratio") ? tag.getFloat("Ratio") : 1f;
         networkCapacitySu = tag.getFloat("CapacitySu");
         networkLoadSu = tag.getFloat("LoadSu");
-        source = tag.contains("Source") ? NbtUtils.readBlockPos(tag, "Source").orElse(null) : null;
     }
 
     // --- client sync ------------------------------------------------------------------------

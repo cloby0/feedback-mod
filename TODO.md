@@ -94,9 +94,16 @@ Built and compiling: rotation engine (`RotationNode` / `RotationNetwork` / `Rota
 ### Decisions taken while building, worth revisiting
 
 - **Propagation is a full rebuild, not Create's incremental update.** Flood fill the run, find the strongest source, walk outward. O(n) per change instead of O(change), which is worse on paper and fine at our scale — and it removes the need for Create's "flicker score", because a rebuild cannot loop. Revisit only if a profiler complains.
-- **No rotational inertia.** **[OPEN]** Create has none either — its network snaps to a new speed instantly. But §13 says oscillation is fixed with physical mass, and the energy-cutoff rule says clutches *coast*. Both need spin-up and spin-down time. Nothing in beat 1 needs it; slice 2's actuators probably do.
-- **Shafts are lossless.** **[OPEN]** Slice 1 says "SHAFT / GEARBOX — transmits, **with loss**". Not implemented. Needs deciding what is lost: `RPM`, `Su`, or both, and whether loss is per block or per run. A per-block loss makes layout matter; a flat loss is just a tax.
-- **RPM figures are invented.** Slice 1 fixes `Su` for every machine and never fixes a speed. Hand Crank 32 RPM, Water Wheel 4 RPM per flowing side. Placeholders, flagged as such in the code.
+- **Inertia is implemented.** Speed belongs to the network, not the block; each node keeps a *ratio*. The network has a target speed and a current speed chasing it, at `(capacity − load) ÷ inertia` RPM per tick — real angular acceleration, not a fudge. Create has no equivalent: its networks snap to speed, which is why its flywheel visibly coasts while the network does not.
+- **Shaft loss is implemented, as `Su`.** Each shaft charges bearing friction to the network. Loss is `Su` rather than `RPM` because a rigid shaft turns at one speed along its length — a speed difference between its ends is torsion, not loss, and what friction eats is torque. Because `Su` sums network-wide this is automatically distance-independent: moving a machine nearer the generator saves nothing, since every bearing turns either way. **Sprawl costs, distance doesn't.**
+- **All numbers live in `core/FTuning.java`.** Everything is fiction until playtesting, so the point is turnaround: one file to edit, not twelve block entities. Becomes a config when the figures start meaning something.
+
+### Found by building, not by designing
+
+- **Headroom became a real decision.** A network at 98% of capacity (three hammers on a 256 Su wheel) takes **81 seconds** to reach speed, because acceleration is surplus torque over inertia and there is almost no surplus. Two hammers reach speed in two seconds. Nobody installed this — it falls out of the acceleration relationship — and it is §5's test passing: the same capital-vs-attention trade, in a third unrelated place. **Keep it.** Possibly soften the magnitude; do not remove the shape.
+- **[OPEN] Does shaft loss scale with RPM?** Real friction partly does. If it does, fast networks cost more and "run slow and wide" becomes a genuine alternative to "run fast and narrow" — which pairs well with inertia, since heavy networks already favour steady running. Currently flat.
+- **[OPEN] Is a 48-second coast too long?** An almost-unloaded water wheel takes that to wind down. Nothing can cut a wheel's power yet, so it does not bite until slice 2's clutch.
+- **Bearings are the obvious first physical upgrade** — a bushed or greased shaft with lower `Su` cost. Fits "upgrades are physical components" exactly. Not built.
 - **Water wheel speed scales with how many sides have flowing water**, so siting it is a decision rather than a placement. Not from the slice doc — an invention, and cheap to remove.
 
 ---

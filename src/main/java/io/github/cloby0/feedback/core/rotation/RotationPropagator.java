@@ -49,16 +49,23 @@ public class RotationPropagator {
             return;
         if (removed.getNetwork() != null)
             removed.getNetwork().remove(removed);
-        // The run may have been cut in two. Rebuild from each side independently; a neighbour
-        // that is now in a separate component will simply flood fill a smaller set.
+        // The run may have been cut in two. Rebuild from each side; a neighbour now in a
+        // separate component simply flood fills a smaller set. Neighbours still joined to each
+        // other share a component, so skip any that the previous rebuild already covered.
+        Set<BlockPos> covered = new HashSet<>();
         for (Direction face : Direction.values()) {
-            BlockPos neighbour = pos.relative(face);
-            if (nodeAt(level, neighbour) != null)
-                rebuildFrom(level, neighbour);
+            BlockPos neighbourPos = pos.relative(face);
+            if (covered.contains(neighbourPos) || nodeAt(level, neighbourPos) == null)
+                continue;
+            rebuildFrom(level, neighbourPos);
+            RotationNode neighbour = nodeAt(level, neighbourPos);
+            if (neighbour != null)
+                for (RotationNode member : floodFill(level, neighbour))
+                    covered.add(member.getBlockPos());
         }
     }
 
-    /** Recompute speeds and network membership for the entire run containing {@code pos}. */
+    /** Recompute ratios, target speed and network membership for the whole run at {@code pos}. */
     public static void rebuildFrom(Level level, BlockPos pos) {
         RotationNode start = nodeAt(level, pos);
         if (start == null)
@@ -72,54 +79,70 @@ public class RotationPropagator {
                     || Math.abs(node.getGeneratedRpm()) > Math.abs(strongest.getGeneratedRpm())))
                 strongest = node;
 
-        Map<RotationNode, Float> speeds = new HashMap<>();
-        if (strongest != null && !assignSpeeds(level, strongest, speeds)) {
+        // Ratios are measured against a reference node. The driving source is the natural
+        // choice; with nothing driving, any node will do, since the run still has to keep its
+        // relative speeds straight while it coasts.
+        RotationNode reference = strongest != null ? strongest : start;
+
+        Map<RotationNode, Float> ratios = new HashMap<>();
+        if (!assignRatios(level, reference, ratios)) {
             // Two sources are fighting over the same run. Something has to give, and it is the
             // block that was just placed to complete the conflict.
             level.destroyBlock(pos, true);
             return;
         }
 
-        RotationNetwork network = RotationNetworks.of(level).create();
-        for (RotationNode node : component) {
-            float previous = node.getTheoreticalRpm();
-            float assigned = speeds.getOrDefault(node, 0f);
+        // Carry the reference node's actual speed across the rebuild, so adding a shaft to a
+        // turning line does not stop it dead. Its ratio is 1 by construction, so its speed is
+        // the network's speed.
+        float inheritedRpm = reference.getRpm();
 
+        // Retire whatever networks these nodes used to belong to. Without this the old network
+        // object stays in the registry with its members still listed, and goes on ticking
+        // forever alongside the new one.
+        RotationNetworks registry = RotationNetworks.of(level);
+        Set<Long> retired = new HashSet<>();
+        for (RotationNode node : component) {
+            RotationNetwork previous = node.getNetwork();
+            if (previous != null && retired.add(previous.id))
+                registry.discard(previous.id);
+        }
+
+        RotationNetwork network = registry.create();
+        for (RotationNode node : component) {
+            node.setRatio(ratios.getOrDefault(node, 0f));
             node.setNetwork(network);
             network.add(node);
-
-            if (previous != assigned) {
-                node.setRpm(assigned);
-                node.onSpeedChanged(previous);
-                node.sync();
-            }
         }
+        network.inheritSpeed(inheritedRpm);
+        network.setTargetRpm(strongest != null ? strongest.getGeneratedRpm() : 0);
         network.recalculate();
     }
 
     /**
-     * Walk outward from a source, giving every reachable node the speed that source implies.
+     * Walk outward from the reference node, giving every reachable node its speed ratio.
      *
      * @return false if two sources demand incompatible speeds of the same node.
      */
-    private static boolean assignSpeeds(Level level, RotationNode source, Map<RotationNode, Float> speeds) {
-        speeds.put(source, source.getGeneratedRpm());
+    private static boolean assignRatios(Level level, RotationNode reference, Map<RotationNode, Float> ratios) {
+        ratios.put(reference, 1f);
+        float referenceRpm = reference.getGeneratedRpm();
 
         Deque<RotationNode> queue = new ArrayDeque<>();
-        queue.add(source);
+        queue.add(reference);
 
         while (!queue.isEmpty()) {
             RotationNode current = queue.poll();
-            float currentRpm = speeds.get(current);
+            float currentRatio = ratios.get(current);
 
             for (RotationNode neighbour : connectedNeighbours(level, current)) {
-                float ratio = ratioBetween(level, current, neighbour);
-                if (ratio == 0)
+                float gearing = ratioBetween(level, current, neighbour);
+                if (gearing == 0)
                     continue;
 
-                float conveyed = currentRpm * ratio;
+                float conveyed = currentRatio * gearing;
 
-                Float existing = speeds.get(neighbour);
+                Float existing = ratios.get(neighbour);
                 if (existing != null) {
                     // Rejoining the walk at a node we have already set is fine, as long as both
                     // routes agree. Disagreement means the run is geared against itself.
@@ -128,12 +151,14 @@ public class RotationPropagator {
                     continue;
                 }
 
-                // A second, independently driven source in the same run only survives if it
-                // happens to want exactly what it is being given.
-                if (neighbour.isSource() && Math.abs(neighbour.getGeneratedRpm() - conveyed) > 1e-4f)
+                // A second source in the same run only survives if it happens to want exactly
+                // the speed this one is already giving it. Checked in RPM rather than ratio,
+                // because a ratio means nothing without a reference speed to apply it to.
+                if (neighbour.isSource() && referenceRpm != 0
+                        && Math.abs(neighbour.getGeneratedRpm() - conveyed * referenceRpm) > 1e-4f)
                     return false;
 
-                speeds.put(neighbour, conveyed);
+                ratios.put(neighbour, conveyed);
                 queue.add(neighbour);
             }
         }

@@ -1,6 +1,8 @@
 package io.github.cloby0.feedback.core.rotation;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 
@@ -10,8 +12,10 @@ import net.minecraft.world.level.LevelAccessor;
 /**
  * Per-level registry of live rotation networks.
  * <p>
- * Networks are runtime-only. Nothing here is saved: on load every node re-announces itself
- * and the networks rebuild from the blocks, which are the actual source of truth.
+ * Networks are runtime-only and nothing here is saved. On load every node re-announces itself
+ * and the networks rebuild from the blocks, which are the real source of truth. Momentum is the
+ * one thing lost across a reload, which is a reasonable thing to lose when the chunk was not
+ * ticking anyway.
  */
 public class RotationNetworks {
 
@@ -30,11 +34,16 @@ public class RotationNetworks {
         return network;
     }
 
-    public RotationNetwork get(long id) {
-        return networks.get(id);
-    }
-
     public void discard(long id) {
         networks.remove(id);
+    }
+
+    /** Advance every network one tick. Copied first, because a network can discard itself. */
+    public void tickAll() {
+        if (networks.isEmpty())
+            return;
+        List<RotationNetwork> snapshot = new ArrayList<>(networks.values());
+        for (RotationNetwork network : snapshot)
+            network.tick();
     }
 }

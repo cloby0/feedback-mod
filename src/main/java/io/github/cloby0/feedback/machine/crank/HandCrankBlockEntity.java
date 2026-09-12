@@ -1,5 +1,6 @@
 package io.github.cloby0.feedback.machine.crank;
 
+import io.github.cloby0.feedback.core.FTuning;
 import io.github.cloby0.feedback.core.rotation.RotationNode;
 import io.github.cloby0.feedback.core.rotation.RotationPropagator;
 import io.github.cloby0.feedback.registry.FBlockEntities;
@@ -12,20 +13,14 @@ import net.minecraft.world.level.block.state.BlockState;
 /**
  * Rotation for as long as somebody keeps clicking.
  * <p>
- * Slice 1: 12 Su. Placeholder RPM -- the slice fixes Su for every machine but never fixes a
- * speed, so this number is invented and marked as such.
+ * Slice 1: 12 Su. Its speed, and how long one click keeps it going, are invented -- see
+ * {@link FTuning}.
+ * <p>
+ * A right click is a single event, but turning a crank is continuous, so each click buys a short
+ * run of rotation and holding the button refreshes it before it lapses. The crank turns for
+ * exactly as long as somebody is working it.
  */
 public class HandCrankBlockEntity extends RotationNode {
-
-    public static final float RPM = 32f;
-    public static final float CAPACITY_SU = 12f;
-
-    /**
-     * A right click is a single event, but turning a crank is continuous. Each click buys a
-     * short run of rotation; holding the button down refreshes it before it lapses, so the crank
-     * keeps going exactly as long as somebody is working it.
-     */
-    private static final int TICKS_PER_TURN = 12;
 
     private int turningTicks;
 
@@ -37,7 +32,7 @@ public class HandCrankBlockEntity extends RotationNode {
         if (level == null || level.isClientSide)
             return;
         boolean wasStopped = turningTicks <= 0;
-        turningTicks = TICKS_PER_TURN;
+        turningTicks = FTuning.HAND_CRANK_TICKS_PER_TURN;
         if (wasStopped)
             RotationPropagator.rebuildFrom(level, worldPosition);
     }
@@ -52,12 +47,17 @@ public class HandCrankBlockEntity extends RotationNode {
 
     @Override
     public float getGeneratedRpm() {
-        return turningTicks > 0 ? RPM : 0;
+        return turningTicks > 0 ? FTuning.HAND_CRANK_RPM : 0;
     }
 
     @Override
     public float getCapacitySu() {
-        return CAPACITY_SU;
+        return FTuning.HAND_CRANK_CAPACITY_SU;
+    }
+
+    @Override
+    public float getInertia() {
+        return FTuning.HAND_CRANK_INERTIA;
     }
 
     @Override
