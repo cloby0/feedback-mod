@@ -110,13 +110,26 @@ A part-worked ingot **looks** part-worked. It is visibly flattening, the player 
 
 So beat 1 deliberately ships **no measuring tool at all.** The player's eyes are sufficient for the problem beat 1 poses, and handing them an instrument here would teach the wrong lesson about what instruments are for.
 
-### The timer
+### The clutch and the timer
 
 The obvious fix. Power the hammer, wait, cut power.
 
-And it works — **automation arrives before precision does**, which is worth the player discovering firsthand. But the hammer's rate depends on the rotation it is getting, and rotation from a water wheel is not perfectly steady. So the timer is a bet (§8), and it pays out something like *mostly plates, sometimes foil, occasionally scrap.*
+It takes **two blocks**, not one, and the split is the point (§8, §13). Stopping a shaft and deciding when to stop it are different jobs, so they are different things you bolt together:
 
-The player's first instinct — set the timer short and accept a few under-worked ingots — is correct, and it is their first encounter with trading yield for safety.
+```
+CLUTCH          engages or releases the shaft run in front of it
+TIMER           winds, runs for that long, lets go
+```
+
+The Clutch is the mechanical actuator. It knows nothing — it holds the output shaft or it doesn't. The Timer is control at its crudest: it can start and stop a supply, and that is the whole of its vocabulary. Neither can measure anything.
+
+Keeping them apart costs the slice one block and buys two things. A player can throw the clutch by hand before ever building a timer, which is the honest introduction to *you are the controller*. And when slice 2's controller arrives it **replaces the Timer** rather than introducing a new idea — the clutch cannot tell the difference, because §13 allows a controller no output a timer does not already have.
+
+**And a clutch does not stop the hammer.** It stops *driving* it. Whatever is downstream keeps turning on its own momentum until friction takes it, so blows keep landing after the timer lets go — fewer each time, but landing. Nothing in the clutch implements that; disengaging simply splits the run into two networks and the far one has no source any more.
+
+So the timer is a bet (§8), and a worse one than it looks. The hammer's rate depends on the rotation it is getting, a water wheel's speed wanders with how much water is against it, shaft friction rises with speed, and the coast-down adds a few uncounted blows on the end. The same wind buys a different number of blows on different days: *mostly plates, sometimes foil, occasionally scrap.*
+
+The player's first instinct — wind it short and accept a few under-worked ingots — is correct, and it is their first encounter with trading yield for safety.
 
 ### Calipers, and what they are actually for
 

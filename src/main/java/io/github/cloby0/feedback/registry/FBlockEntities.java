@@ -1,6 +1,8 @@
 package io.github.cloby0.feedback.registry;
 
 import io.github.cloby0.feedback.Feedback;
+import io.github.cloby0.feedback.control.timer.TimerBlockEntity;
+import io.github.cloby0.feedback.machine.clutch.ClutchBlockEntity;
 import io.github.cloby0.feedback.machine.crank.HandCrankBlockEntity;
 import io.github.cloby0.feedback.machine.hammer.MechanicalHammerBlockEntity;
 import io.github.cloby0.feedback.machine.linkage.CrankLinkageBlockEntity;
@@ -41,6 +43,16 @@ public class FBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MechanicalHammerBlockEntity>> MECHANICAL_HAMMER =
             BLOCK_ENTITIES.register("mechanical_hammer", () -> BlockEntityType.Builder
                     .of(MechanicalHammerBlockEntity::new, FBlocks.MECHANICAL_HAMMER.get())
+                    .build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ClutchBlockEntity>> CLUTCH =
+            BLOCK_ENTITIES.register("clutch", () -> BlockEntityType.Builder
+                    .of(ClutchBlockEntity::new, FBlocks.CLUTCH.get())
+                    .build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TimerBlockEntity>> TIMER =
+            BLOCK_ENTITIES.register("timer", () -> BlockEntityType.Builder
+                    .of(TimerBlockEntity::new, FBlocks.TIMER.get())
                     .build(null));
 
     private FBlockEntities() {

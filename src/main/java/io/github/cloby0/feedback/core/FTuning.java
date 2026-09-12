@@ -138,6 +138,22 @@ public final class FTuning {
      */
     public static final float STOPPED_RPM_THRESHOLD = 0.05f;
 
+    // --- control --------------------------------------------------------------------------
+
+    /**
+     * How long one wind of the Timer lasts, in ticks.
+     * <p>
+     * A short list of positions rather than a free number (§3). There is no correct value hiding
+     * in here to be ground out -- the run being timed is not repeatable enough for one to exist
+     * -- but a device with a scalar on it teaches players to hunt for one anyway, and that is a
+     * habit worth not teaching.
+     * <p>
+     * The range is set against beat 1: a water wheel lands roughly a blow a second, and a plate
+     * is five blows on the gentle crank. So the useful settings sit either side of that, and the
+     * long ones exist mostly to demonstrate what overrun looks like.
+     */
+    public static final int[] TIMER_SETTINGS = { 40, 100, 200, 400 };
+
     // --- readouts -------------------------------------------------------------------------
 
     // Where the free, qualitative speed bands fall. Philosophy 8 says a player standing next to

@@ -1,0 +1,28 @@
+{
+  "parent": "block/block",
+  "textures": {
+    "body": "minecraft:block/cut_copper",
+    "collar": "minecraft:block/iron_block",
+    "particle": "minecraft:block/cut_copper"
+  },
+  "elements": [
+    {
+      "from": [5, 5, 3],
+      "to": [11, 11, 13],
+      "faces": {
+        "north": { "texture": "#body" }, "south": { "texture": "#body" },
+        "west":  { "texture": "#body" }, "east":  { "texture": "#body" },
+        "up":    { "texture": "#body" }, "down":  { "texture": "#body" }
+      }
+    },
+    {
+      "from": [3, 3, 2],
+      "to": [13, 13, 6],
+      "faces": {
+        "north": { "texture": "#collar" }, "south": { "texture": "#collar" },
+        "west":  { "texture": "#collar" }, "east":  { "texture": "#collar" },
+        "up":    { "texture": "#collar" }, "down":  { "texture": "#collar" }
+      }
+    }
+  ]
+}

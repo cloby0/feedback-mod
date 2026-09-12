@@ -11,5 +11,8 @@
   "feedback.workpiece.barely_marked": "Barely marked",
   "feedback.workpiece.taking_shape": "Taking shape",
   "feedback.workpiece.visibly_worked": "Visibly worked",
-  "feedback.workpiece.nearly_there": "Nearly there"
+  "feedback.workpiece.nearly_there": "Nearly there",
+  "block.feedback.clutch": "Clutch",
+  "block.feedback.timer": "Timer",
+  "feedback.timer.setting": "Wind: %s seconds"
 }

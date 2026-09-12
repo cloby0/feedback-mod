@@ -1,6 +1,8 @@
 package io.github.cloby0.feedback.registry;
 
 import io.github.cloby0.feedback.Feedback;
+import io.github.cloby0.feedback.control.timer.TimerBlock;
+import io.github.cloby0.feedback.machine.clutch.ClutchBlock;
 import io.github.cloby0.feedback.machine.crank.HandCrankBlock;
 import io.github.cloby0.feedback.machine.hammer.MechanicalHammerBlock;
 import io.github.cloby0.feedback.machine.linkage.CrankLinkageBlock;
@@ -51,6 +53,20 @@ public class FBlocks {
                     .mapColor(MapColor.STONE)
                     .strength(3.5f)
                     .sound(SoundType.STONE)
+                    .noOcclusion()));
+
+    public static final DeferredBlock<ClutchBlock> CLUTCH = BLOCKS.register("clutch",
+            () -> new ClutchBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.METAL)
+                    .strength(3.0f)
+                    .sound(SoundType.COPPER)
+                    .noOcclusion()));
+
+    public static final DeferredBlock<TimerBlock> TIMER = BLOCKS.register("timer",
+            () -> new TimerBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.WOOD)
+                    .strength(2.0f)
+                    .sound(SoundType.WOOD)
                     .noOcclusion()));
 
     private FBlocks() {
