@@ -89,6 +89,7 @@ Built and compiling: rotation engine (`RotationNode` / `RotationNetwork` / `Rota
 - [ ] **Calipers** — `16 / 20 Fu`, and deliberately *after* the timer
 - [ ] Flywheel-based rendering for spinning shafts; currently the model does not visibly turn
 - [ ] Real textures
+- [ ] **Delete the temporary debug readout** (`RotationNode#debugReport`, sneak-right-click). It hands out exact figures with no instrument, which is §8 backwards. It exists only because nothing visibly turns yet
 
 ### Decisions taken while building, worth revisiting
 
