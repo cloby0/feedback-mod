@@ -36,8 +36,8 @@ public class WorkpieceTooltip {
             return;
 
         if (Readout.instrumented(Readout.Quantity.WORK)) {
-            event.getToolTip().add(Component.translatable("feedback.readout.work",
-                    worked, required).withStyle(ChatFormatting.AQUA));
+            event.getToolTip().add(Readout.reading(Readout.Quantity.WORK,
+                    "feedback.readout.work", worked, required));
             return;
         }
 

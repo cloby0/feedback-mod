@@ -37,5 +37,10 @@
   "feedback.jei.work": "Work",
   "feedback.jei.hardness": "Hardness",
   "feedback.jei.output": "Output",
-  "item.feedback.calipers": "Calipers"
+  "item.feedback.calipers": "Calipers",
+  "config.jade.plugin_feedback.rotation": "Rotation",
+  "config.jade.plugin_feedback.mechanical_hammer": "Mechanical Hammer",
+  "feedback.readout.attributed": "%s: %s",
+  "feedback.instrument.calipers": "Calipers",
+  "feedback.instrument.debug": "Debug"
 }

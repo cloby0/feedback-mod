@@ -73,6 +73,21 @@ public class RotationNetwork {
     /** Counts down to the next complaint, so a labouring network does not smoke every tick. */
     private int ticksUntilComplaint;
 
+    /**
+     * How far this run has turned, in degrees, as one rigid object.
+     *
+     * <h3>Why the network owns this and not the blocks</h3>
+     * A shaft run is bolted together: its parts cannot be at different angles. When each block
+     * accumulated its own angle they drifted apart the moment their histories differed -- stop one
+     * shaft, let it settle, reconnect it, and it would turn at exactly the right speed while
+     * visibly out of phase with the shaft it was bolted to.
+     * <p>
+     * Phase is not physically meaningful on its own; two runs at the same speed may sit at any
+     * angle to each other. What matters is that members of the <em>same</em> run agree, which they
+     * do for free once there is only one number.
+     */
+    private float phase;
+
     public RotationNetwork(long id) {
         this.id = id;
     }
@@ -140,6 +155,8 @@ public class RotationNetwork {
      * to the network, and letting each block nudge it would advance it once per member.
      */
     public void tick() {
+        advancePhase();
+
         // Before the early-out below: a network that is stuck at zero because it is overloaded is
         // exactly the case worth complaining about, and it never changes speed.
         if (!members.isEmpty())
@@ -188,6 +205,16 @@ public class RotationNetwork {
 
         for (RotationNode member : members.keySet())
             member.onNetworkSpeedChanged();
+    }
+
+    /** Advance the shared angle. Called every tick, including when the speed is settled. */
+    public void advancePhase() {
+        if (currentRpm != 0)
+            phase = (phase + currentRpm * RotationNode.DEGREES_PER_TICK_PER_RPM) % 360f;
+    }
+
+    public float getPhase() {
+        return phase;
     }
 
     /**

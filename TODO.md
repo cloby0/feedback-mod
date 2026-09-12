@@ -90,6 +90,10 @@ Built and compiling: rotation engine (`RotationNode` / `RotationNetwork` / `Rota
 - [ ] **Workpiece should be visible in the machine too** — a block entity renderer showing what is on the anvil. The tooltip covers the lesson, but you currently cannot see that the hammer is occupied without clicking it
 ### Information layer — Jade, JEI, and the debug helmet
 
+- [x] **Every reading is signed by the instrument that took it** — `Calipers: 9 / 14 Fu`. A bare figure is unfalsifiable, and §8 promises instruments never lie while saying nothing about them being *accurate*. Once drift and recalibration are real, a player looking at a bad batch must know which instrument to distrust, and two tiers disagreeing has to read as informative rather than broken
+- [ ] **The `Instrument` interface is still not built.** `Readout.source(Quantity)` hardcodes calipers and the helmet. The agreed shape: an item declares `canRead(Quantity)`, `resolution(Quantity)`, `label()`, and `Instruments.best(player, quantity)` finds the finest one carried — so a thermometer is one declaration and touches no display code. Do this before the thermometer, not after
+
+
 Governed by §8's *what you need is free, what you have is a cost*. Write these together; they are one design, not three features.
 
 - [x] **JEI: process cards, not recipes.** Render a `Deformation` as a spec sheet with **exact units**, because a requirement is published data:

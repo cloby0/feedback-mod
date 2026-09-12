@@ -71,7 +71,7 @@ public class RotationComponent implements IBlockComponentProvider {
     }
 
     private static void exact(ITooltip tooltip, String key, Object... args) {
-        tooltip.add(Component.translatable(key, args).withStyle(ChatFormatting.AQUA));
+        tooltip.add(Readout.reading(Readout.Quantity.SPEED, key, args));
     }
 
     @Override

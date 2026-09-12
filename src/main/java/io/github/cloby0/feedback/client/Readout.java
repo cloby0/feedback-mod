@@ -68,13 +68,45 @@ public final class Readout {
      * player may never actually buy, and it is a creative-only cheat precisely so that stays true.
      */
     public static boolean instrumented(Quantity quantity) {
+        return source(quantity) != null;
+    }
+
+    /**
+     * Which instrument, if any, is answering for this quantity.
+     *
+     * <h3>Why every figure is signed</h3>
+     * A bare number is unfalsifiable. §8 promises that instruments never lie but says nothing
+     * about them being accurate -- they drift, they have limited resolution, and eventually they
+     * need recalibrating. The moment any of that is real, a player looking at a bad batch needs to
+     * know <em>which instrument</em> to distrust, and two instruments of different tiers
+     * disagreeing about the same quantity has to read as informative rather than broken.
+     * <p>
+     * So a reading is attributed to the thing that produced it, always. It also quietly teaches
+     * where the number came from: not from the world, but from a device the player chose to own.
+     */
+    @Nullable
+    public static Component source(Quantity quantity) {
         Player player = Minecraft.getInstance().player;
         if (DebugHelmetItem.wornBy(player))
-            return true;
+            return Component.translatable("feedback.instrument.debug");
         return switch (quantity) {
-            case WORK -> CalipersItem.carriedBy(player);
-            case SPEED, LOAD -> false;
+            case WORK -> CalipersItem.carriedBy(player)
+                    ? Component.translatable("feedback.instrument.calipers")
+                    : null;
+            case SPEED, LOAD -> null;
         };
+    }
+
+    /**
+     * A reading, signed by the instrument that took it: {@code Calipers: 9 / 14 Fu}.
+     */
+    public static Component reading(Quantity quantity, String key, Object... args) {
+        Component instrument = source(quantity);
+        Component figure = Component.translatable(key, args);
+        if (instrument == null)
+            return figure;
+        return Component.translatable("feedback.readout.attributed", instrument, figure)
+                .withStyle(ChatFormatting.AQUA);
     }
 
     /**

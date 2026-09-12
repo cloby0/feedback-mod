@@ -179,6 +179,11 @@ public abstract class RotationNode extends BlockEntity {
      */
     public void syncSpeedNow() {
         syncedRpm = getRpm();
+        // Adopt the run's shared angle at the same moment as its speed. After this every member
+        // advances by the same amount each tick, so agreeing once is agreeing forever -- which is
+        // what stops a reconnected shaft from turning at the right speed in the wrong phase.
+        if (network != null)
+            visualAngle = network.getPhase() * ratio;
         sync();
     }
 
@@ -225,6 +230,7 @@ public abstract class RotationNode extends BlockEntity {
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         tag.putFloat("Rpm", syncedRpm);
+        tag.putFloat("Phase", visualAngle);
         tag.putFloat("Ratio", ratio);
         tag.putFloat("CapacitySu", networkCapacitySu);
         tag.putFloat("LoadSu", networkLoadSu);
@@ -234,6 +240,7 @@ public abstract class RotationNode extends BlockEntity {
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         syncedRpm = tag.getFloat("Rpm");
+        visualAngle = tag.getFloat("Phase");
         ratio = tag.contains("Ratio") ? tag.getFloat("Ratio") : 1f;
         networkCapacitySu = tag.getFloat("CapacitySu");
         networkLoadSu = tag.getFloat("LoadSu");

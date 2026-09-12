@@ -59,8 +59,7 @@ public class HammerComponent implements IBlockComponentProvider {
             return;
 
         if (Readout.instrumented(Readout.Quantity.WORK))
-            tooltip.add(Component.translatable("feedback.readout.work", worked, required)
-                    .withStyle(ChatFormatting.AQUA));
+            tooltip.add(Readout.reading(Readout.Quantity.WORK, "feedback.readout.work", worked, required));
         else
             tooltip.add(Readout.progress(worked, required));
     }
