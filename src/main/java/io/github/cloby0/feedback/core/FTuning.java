@@ -109,10 +109,10 @@ public final class FTuning {
     // --- reciprocation --------------------------------------------------------------------
 
     /**
-     * Invented. Strokes delivered per RPM per tick, so a crank at 32 RPM lands one blow every
-     * ten ticks and a water wheel at 8 RPM one every forty.
+     * Invented. Strokes delivered per RPM per tick, so a water wheel at 8 RPM lands about one
+     * blow a second and a hand crank at 32 RPM about four.
      */
-    public static final float STROKES_PER_RPM_PER_TICK = 0.003125f;
+    public static final float STROKES_PER_RPM_PER_TICK = 0.00625f;
 
     /**
      * SLICE: the Mechanical Hammer delivers 12 St on a short throw and 3 on a long one.
@@ -128,8 +128,9 @@ public final class FTuning {
     /** SLICE: 80 Su, against the water wheel's 256. Three hammers fit; four do not. */
     public static final float HAMMER_LOAD_SU = 80f;
 
-    /** Invented. Three blows to a plate, at the slice's 30 Fu. */
-    public static final int HAMMER_FU_PER_STROKE = 10;
+    // Work per blow is deliberately NOT a figure here. It is force divided by the material's
+    // hardness -- see Deformation. A machine states the force it can deliver; what that
+    // accomplishes is the material's business.
 
     /**
      * Below this, a coasting network is called stopped. Without a floor, speed approaches zero

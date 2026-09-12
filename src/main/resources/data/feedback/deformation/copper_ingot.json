@@ -1,6 +1,6 @@
 {
   "input": { "item": "minecraft:copper_ingot" },
   "work": 30,
-  "minimum_strength": 1,
+  "hardness": 1,
   "result": { "id": "feedback:copper_plate" }
 }

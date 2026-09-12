@@ -20,19 +20,48 @@ import net.minecraft.world.item.crafting.Ingredient;
  * struck becomes foil because foil is what a struck plate <em>is</em>, not because the machine
  * decided to make foil.
  *
- * @param input      what is being worked. An Ingredient, so tags work and identity need not be
- *                   named -- "any copper ingot" is a property, "this exact item" is not.
- * @param work       cumulative Fu required to complete the change.
- * @param minimumSt  force each blow must reach to do anything at all. Below it the work does not
- *                   land; this is philosophy 7's hard gate, a genuine physical impossibility.
- * @param result     what it becomes.
+ * <h2>Hardness does both jobs</h2>
+ * There is deliberately no "force required" separate from "work required". Force and work were
+ * two numbers describing the same event, and nothing is strong enough to dent steel yet fails to
+ * slam copper -- so what a blow accomplishes is not a property of the machine at all. It is what
+ * the <em>material</em> does with the force it is handed:
+ * <pre>
+ *     Fu per blow  =  blow force (St)  /  hardness
+ * </pre>
+ * One number, doing both jobs. It is the floor below which nothing happens, and the divisor for
+ * how much lands above it. Copper's hardness of 1 means a 12 St blow dumps 12 Fu into it; steel's
+ * 15 means the same blow does nothing whatsoever.
+ * <p>
+ * The consequence is the interesting part. A hard blow on a soft material <em>overshoots</em> --
+ * three blows take copper to a plate and two more ruin it into foil, while a gentle blow gives
+ * ten and seven. So a short crank throw is the power option and a long one is the precision
+ * option, and neither is strictly better. A forging press really does wreck copper.
+ *
+ * @param input     what is being worked. An Ingredient, so tags work and identity need not be
+ *                  named -- "any copper ingot" is a property, "this exact item" is not.
+ * @param work      cumulative Fu required to complete the change.
+ * @param hardness  how stubborn the material is. Both the minimum force that does anything --
+ *                  philosophy 7's hard gate, a real impossibility rather than a slow version --
+ *                  and how little of a bigger blow actually lands.
+ * @param result    what it becomes.
  */
-public record Deformation(Ingredient input, int work, float minimumSt, ItemStack result) {
+public record Deformation(Ingredient input, int work, float hardness, ItemStack result) {
 
     public static final Codec<Deformation> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Ingredient.CODEC.fieldOf("input").forGetter(Deformation::input),
             Codec.INT.fieldOf("work").forGetter(Deformation::work),
-            Codec.FLOAT.optionalFieldOf("minimum_strength", 0f).forGetter(Deformation::minimumSt),
+            Codec.FLOAT.optionalFieldOf("hardness", 1f).forGetter(Deformation::hardness),
             ItemStack.CODEC.fieldOf("result").forGetter(Deformation::result)
     ).apply(instance, Deformation::new));
+
+    /**
+     * Fu this material absorbs from one blow of the given force, or 0 if the blow is too weak.
+     * Always at least 1 once the threshold is met, so a barely-sufficient blow still progresses
+     * rather than hammering forever at zero.
+     */
+    public int workFrom(float blowForce) {
+        if (blowForce < hardness)
+            return 0;
+        return Math.max(1, Math.round(blowForce / hardness));
+    }
 }

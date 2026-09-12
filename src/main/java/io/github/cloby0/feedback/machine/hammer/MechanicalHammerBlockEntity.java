@@ -44,6 +44,9 @@ import net.minecraft.world.level.block.state.BlockState;
  */
 public class MechanicalHammerBlockEntity extends BlockEntity implements Reciprocating, StrengthPair {
 
+    /** Stages one blow may cascade through. A guard against a table that loops back on itself. */
+    private static final int MAX_CASCADE = 8;
+
     private ItemStack workpiece = ItemStack.EMPTY;
 
     public MechanicalHammerBlockEntity(BlockPos pos, BlockState state) {
@@ -95,28 +98,41 @@ public class MechanicalHammerBlockEntity extends BlockEntity implements Reciproc
 
         Deformation deformation = maybe.get();
 
-        // Philosophy 7's hard gate: below the minimum force the blow simply does not land. Not a
-        // slower version of the process -- no version of it.
-        if (strength < deformation.minimumSt())
+        // How much a blow accomplishes is the material's business, not the machine's. Below the
+        // hardness threshold nothing lands at all -- philosophy 7's hard gate, a genuine
+        // impossibility rather than a slower version of the process.
+        int delivered = deformation.workFrom(strength);
+        if (delivered <= 0)
             return;
 
-        int worked = workpiece.getOrDefault(FDataComponents.WORK.get(), 0) + FTuning.HAMMER_FU_PER_STROKE;
+        int worked = workpiece.getOrDefault(FDataComponents.WORK.get(), 0) + delivered;
 
-        if (worked < deformation.work()) {
-            workpiece.set(FDataComponents.WORK.get(), worked);
-            // Carried alongside so the workpiece can describe its own progress wherever it goes,
-            // without anything having to look the material up.
-            workpiece.set(FDataComponents.WORK_REQUIRED.get(), deformation.work());
-            sync();
-            return;
+        // Surplus carries, and carries through a finished stage into the next one. A blow does
+        // not politely stop at the finish line, which is the whole point: a hard enough blow on
+        // a soft enough material runs straight past what you wanted. Overshoot is the mechanic,
+        // not an edge case.
+        Deformation stage = deformation;
+        for (int guard = 0; guard < MAX_CASCADE && worked >= stage.work(); guard++) {
+            worked -= stage.work();
+            workpiece = stage.result().copy();
+
+            Optional<Deformation> next = DeformationTable.get().find(workpiece);
+            if (next.isEmpty()) {
+                worked = 0;   // nothing further to become; the work has nowhere to go
+                break;
+            }
+            stage = next.get();
         }
 
-        // Done. The result starts fresh rather than carrying surplus work into the next stage,
-        // so a player counting strokes can predict the next one.
-        ItemStack result = deformation.result().copy();
-        result.remove(FDataComponents.WORK.get());
-        result.remove(FDataComponents.WORK_REQUIRED.get());
-        workpiece = result;
+        if (worked > 0) {
+            workpiece.set(FDataComponents.WORK.get(), worked);
+            // Required work rides along so the workpiece can describe its own progress wherever
+            // it goes, without anything having to look the material up.
+            workpiece.set(FDataComponents.WORK_REQUIRED.get(), stage.work());
+        } else {
+            workpiece.remove(FDataComponents.WORK.get());
+            workpiece.remove(FDataComponents.WORK_REQUIRED.get());
+        }
         sync();
     }
 
@@ -138,7 +154,7 @@ public class MechanicalHammerBlockEntity extends BlockEntity implements Reciproc
         }
         int worked = workpiece.getOrDefault(FDataComponents.WORK.get(), 0);
         String progress = DeformationTable.get().find(workpiece)
-                .map(d -> String.format("%d / %d Fu  (needs %.0f St)", worked, d.work(), d.minimumSt()))
+                .map(d -> String.format("%d / %d Fu  (hardness %.0f)", worked, d.work(), d.hardness()))
                 .orElse("cannot be worked further");
         player.displayClientMessage(Component.literal(
                 String.format("[debug] %s  |  %s", workpiece.getHoverName().getString(), progress)), false);
