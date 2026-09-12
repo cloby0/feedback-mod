@@ -1,0 +1,64 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## What this repository is
+
+This is the repository for **Feedback**, a Minecraft technology mod. The mod has not been written yet — right now the repo contains only design documentation. The eventual mod source will live here alongside these documents.
+
+There is therefore **no build system, no test suite, and no code to run yet**. Do not invent build/run instructions. When implementation begins, the loader (Forge / NeoForge / Fabric), Minecraft version, and project layout are all still undecided — ask rather than assume.
+
+Until then, the work is design: reasoning about mechanics, filling in open questions, and turning the documents below into a concrete specification.
+
+## The documents
+
+The design is intended to live in **three documents on a spectrum from idea to implementation**:
+
+| File | Role |
+| --- | --- |
+| `feedback_philosophy.md` | **Document 1 — authoritative.** Identity, principles, constraints. Worked examples only where they prove a principle is real. Open questions are marked `**[OPEN]**` inline and collected in §18; §19 lists things that look decided and are not. |
+| *(document 2 — mechanics)* | **Does not exist yet.** How each principle is implemented: unit arithmetic, the sensor/actuator matrix, the thermal model, energy networks, overrun band tuning, the control node set. |
+| *(document 3 — content)* | **Does not exist yet.** The roster: every item, material, machine, cover and process, and what each does. |
+| `feedback_slice_01.md` | **Working document, not one of the three.** The first playable vertical slice, built by `feedback_philosophy.md` §20's method — two beats (mechanical repetition, then thermal control), copper then steel. Concrete but explicitly placeholder-numbered. Its rules feed document 2; its objects feed document 3. Where it and the philosophy disagree, the philosophy wins. |
+| `speculative_physics_inspo_doc.md` | *A Speculative Physics and Biochemistry Compendium of Minecraft (Vanilla and Modded)* — the user's own worldbuilding document, ~2800 lines. Explicitly **not canon**. A **mindset reference** (how to reason about Minecraft phenomena scientifically) and a parts bin — the Liquid Teleportant chain and the "flagged exception" treatment of Redstone were already lifted from it. |
+| `feedback_notes_i.md`, `feedback_notes_ii.md` | **Superseded.** Write-ups of earlier design conversations the user had with a different AI. `feedback_philosophy.md` merges both and resolves their conflicts. Consult only for provenance; do not cite them as current design. |
+
+## The core pitch — state it precisely
+
+Machines do not recognize when a recipe is complete. They keep performing their physical action for as long as they have input and power. Continued operation past completion **acts on the already-finished output**, changing, degrading, spoiling, or endangering it.
+
+The last clause is the whole differentiator. GregTech 6 already has machines that idle and burn fuel forever; "always-on machines" is not the novel part. *The output is perishable to continued processing* is. Preserve this framing when describing the mod.
+
+## Hard design rules
+
+These are settled and constrain any proposal:
+
+- **No identity checks.** Nothing in the mod may route or sort on item identity ("if item == iron ingot"). All sorting exploits physical properties — density, magnetism, particle size, optical/reflectivity — each with real, exploitable weaknesses.
+- **Electricity is not the universal currency.** Mechanical, Thermal, and Chemical are natively consumable and never *have* to convert to Electrical. This is the explicit point of departure from GregTech, where everything funnels to EU.
+- **Machines define physical operations, not recipes.** A machine says "I apply this operation to whatever is here," never "I know how to make Copper Plate."
+- **Upgrades are physical components** you could point at — larger vessel, thicker insulation, flywheel, finer screen, better seal. "+50% throughput" is not a design concept; the question is what physical change causes it.
+- **Measurement, control, and actuation are separate systems** the player wires together. A sensor controls nothing; an actuator knows nothing; the controller has no built-in target. Precision is emergent from the whole loop, never a machine stat.
+- **Precision is never a hard gate.** Hard gates are genuine physical impossibilities (insufficient temperature, strength, work, pressure, material limits). Anything precision-limited stays *possible* — just unreliable and uneconomical. The shorthand: *the recipe is not locked, the process is difficult.*
+- **Manual production stays theoretically possible** for a surprising share of the game, at tiny rates. Automation makes processes practical; it does not unlock them.
+- **Sensing and stopping are separate problems, with distinct hardware per energy type** — and each cutoff has its own failure character (breakers arc and wear, clutches coast, thermal mass dissipates slowly, closing a reagent valve doesn't stop the reaction already underway).
+- **Don't build a physics simulator.** The test for any variable: *does modeling this create a meaningful engineering choice?* If not, abstract it away. Real engineering having the variable is not a reason.
+
+## Conventions
+
+- **Units:** `Tu` temperature — a *state*, not an amount of heat — `Pu` pressure, `Fu` cumulative mechanical work, `St` per-application strength, `Su` stress/load (Create's meaning — never speed), `RPM` rotational speed, `mB`/`mB/t` fluids, `Mu` mass (density is `Mu/mB`), `Qu` amount of substance (concentration is `Qu/mB`; a mole stand-in with no atomic implications), `Eu` electrical — voltage *and* current, the one non-scalar unit. Generic untyped energy is `Work`, spelled out and deliberately unabbreviated so it doesn't read as another currency; `Eu` is electricity's unit, not the mod's. Resistance is deliberately not modelled. Derive rates rather than invent them — `Tu/t`, `Eu/t`, `mB/t`. Show time as both: `600 t (30 s)`. Handy: 1 mB is exactly 1 litre (1000 mB fills a 1 m³ block), so `Mu` anchors to the kilogram and water is exactly `1 Mu/mB`.
+- **`[OPEN]`** marks an unresolved question inside the notes. Adding one is a legitimate outcome; silently resolving one is not.
+- **Hard gate vs. soft gate** (§7) is the load-bearing distinction: a hard gate is physical impossibility, a soft gate is a *reproducibility* gate — you can still succeed by luck. Precision only ever gates softly. If a proposal needs "requires tier N," it's wrong.
+- **Instrumentation is a yield technology, not a key** (§7). It unlocks nothing; it's bought because it improves the conversion ratio. Corollary that makes this work: failed batches must consume their inputs — the waste *is* the gate.
+- **The world resolves on truth, not on readings** (§8). Success is computed from real conditions; instruments never enter the calculation — a bad sensor costs you reproducibility, never success.
+- **There is an irreducible noise floor** (§8). No apparatus reaches zero variance, deliberately: if a factory could become fully deterministic, the optimal endgame is timers and the whole sensing layer becomes a discardable scaffold. Better equipment narrows the distribution, never collapses it. Model a variable only where the player can act on it; the rest is honest noise, not a simulated stand-in for noise.
+- **Difficulty stays flat; novelty goes up** (§14). Tolerances tighten, but tools improve in step — difficulty is the *ratio* of required to achievable precision, held roughly constant. What changes is the *kind* of hard (narrow → coupled → unstable → path-dependent), not the amount. A proposal that makes old work harder is wrong.
+- **Specialization should be emergent, never enforced** (§15). The vanilla Smoker and Crude Blast Furnace keep their traditional niches purely through thermal behavior — the recipe-type whitelists come off. If a proposal needs a whitelist to produce the right outcome, the physics isn't doing its job.
+- **"Which axis does this advance?"** (§14) is the question to ask of any proposed technology — progression is a profile across ten axes, not a rank.
+- **`feedback_philosophy.md` §19 lists explicit non-conclusions** — tier names, first machines, first materials, numbers, chemistry implementation, separator mapping, progression boundaries, control block implementation. Treat these as deliberately open. ("McGuffnium" appears in the old notes as a metaphor only; it is not a material.)
+- These are the user's own documents and a live design conversation. Propose and argue for changes; don't rewrite settled sections unprompted.
+
+## Outstanding work
+
+1. **Write document 2 (mechanics).** Not started. `feedback_philosophy.md` defers to it by name throughout — unit arithmetic, per-energy sensor/actuator pairings, the thermal model, overrun band tuning, vanilla furnace rework-vs-removal.
+2. **Write document 3 (content).** Not started, and downstream of 2.
+3. **Slice 1 is drafted** in `feedback_slice_01.md` and has five open decisions listed at its end — the biggest being whether the vanilla furnace survives the slice (§15). Slice 2 opens on tempering, which `feedback_slice_01.md` deliberately leaves dangling.
