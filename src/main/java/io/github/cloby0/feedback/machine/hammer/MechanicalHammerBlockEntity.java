@@ -104,6 +104,9 @@ public class MechanicalHammerBlockEntity extends BlockEntity implements Reciproc
 
         if (worked < deformation.work()) {
             workpiece.set(FDataComponents.WORK.get(), worked);
+            // Carried alongside so the workpiece can describe its own progress wherever it goes,
+            // without anything having to look the material up.
+            workpiece.set(FDataComponents.WORK_REQUIRED.get(), deformation.work());
             sync();
             return;
         }
@@ -112,6 +115,7 @@ public class MechanicalHammerBlockEntity extends BlockEntity implements Reciproc
         // so a player counting strokes can predict the next one.
         ItemStack result = deformation.result().copy();
         result.remove(FDataComponents.WORK.get());
+        result.remove(FDataComponents.WORK_REQUIRED.get());
         workpiece = result;
         sync();
     }

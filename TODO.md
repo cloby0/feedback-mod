@@ -85,7 +85,8 @@ Built and compiling: rotation engine (`RotationNode` / `RotationNetwork` / `Rota
 - [x] **Mechanical Hammer** — 80 Su, `12 / 3 St`, one blow per stroke
 - [x] **Crank Linkage** — short/long throw, swapped by right-clicking it; rotation to reciprocation
 - [x] **The `Fu` process** — 30 Fu to a plate, then plate → foil → scrap, as a datapack table
-- [ ] **Workpiece must be visible.** Slice 1 is explicit that a part-worked ingot *looks* part-worked and beat 1 ships no instrument at all. Right now the only way to see progress is the debug readout, which is exactly backwards. Needs either a block entity renderer showing the workpiece, or a qualitative tooltip — **adjectives, never figures**, until calipers exist
+- [x] **Workpiece progress is visible, in adjectives** — "Barely marked" → "Taking shape" → "Visibly worked" → "Nearly there". No figures: that is what calipers are for. The exact `Fu` is on the stack and deliberately not shown
+- [ ] **Workpiece should be visible in the machine too** — a block entity renderer showing what is on the anvil. The tooltip covers the lesson, but you currently cannot see that the hammer is occupied without clicking it
 - [ ] **Timer** — the slice's only automation before instruments
 - [ ] **Calipers** — `16 / 20 Fu`, and deliberately *after* the timer
 - [ ] Flywheel-based rendering for spinning shafts; currently the model does not visibly turn

@@ -68,8 +68,9 @@ public class HandCrankBlock extends Block implements EntityBlock, Rotatable {
 
     @Override
     public boolean hasShaftTowards(LevelAccessor level, BlockPos pos, BlockState state, Direction face) {
-        // The crank drives out of its back only -- the handle side is where the player stands.
-        return face == state.getValue(FACING).getOpposite();
+        // Drives along its whole axis rather than out of one face. An axle passes through, and
+        // being fussy about which end only produces cranks that silently do nothing.
+        return face.getAxis() == state.getValue(FACING).getAxis();
     }
 
     @Nullable

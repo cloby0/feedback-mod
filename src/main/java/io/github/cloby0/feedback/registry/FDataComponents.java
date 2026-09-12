@@ -29,6 +29,19 @@ public class FDataComponents {
                     .networkSynchronized(ByteBufCodecs.VAR_INT)
                     .build());
 
+    /**
+     * Fu this workpiece needs before it becomes the next thing.
+     * <p>
+     * Stored on the stack next to {@link #WORK} so the two travel together. That is what lets a
+     * tooltip say "nearly there" without the client knowing the deformation table, and it is the
+     * same pair the calipers will eventually report as {@code 16 / 20 Fu}.
+     */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> WORK_REQUIRED =
+            COMPONENTS.register("work_required", () -> DataComponentType.<Integer>builder()
+                    .persistent(Codec.INT)
+                    .networkSynchronized(ByteBufCodecs.VAR_INT)
+                    .build());
+
     private FDataComponents() {
     }
 

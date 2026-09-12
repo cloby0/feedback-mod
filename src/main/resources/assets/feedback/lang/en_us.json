@@ -7,5 +7,9 @@
   "item.feedback.copper_foil": "Copper Foil",
   "item.feedback.copper_scrap": "Copper Scrap",
   "block.feedback.crank_linkage": "Crank Linkage",
-  "block.feedback.mechanical_hammer": "Mechanical Hammer"
+  "block.feedback.mechanical_hammer": "Mechanical Hammer",
+  "feedback.workpiece.barely_marked": "Barely marked",
+  "feedback.workpiece.taking_shape": "Taking shape",
+  "feedback.workpiece.visibly_worked": "Visibly worked",
+  "feedback.workpiece.nearly_there": "Nearly there"
 }

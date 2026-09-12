@@ -98,9 +98,12 @@ public class CrankLinkageBlockEntity extends RotationNode {
     @Override
     public void debugReport(Player player) {
         super.debugReport(player);
+        Direction input = getFacing().getOpposite();
         player.displayClientMessage(Component.literal(
-                String.format("[debug] throw %s  |  %.0f St  |  driving %s",
+                String.format("[debug] throw %s  |  %.0f St  |  in from %s%s  |  out to %s: %s",
                         getThrow().getSerializedName(), getStrength(),
+                        input.getName(), getNetwork() == null ? " (no shaft)" : "",
+                        getFacing().getName(),
                         getDriven() == null ? "nothing" : "a machine")), false);
     }
 

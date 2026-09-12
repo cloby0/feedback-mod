@@ -46,10 +46,34 @@ public class CrankLinkageBlock extends Block implements EntityBlock, Rotatable {
         builder.add(FACING, THROW);
     }
 
+    /**
+     * Orient so the input end meets a shaft, if one is adjacent.
+     * <p>
+     * A linkage has a back that takes rotation and a front that pushes, and getting that
+     * backwards silently produces a machine that does nothing -- there is no error, it simply
+     * never turns. Rather than making the player reason about it, look for a shaft touching the
+     * spot being built on and face away from it.
+     */
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        // Point the output at the block clicked, so it drives what you placed it against.
-        return defaultBlockState().setValue(FACING, context.getClickedFace().getOpposite());
+        BlockPos pos = context.getClickedPos();
+        for (Direction face : context.getNearestLookingDirections()) {
+            if (presentsShaft(context.getLevel(), pos.relative(face), face.getOpposite()))
+                return defaultBlockState().setValue(FACING, face.getOpposite());
+        }
+        for (Direction face : Direction.values()) {
+            if (presentsShaft(context.getLevel(), pos.relative(face), face.getOpposite()))
+                return defaultBlockState().setValue(FACING, face.getOpposite());
+        }
+        // Nothing to couple to. Drive away from whatever was clicked, which is the usual intent.
+        return defaultBlockState().setValue(FACING, context.getClickedFace());
+    }
+
+    /** Does the block at {@code pos} offer a shaft end pointing at {@code towards}? */
+    private static boolean presentsShaft(LevelAccessor level, BlockPos pos, Direction towards) {
+        BlockState state = level.getBlockState(pos);
+        return state.getBlock() instanceof Rotatable rotatable
+                && rotatable.hasShaftTowards(level, pos, state, towards);
     }
 
     /**
