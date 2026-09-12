@@ -28,16 +28,29 @@ public class MechanicalHammerBlock extends Block implements EntityBlock {
         super(properties);
     }
 
+    /**
+     * Vanilla calls this even when the hand is empty, and only falls through to
+     * {@link #useWithoutItem} when told to with PASS_TO_DEFAULT_BLOCK_INTERACTION. Returning
+     * success for an empty hand therefore swallows the interaction -- which is exactly how
+     * extraction came to be unreachable without breaking the block.
+     */
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                               Player player, InteractionHand hand, BlockHitResult hit) {
+        if (stack.isEmpty() || player.isShiftKeyDown())
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         if (!(level.getBlockEntity(pos) instanceof MechanicalHammerBlockEntity hammer))
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
-        if (player.isShiftKeyDown())
-            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
 
-        if (!level.isClientSide && hammer.insert(stack))
-            return ItemInteractionResult.SUCCESS;
+        // An occupied hammer gives its workpiece back whatever you are holding. Requiring an
+        // empty hand reads as "there is no way to get it out" the first time you try it with a
+        // stack of ingots in hand, which is the only thing you would plausibly be holding.
+        if (!level.isClientSide) {
+            if (hammer.getWorkpiece().isEmpty())
+                hammer.insert(stack);
+            else
+                give(player, hammer.removeWorkpiece());
+        }
         return ItemInteractionResult.sidedSuccess(level.isClientSide);
     }
 
@@ -49,13 +62,17 @@ public class MechanicalHammerBlock extends Block implements EntityBlock {
         if (!level.isClientSide) {
             if (player.isShiftKeyDown())
                 hammer.debugReport(player);
-            else {
-                ItemStack taken = hammer.removeWorkpiece();
-                if (!taken.isEmpty() && !player.getInventory().add(taken))
-                    player.drop(taken, false);
-            }
+            else
+                give(player, hammer.removeWorkpiece());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    private static void give(Player player, ItemStack stack) {
+        if (stack.isEmpty())
+            return;
+        if (!player.getInventory().add(stack))
+            player.drop(stack, false);
     }
 
     @Override
