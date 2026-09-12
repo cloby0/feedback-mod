@@ -16,7 +16,13 @@ import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.core.Vec3i;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
@@ -31,6 +37,9 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * simulation inside it does not.
  */
 public class ShaftBlock extends RotatedPillarBlock implements EntityBlock, Rotatable {
+
+    /** Cap on how far an extend click will scan, so a very long line cannot stall the server. */
+    private static final int MAX_EXTEND_SCAN = 64;
 
     private static final VoxelShape X = box(0, 6, 6, 16, 10, 10);
     private static final VoxelShape Y = box(6, 0, 6, 10, 16, 10);
@@ -63,6 +72,59 @@ public class ShaftBlock extends RotatedPillarBlock implements EntityBlock, Rotat
     @Override
     public boolean hasShaftTowards(LevelAccessor level, BlockPos pos, BlockState state, Direction face) {
         return face.getAxis() == state.getValue(AXIS);
+    }
+
+    /**
+     * Clicking a shaft with a shaft in hand extends the run along its axis, placing at the far
+     * end rather than against the face you hit.
+     * <p>
+     * Pure quality of life, borrowed from Create because laying a shaft line by walking backwards
+     * on right click is miserable. Nothing about the mod depends on it.
+     */
+    @Override
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
+                                              Player player, InteractionHand hand, BlockHitResult hit) {
+        if (!stack.is(asItem()) || player.isShiftKeyDown())
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+
+        Direction.Axis axis = state.getValue(AXIS);
+        // Clicking an end face says which way to grow. Clicking the side of a shaft does not, so
+        // grow away from the player -- which is the direction they are almost certainly building.
+        Direction growth = hit.getDirection().getAxis() == axis
+                ? hit.getDirection()
+                : awayFromPlayer(axis, player, pos);
+
+        BlockPos target = pos.relative(growth);
+        for (int scanned = 0; scanned < MAX_EXTEND_SCAN; scanned++) {
+            BlockState at = level.getBlockState(target);
+            if (!at.is(this) || at.getValue(AXIS) != axis)
+                break;
+            target = target.relative(growth);
+        }
+
+        if (!level.getBlockState(target).canBeReplaced())
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+
+        if (!level.isClientSide) {
+            level.setBlockAndUpdate(target, defaultBlockState().setValue(AXIS, axis));
+            SoundType sound = getSoundType(state);
+            level.playSound(null, target, sound.getPlaceSound(), SoundSource.BLOCKS,
+                    (sound.getVolume() + 1f) / 2f, sound.getPitch() * 0.8f);
+            if (!player.getAbilities().instabuild)
+                stack.shrink(1);
+        }
+        return ItemInteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    private static Direction awayFromPlayer(Direction.Axis axis, Player player, BlockPos pos) {
+        Vec3i normal = Direction.get(Direction.AxisDirection.POSITIVE, axis).getNormal();
+        double along = player.position().x * normal.getX()
+                + player.position().y * normal.getY()
+                + player.position().z * normal.getZ();
+        double blockAlong = pos.getX() * normal.getX() + pos.getY() * normal.getY() + pos.getZ() * normal.getZ();
+        return Direction.get(along > blockAlong + 0.5
+                ? Direction.AxisDirection.NEGATIVE
+                : Direction.AxisDirection.POSITIVE, axis);
     }
 
     // TEMPORARY: sneak-right-click prints the network state. Development scaffolding, not a

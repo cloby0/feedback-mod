@@ -89,7 +89,7 @@ Built and compiling: rotation engine (`RotationNode` / `RotationNetwork` / `Rota
 - [ ] **Calipers** — `16 / 20 Fu`, and deliberately *after* the timer
 - [ ] Flywheel-based rendering for spinning shafts; currently the model does not visibly turn
 - [ ] Real textures
-- [ ] **Shaft placement QoL** — clicking a shaft while holding a shaft extends the run along its axis, the way Create does. Not required for anything; it is just far nicer than walking backwards holding right click. Small, maybe 20 lines. Worth doing before any long playtest, because laying shafts is most of what testing the rotation network involves
+- [x] **Shaft placement QoL** — clicking a shaft while holding a shaft extends the run along its axis, the way Create does. Clicking an end face grows that way; clicking a side grows away from the player. Sneak to suppress it and place normally
 - [ ] **Delete the temporary debug readout** (`RotationNode#debugReport`, sneak-right-click). It hands out exact figures with no instrument, which is §8 backwards. It exists only because nothing visibly turns yet
 
 ### Decisions taken while building, worth revisiting
