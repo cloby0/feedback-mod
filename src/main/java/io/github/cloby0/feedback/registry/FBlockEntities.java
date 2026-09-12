@@ -2,6 +2,8 @@ package io.github.cloby0.feedback.registry;
 
 import io.github.cloby0.feedback.Feedback;
 import io.github.cloby0.feedback.machine.crank.HandCrankBlockEntity;
+import io.github.cloby0.feedback.machine.hammer.MechanicalHammerBlockEntity;
+import io.github.cloby0.feedback.machine.linkage.CrankLinkageBlockEntity;
 import io.github.cloby0.feedback.machine.shaft.ShaftBlockEntity;
 import io.github.cloby0.feedback.machine.waterwheel.WaterWheelBlockEntity;
 
@@ -29,6 +31,16 @@ public class FBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<WaterWheelBlockEntity>> WATER_WHEEL =
             BLOCK_ENTITIES.register("water_wheel", () -> BlockEntityType.Builder
                     .of(WaterWheelBlockEntity::new, FBlocks.WATER_WHEEL.get())
+                    .build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CrankLinkageBlockEntity>> CRANK_LINKAGE =
+            BLOCK_ENTITIES.register("crank_linkage", () -> BlockEntityType.Builder
+                    .of(CrankLinkageBlockEntity::new, FBlocks.CRANK_LINKAGE.get())
+                    .build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MechanicalHammerBlockEntity>> MECHANICAL_HAMMER =
+            BLOCK_ENTITIES.register("mechanical_hammer", () -> BlockEntityType.Builder
+                    .of(MechanicalHammerBlockEntity::new, FBlocks.MECHANICAL_HAMMER.get())
                     .build(null));
 
     private FBlockEntities() {

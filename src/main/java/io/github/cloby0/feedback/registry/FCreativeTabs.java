@@ -23,6 +23,8 @@ public class FCreativeTabs {
                         output.accept(FItems.SHAFT.get());
                         output.accept(FItems.HAND_CRANK.get());
                         output.accept(FItems.WATER_WHEEL.get());
+                        output.accept(FItems.CRANK_LINKAGE.get());
+                        output.accept(FItems.MECHANICAL_HAMMER.get());
                         output.accept(FItems.COPPER_PLATE.get());
                         output.accept(FItems.COPPER_FOIL.get());
                         output.accept(FItems.COPPER_SCRAP.get());

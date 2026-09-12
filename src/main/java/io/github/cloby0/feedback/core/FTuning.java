@@ -106,6 +106,31 @@ public final class FTuning {
      */
     public static final float MINIMUM_BRAKING_SU = 0.5f;
 
+    // --- reciprocation --------------------------------------------------------------------
+
+    /**
+     * Invented. Strokes delivered per RPM per tick, so a crank at 32 RPM lands one blow every
+     * ten ticks and a water wheel at 8 RPM one every forty.
+     */
+    public static final float STROKES_PER_RPM_PER_TICK = 0.003125f;
+
+    /**
+     * SLICE: the Mechanical Hammer delivers 12 St on a short throw and 3 on a long one.
+     * <p>
+     * Note there is deliberately no matching pair for work. A lever trades force against
+     * distance and the work per stroke is the same either way, so throw changes how hard a blow
+     * lands and not how fast the job goes. That is exactly why copper -- which yields to almost
+     * nothing -- lets a player install the wrong crank and never find out.
+     */
+    public static final float HAMMER_ST_SHORT = 12f;
+    public static final float HAMMER_ST_LONG = 3f;
+
+    /** SLICE: 80 Su, against the water wheel's 256. Three hammers fit; four do not. */
+    public static final float HAMMER_LOAD_SU = 80f;
+
+    /** Invented. Three blows to a plate, at the slice's 30 Fu. */
+    public static final int HAMMER_FU_PER_STROKE = 10;
+
     /**
      * Below this, a coasting network is called stopped. Without a floor, speed approaches zero
      * asymptotically and machines tick forever at 0.0001 RPM.

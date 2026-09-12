@@ -1,0 +1,173 @@
+package io.github.cloby0.feedback.machine.hammer;
+
+import io.github.cloby0.feedback.core.FTuning;
+import io.github.cloby0.feedback.machine.linkage.Reciprocating;
+import io.github.cloby0.feedback.machine.linkage.StrengthPair;
+import io.github.cloby0.feedback.machine.linkage.Throw;
+import io.github.cloby0.feedback.process.Deformation;
+import io.github.cloby0.feedback.process.DeformationTable;
+import io.github.cloby0.feedback.registry.FBlockEntities;
+import io.github.cloby0.feedback.registry.FDataComponents;
+
+import java.util.Optional;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+
+/**
+ * Hits whatever is in front of it, forever.
+ *
+ * <h2>The whole mod, in one block</h2>
+ * The hammer has no recipe list and no notion of completion. It delivers {@code Fu} at whatever
+ * {@code St} its linkage provides, and it keeps doing that for as long as it is driven. When the
+ * workpiece has taken enough work it becomes the next thing along the same physical axis -- and
+ * then the hammer carries straight on working <em>that</em>.
+ * <p>
+ * Copper ingot to plate is the process. Plate to foil is the same process, not a malfunction:
+ * foil is a real material the thermometer needs, so the first overrun a player meets is a
+ * sidegrade rather than a punishment. Only past foil is there scrap.
+ * <p>
+ * Nothing here decides any of that. The chain lives in {@link DeformationTable} as a property of
+ * the material, and the hammer never consults it for anything except "how much work does this
+ * need and how hard must I hit it".
+ */
+public class MechanicalHammerBlockEntity extends BlockEntity implements Reciprocating, StrengthPair {
+
+    private ItemStack workpiece = ItemStack.EMPTY;
+
+    public MechanicalHammerBlockEntity(BlockPos pos, BlockState state) {
+        super(FBlockEntities.MECHANICAL_HAMMER.get(), pos, state);
+    }
+
+    public ItemStack getWorkpiece() {
+        return workpiece;
+    }
+
+    public ItemStack removeWorkpiece() {
+        ItemStack taken = workpiece;
+        workpiece = ItemStack.EMPTY;
+        sync();
+        return taken;
+    }
+
+    public boolean insert(ItemStack stack) {
+        if (!workpiece.isEmpty() || stack.isEmpty())
+            return false;
+        workpiece = stack.split(1);
+        sync();
+        return true;
+    }
+
+    @Override
+    public float getStrength(Throw installed) {
+        return installed == Throw.SHORT ? FTuning.HAMMER_ST_SHORT : FTuning.HAMMER_ST_LONG;
+    }
+
+    @Override
+    public float getLoadSu() {
+        return FTuning.HAMMER_LOAD_SU;
+    }
+
+    @Override
+    public void onStroke(float strength) {
+        if (level == null || level.isClientSide)
+            return;
+
+        playBlow();
+
+        if (workpiece.isEmpty())
+            return;
+
+        Optional<Deformation> maybe = DeformationTable.get().find(workpiece);
+        if (maybe.isEmpty())
+            return; // Nothing this material does under a hammer. Scrap is already scrap.
+
+        Deformation deformation = maybe.get();
+
+        // Philosophy 7's hard gate: below the minimum force the blow simply does not land. Not a
+        // slower version of the process -- no version of it.
+        if (strength < deformation.minimumSt())
+            return;
+
+        int worked = workpiece.getOrDefault(FDataComponents.WORK.get(), 0) + FTuning.HAMMER_FU_PER_STROKE;
+
+        if (worked < deformation.work()) {
+            workpiece.set(FDataComponents.WORK.get(), worked);
+            sync();
+            return;
+        }
+
+        // Done. The result starts fresh rather than carrying surplus work into the next stage,
+        // so a player counting strokes can predict the next one.
+        ItemStack result = deformation.result().copy();
+        result.remove(FDataComponents.WORK.get());
+        workpiece = result;
+        sync();
+    }
+
+    private void playBlow() {
+        if (level == null)
+            return;
+        level.playSound(null, worldPosition, SoundEvents.ANVIL_LAND, SoundSource.BLOCKS, 0.15f, 1.6f);
+    }
+
+    /**
+     * TEMPORARY, like the rotation readout. Slice 1 says a part-worked ingot should <em>look</em>
+     * part-worked and need no instrument at all -- that is a rendering job which does not exist
+     * yet, and until it does this is the only way to see the mechanic working.
+     */
+    public void debugReport(Player player) {
+        if (workpiece.isEmpty()) {
+            player.displayClientMessage(Component.literal("[debug] hammer empty"), false);
+            return;
+        }
+        int worked = workpiece.getOrDefault(FDataComponents.WORK.get(), 0);
+        String progress = DeformationTable.get().find(workpiece)
+                .map(d -> String.format("%d / %d Fu  (needs %.0f St)", worked, d.work(), d.minimumSt()))
+                .orElse("cannot be worked further");
+        player.displayClientMessage(Component.literal(
+                String.format("[debug] %s  |  %s", workpiece.getHoverName().getString(), progress)), false);
+    }
+
+    public void sync() {
+        setChanged();
+        if (level != null && !level.isClientSide)
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+    }
+
+    @Override
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        if (!workpiece.isEmpty())
+            tag.put("Workpiece", workpiece.save(registries));
+    }
+
+    @Override
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        workpiece = tag.contains("Workpiece")
+                ? ItemStack.parse(registries, tag.getCompound("Workpiece")).orElse(ItemStack.EMPTY)
+                : ItemStack.EMPTY;
+    }
+
+    @Override
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        return saveWithoutMetadata(registries);
+    }
+
+    @Override
+    public Packet<ClientGamePacketListener> getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
+    }
+}

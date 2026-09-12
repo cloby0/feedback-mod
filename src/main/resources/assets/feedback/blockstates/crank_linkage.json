@@ -1,0 +1,17 @@
+{
+  "variants": {
+    "facing=north,throw=short": { "model": "feedback:block/crank_linkage_short" },
+    "facing=south,throw=short": { "model": "feedback:block/crank_linkage_short", "y": 180 },
+    "facing=west,throw=short":  { "model": "feedback:block/crank_linkage_short", "y": 270 },
+    "facing=east,throw=short":  { "model": "feedback:block/crank_linkage_short", "y": 90 },
+    "facing=up,throw=short":    { "model": "feedback:block/crank_linkage_short", "x": 270 },
+    "facing=down,throw=short":  { "model": "feedback:block/crank_linkage_short", "x": 90 },
+
+    "facing=north,throw=long": { "model": "feedback:block/crank_linkage_long" },
+    "facing=south,throw=long": { "model": "feedback:block/crank_linkage_long", "y": 180 },
+    "facing=west,throw=long":  { "model": "feedback:block/crank_linkage_long", "y": 270 },
+    "facing=east,throw=long":  { "model": "feedback:block/crank_linkage_long", "y": 90 },
+    "facing=up,throw=long":    { "model": "feedback:block/crank_linkage_long", "x": 270 },
+    "facing=down,throw=long":  { "model": "feedback:block/crank_linkage_long", "x": 90 }
+  }
+}

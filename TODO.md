@@ -82,15 +82,22 @@ Not started. Philosophy defers to it **by name** in these places; each is a debt
 
 Built and compiling: rotation engine (`RotationNode` / `RotationNetwork` / `RotationPropagator`), Shaft, Hand Crank, Water Wheel, and the three copper overrun items. Placeholder art throughout (vanilla textures).
 
-- [ ] **Mechanical Hammer** — 80 Su, `12 / 3 St`, one blow per cycle
-- [ ] **Crank Linkage** — short/long throw variants; rotation to reciprocation
-- [ ] **The `Fu` process** — 30 Fu to a plate, then plate → foil → scrap on continued striking
+- [x] **Mechanical Hammer** — 80 Su, `12 / 3 St`, one blow per stroke
+- [x] **Crank Linkage** — short/long throw, swapped by right-clicking it; rotation to reciprocation
+- [x] **The `Fu` process** — 30 Fu to a plate, then plate → foil → scrap, as a datapack table
+- [ ] **Workpiece must be visible.** Slice 1 is explicit that a part-worked ingot *looks* part-worked and beat 1 ships no instrument at all. Right now the only way to see progress is the debug readout, which is exactly backwards. Needs either a block entity renderer showing the workpiece, or a qualitative tooltip — **adjectives, never figures**, until calipers exist
 - [ ] **Timer** — the slice's only automation before instruments
 - [ ] **Calipers** — `16 / 20 Fu`, and deliberately *after* the timer
 - [ ] Flywheel-based rendering for spinning shafts; currently the model does not visibly turn
 - [ ] Real textures
 - [x] **Shaft placement QoL** — clicking a shaft while holding a shaft extends the run along its axis, the way Create does. Clicking an end face grows that way; clicking a side grows away from the player. Sneak to suppress it and place normally
 - [ ] **Delete the temporary debug readout** (`RotationNode#debugReport`, sneak-right-click). It hands out exact figures with no instrument, which is §8 backwards. It exists only because nothing visibly turns yet
+
+### Slice discrepancies found while building
+
+- **"Thin plate" is in the chain but not in the roster.** `feedback_slice_01.md` writes the overrun as `ingot → plate → thin plate → foil → scrap`, but the 12-item list has only Plate, Foil and Scrap. Implemented as three stages. Either add the item or fix the line.
+- **"About 8 ticks, there is a plate" does not survive a coherent stroke model.** One blow per revolution puts a plate at ~30 ticks on a hand crank and ~120 on an 8 RPM water wheel. 8 ticks would need either enormous speeds or a blow that does the whole job. The slower figures are implemented; the slice line should probably change.
+- **Throw does not change work per stroke, only `St`.** A lever trades force against distance, so work per stroke is identical either way. This makes the slice's copper lesson *literally* true — both cranks flatten copper at the same rate, so the player cannot detect the wrong choice until steel asks for 15 St. It is also why the bellows figures run the other way: a bellows wants displacement, not work, so the long throw wins there. Same lever, two figures of merit.
 
 ### Decisions taken while building, worth revisiting
 

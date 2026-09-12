@@ -2,6 +2,8 @@ package io.github.cloby0.feedback.registry;
 
 import io.github.cloby0.feedback.Feedback;
 import io.github.cloby0.feedback.machine.crank.HandCrankBlock;
+import io.github.cloby0.feedback.machine.hammer.MechanicalHammerBlock;
+import io.github.cloby0.feedback.machine.linkage.CrankLinkageBlock;
 import io.github.cloby0.feedback.machine.shaft.ShaftBlock;
 import io.github.cloby0.feedback.machine.waterwheel.WaterWheelBlock;
 
@@ -35,6 +37,20 @@ public class FBlocks {
                     .mapColor(MapColor.WOOD)
                     .strength(2.0f)
                     .sound(SoundType.WOOD)
+                    .noOcclusion()));
+
+    public static final DeferredBlock<CrankLinkageBlock> CRANK_LINKAGE = BLOCKS.register("crank_linkage",
+            () -> new CrankLinkageBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.METAL)
+                    .strength(3.0f)
+                    .sound(SoundType.COPPER)
+                    .noOcclusion()));
+
+    public static final DeferredBlock<MechanicalHammerBlock> MECHANICAL_HAMMER = BLOCKS.register("mechanical_hammer",
+            () -> new MechanicalHammerBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.STONE)
+                    .strength(3.5f)
+                    .sound(SoundType.STONE)
                     .noOcclusion()));
 
     private FBlocks() {

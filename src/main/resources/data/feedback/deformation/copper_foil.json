@@ -1,0 +1,6 @@
+{
+  "input": { "item": "feedback:copper_foil" },
+  "work": 20,
+  "minimum_strength": 1,
+  "result": { "id": "feedback:copper_scrap" }
+}
