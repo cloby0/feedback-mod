@@ -96,6 +96,9 @@ public class RotationPropagator {
         // turning line does not stop it dead. Its ratio is 1 by construction, so its speed is
         // the network's speed.
         float inheritedRpm = reference.getRpm();
+        // Read the phase off the old NETWORK, not off the node. A node's own visualAngle is only
+        // written when it syncs, so between syncs it is stale, while the network's is live.
+        float inheritedPhase = reference.getNetwork() == null ? 0f : reference.getNetwork().getPhase();
 
         // Retire whatever networks these nodes used to belong to. Without this the old network
         // object stays in the registry with its members still listed, and goes on ticking
@@ -115,6 +118,7 @@ public class RotationPropagator {
             network.add(node);
         }
         network.inheritSpeed(inheritedRpm);
+        network.inheritPhase(inheritedPhase);
         network.setTargetRpm(strongest != null ? strongest.getGeneratedRpm() : 0);
         network.recalculate();
 

@@ -149,6 +149,23 @@ public class RotationNetwork {
     }
 
     /**
+     * Carry the angle across a rebuild, alongside the momentum.
+     * <p>
+     * A fresh network starts at zero, and rebuilding is not a physical event -- it happens
+     * whenever anything anywhere on the run changes. Without this, cutting a shaft free snapped
+     * the whole severed run to straight, which looked exactly like it had stopped dead and
+     * quietly hid the coast-down it was actually doing.
+     * <p>
+     * Which angle gets inherited is decided by which node is the reference, and that falls out
+     * correctly on its own: splitting a run takes the reference from the severed side, so it
+     * keeps its own angle and nothing jumps; joining a run takes it from the driving source, so
+     * the newcomer snaps into line with what it was bolted to.
+     */
+    public void inheritPhase(float degrees) {
+        this.phase = degrees % 360f;
+    }
+
+    /**
      * Advance the network one tick: move current speed toward target.
      * <p>
      * Called once per level tick by {@link RotationTicker}, not by the blocks -- momentum belongs

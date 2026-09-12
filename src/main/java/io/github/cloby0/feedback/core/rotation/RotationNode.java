@@ -178,13 +178,32 @@ public abstract class RotationNode extends BlockEntity {
      * 12 RPM and refuses to animate.
      */
     public void syncSpeedNow() {
-        syncedRpm = getRpm();
-        // Adopt the run's shared angle at the same moment as its speed. After this every member
-        // advances by the same amount each tick, so agreeing once is agreeing forever -- which is
-        // what stops a reconnected shaft from turning at the right speed in the wrong phase.
-        if (network != null)
-            visualAngle = network.getPhase() * ratio;
+        syncedRpm = liveRpm();
+        visualAngle = livePhase();
         sync();
+    }
+
+    /**
+     * This node's speed as the server currently knows it, falling back to the cached value on the
+     * client, where there is no network to ask.
+     */
+    private float liveRpm() {
+        if (level == null || level.isClientSide || network == null)
+            return syncedRpm;
+        return network.getCurrentRpm() * ratio;
+    }
+
+    /**
+     * The run's shared angle, scaled by this node's gearing.
+     * <p>
+     * Taken from the network rather than accumulated per block, because a shaft run is bolted
+     * together and its parts cannot be at different angles. Every member reads the same number,
+     * so they agree by construction instead of by luck.
+     */
+    private float livePhase() {
+        if (level == null || level.isClientSide || network == null)
+            return visualAngle;
+        return network.getPhase() * ratio;
     }
 
     public void tickClient() {
@@ -229,8 +248,17 @@ public abstract class RotationNode extends BlockEntity {
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
-        tag.putFloat("Rpm", syncedRpm);
-        tag.putFloat("Phase", visualAngle);
+        // Write what is true NOW, not what was last cached in these fields.
+        //
+        // This is worth being careful about because getting it wrong is so hard to read from the
+        // symptom. syncedRpm and visualAngle are client-facing caches; on the server the live
+        // values live on the network and change every tick. Shipping the cached ones meant every
+        // sync handed the client a stale angle, which it snapped back to and then advanced from
+        // -- so a machine changing speed appeared to rubber-band, jumping to straight and turning
+        // a little, over and over. The same staleness made a coasting run look like it had
+        // stopped dead the instant it was cut free.
+        tag.putFloat("Rpm", liveRpm());
+        tag.putFloat("Phase", livePhase());
         tag.putFloat("Ratio", ratio);
         tag.putFloat("CapacitySu", networkCapacitySu);
         tag.putFloat("LoadSu", networkLoadSu);
