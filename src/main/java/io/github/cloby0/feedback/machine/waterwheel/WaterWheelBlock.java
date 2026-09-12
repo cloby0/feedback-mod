@@ -11,6 +11,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -41,6 +42,20 @@ public class WaterWheelBlock extends RotatedPillarBlock implements EntityBlock, 
     @Override
     public boolean hasShaftTowards(LevelAccessor level, BlockPos pos, BlockState state, Direction face) {
         return face.getAxis() == state.getValue(AXIS);
+    }
+
+    /**
+     * Kept out of the chunk mesh, because {@code RotatingVisual} draws this block itself and would
+     * otherwise put a turning copy on top of a motionless one. With Flywheel's backend off,
+     * {@code RotatingRenderer} draws it instead; there is no path where nothing does.
+     * <p>
+     * {@code ENTITYBLOCK_ANIMATED} rather than {@code INVISIBLE}: the chunk mesh skips both, but
+     * only {@code INVISIBLE} also suppresses block-breaking particles, and a shaft that shatters
+     * silently is a sense taken away for nothing.
+     */
+    @Override
+    protected RenderShape getRenderShape(BlockState state) {
+        return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Nullable

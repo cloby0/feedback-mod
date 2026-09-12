@@ -13,7 +13,10 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -87,9 +90,32 @@ public class ClutchBlock extends Block implements EntityBlock, Rotatable {
         return face == output && state.getValue(ENGAGED);
     }
 
+    /**
+     * Kept out of the chunk mesh, because {@code RotatingVisual} draws this block itself and would
+     * otherwise put a turning copy on top of a motionless one. With Flywheel's backend off,
+     * {@code RotatingRenderer} draws it instead; there is no path where nothing does.
+     * <p>
+     * {@code ENTITYBLOCK_ANIMATED} rather than {@code INVISIBLE}: the chunk mesh skips both, but
+     * only {@code INVISIBLE} also suppresses block-breaking particles, and a shaft that shatters
+     * silently is a sense taken away for nothing.
+     */
+    @Override
+    protected RenderShape getRenderShape(BlockState state) {
+        return RenderShape.ENTITYBLOCK_ANIMATED;
+    }
+
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new ClutchBlockEntity(pos, state);
+    }
+
+    @Nullable
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
+        // The clutch does its own work on right click and needs no server tick. The client tick is
+        // purely the rendered angle -- without it a clutch sits frozen in the middle of a run that
+        // is plainly turning, which reads as the clutch being disengaged when it is not.
+        return level.isClientSide ? (l, p, s, be) -> ((ClutchBlockEntity) be).tickClient() : null;
     }
 }

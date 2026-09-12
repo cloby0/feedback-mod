@@ -14,6 +14,7 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.DirectionalBlock;
 import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -64,6 +65,20 @@ public class HandCrankBlock extends Block implements EntityBlock, Rotatable {
         // Drives along its whole axis rather than out of one face. An axle passes through, and
         // being fussy about which end only produces cranks that silently do nothing.
         return face.getAxis() == state.getValue(FACING).getAxis();
+    }
+
+    /**
+     * Kept out of the chunk mesh, because {@code RotatingVisual} draws this block itself and would
+     * otherwise put a turning copy on top of a motionless one. With Flywheel's backend off,
+     * {@code RotatingRenderer} draws it instead; there is no path where nothing does.
+     * <p>
+     * {@code ENTITYBLOCK_ANIMATED} rather than {@code INVISIBLE}: the chunk mesh skips both, but
+     * only {@code INVISIBLE} also suppresses block-breaking particles, and a shaft that shatters
+     * silently is a sense taken away for nothing.
+     */
+    @Override
+    protected RenderShape getRenderShape(BlockState state) {
+        return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Nullable

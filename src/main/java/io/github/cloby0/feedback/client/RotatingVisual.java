@@ -3,6 +3,9 @@ package io.github.cloby0.feedback.client;
 import io.github.cloby0.feedback.core.rotation.Rotatable;
 import io.github.cloby0.feedback.core.rotation.RotationNode;
 
+import java.util.function.Consumer;
+
+import dev.engine_room.flywheel.api.instance.Instance;
 import dev.engine_room.flywheel.api.visual.DynamicVisual;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
 import dev.engine_room.flywheel.lib.instance.InstanceTypes;
@@ -74,6 +77,12 @@ public class RotatingVisual extends AbstractBlockEntityVisual<RotationNode> impl
         relight(instance);
     }
 
+    /** Feeds the block-breaking crack overlay, which would otherwise draw on nothing. */
+    @Override
+    public void collectCrumblingInstances(Consumer<Instance> consumer) {
+        consumer.accept(instance);
+    }
+
     @Override
     protected void _delete() {
         instance.delete();
@@ -84,8 +93,8 @@ public class RotatingVisual extends AbstractBlockEntityVisual<RotationNode> impl
      * <p>
      * {@code skipVanillaRender} is left at its default of always skipping, which suppresses the
      * fallback {@link RotatingRenderer} while the backend is on. It does <em>not</em> suppress the
-     * static chunk model — that is what {@code RenderShape.INVISIBLE} on the block is for, and
-     * without both the block is drawn twice, once still and once spinning.
+     * static chunk model — that is what the block's own {@code RenderShape} is for, and without
+     * both the block is drawn twice, once still and once spinning.
      */
     public static <T extends RotationNode> SimpleBlockEntityVisualizer.Factory<T> factory() {
         return RotatingVisual::new;

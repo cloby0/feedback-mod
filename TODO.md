@@ -35,11 +35,11 @@ Platform decided: **NeoForge, Minecraft 1.21.1.**
 
 ### Library decisions
 
-Dev environment currently loads **JEI**, **PonderLib** and **Flywheel** (transitive via Ponder) out of `run/mods`, synced by the `syncDevMods` Gradle task. None are shipped dependencies yet.
+Dev environment loads **JEI**, **PonderLib**, **Jade** and **Flywheel** out of `run/mods`, synced by the `syncDevMods` Gradle task. **Flywheel is now a shipped dependency** — `compileOnlyApi` on the API, `jarJar(runtimeOnly)` on the implementation, pinned to `1.0.4` with the range `[1.0.0,2.0)`. The rest are still dev-only.
 
 - [x] **JEI** — dev only, now with a written plugin. Our machines still have no recipe list; what the browser shows is the *material* table, as process cards (see below)
 - [x] **PonderLib** — the designated explanation channel (§8, *Documentation is a free sense*). Scenes teach verbs, never values or solutions. Promote to a real dependency when the first scene is written
-- [x] **Flywheel** — **yes, will be a real dependency.** Instanced rendering; without it every spinning shaft is its own draw call. Create's `SingleAxisRotatingVisual` / `RotatingInstance` are the reference (MIT)
+- [x] **Flywheel** — **a real dependency, declared and jarJar'd.** Instanced rendering; without it every spinning shaft is its own draw call. Create's `SingleAxisRotatingVisual` / `RotatingInstance` were the reference (MIT). Pinned to the version Ponder already drags into the dev run, so the API we compile against is the implementation we test against
 - [x] **GeckoLib** — **no.** It plays authored keyframe animations; our motion must be procedural, because a machine's visible state is a readout the player reasons from. A fixed-length animation decouples the visual from the mechanics, and a machine that visually lies contradicts §8
 - [x] **Cloth Config** — **no.** NeoForge's built-in config is sufficient, and our config surface should stay small: numbers here are design decisions, not user preferences
 - [x] **Registrate** — **no.** Saves registration boilerplate but hides what registration says. Legibility beats brevity on this project
@@ -113,10 +113,20 @@ Governed by §8's *what you need is free, what you have is a cost*. Write these 
 - [x] **Calipers** — held tool; turns the workpiece adjective into `9 / 14 Fu`, on the item and on the hammer through Jade. No right-click to take a reading: applying calipers is a real action but as a mechanic it is a keystroke with no decision in it, and §3 cuts mechanics that are real, well-precedented and simply not fun
 - [x] **The instrument seam is per-quantity now** — `Readout.instrumented(Quantity)`. Calipers answer for `WORK` only; owning one instrument must not sharpen every readout in the game. Still not per-*resolution*, which §8 eventually wants ("each tier buys significant figures") — the call sites are shaped for it
 - [ ] **[OPEN] Calipers on an untouched ingot show nothing**, because an unworked item carries no `WORK_REQUIRED`. The client now has the deformation table (JEI sync), so they *could* read `0 / 14 Fu`. Low value — that figure is a requirement and JEI already gives it away for free
-- [ ] Flywheel-based rendering for spinning shafts; currently the model does not visibly turn
+- [x] **Flywheel-based rendering for spinning shafts.** Shaft, Hand Crank, Water Wheel and Clutch now turn. One visual class (`client/RotatingVisual`) over `RotationNode`, spinning `Models.block(state)` about `Rotatable.getRotationAxis`, plus a plain `client/RotatingRenderer` for players who have the backend off. §8's claim that the player's own senses are free was a fiction until this landed — a running factory and a dead one looked identical
 - [ ] Real textures
 - [x] **Shaft placement QoL** — clicking a shaft while holding a shaft extends the run along its axis, the way Create does. Clicking an end face grows that way; clicking a side grows away from the player. Sneak to suppress it and place normally
 - [x] **Delete the temporary debug readout** (`RotationNode#debugReport`, sneak-right-click). It hands out exact figures with no instrument, which is §8 backwards. Gone, along with the four other `debugReport`s and every sneak-click handler; the Debug Helmet is its replacement
+
+### Rendering — decisions taken while building
+
+- **`ENTITYBLOCK_ANIMATED`, not `RenderShape.INVISIBLE`.** Both keep the block out of the chunk mesh, which is the thing that matters: Flywheel's `skipVanillaRender` suppresses only the *block entity renderer*, so without this the block would be drawn twice, once still and once spinning. But vanilla also gates block-breaking particles on `INVISIBLE` specifically, and a shaft that shatters silently loses a sense for nothing. Create uses `ENTITYBLOCK_ANIMATED` throughout for the same reason.
+- **A fallback renderer is not optional.** Leaving the chunk mesh means the block entity is the *only* thing drawing a shaft, so with Flywheel's backend disabled every shaft in the world would simply vanish. `RotatingRenderer` guards on `VisualizationManager.supportsVisualization` exactly as Create's `KineticBlockEntityRenderer` does.
+- **CPU transforms, not a rotation shader.** Create spins on the GPU with its own `rotating.vert`, which is an *asset* and All Rights Reserved even though Create's code is MIT. Flywheel's built-in `TRANSFORMED` instance type with a per-frame transform is still one draw call for the whole shaft run; a GPU-side clock is a later optimisation, not the entry price.
+- **`0.3f` degrees per tick per RPM is now `RotationNode.DEGREES_PER_TICK_PER_RPM`,** and both the visual and the fallback extrapolate with it. The renderer runs per frame and the simulation per tick, so the two have to agree or a slow shaft lurches around the angle the simulation actually holds.
+- **The Clutch gained a client ticker** it never had — it does all its work on right click and needs no server tick, but without a client tick its angle never advanced and it sat frozen in the middle of a run that was plainly turning, which reads as disengaged when it is not.
+- **Nothing visual was verified.** `./gradlew build` passes and a dedicated server boots clean with no client-only class loaded, which is all that can be checked without a window. Still unconfirmed by eye: that the four blocks actually turn, that none is drawn twice, that none has vanished, that the speed on screen matches the RPM Jade reports, and that the fallback draws correctly with Flywheel's backend set to `OFF`.
+- **The whole block spins, base and all.** `Models.block(state)` takes the block's own model, which for the Hand Crank includes its mounting plate and for the Clutch its housing. Correct art would split the turning part from the fixed one, which means partial models and real textures. Placeholder art, placeholder motion.
 
 ### Information layer — decisions taken while building
 
