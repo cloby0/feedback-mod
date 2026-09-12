@@ -37,14 +37,14 @@ Platform decided: **NeoForge, Minecraft 1.21.1.**
 
 Dev environment currently loads **JEI**, **PonderLib** and **Flywheel** (transitive via Ponder) out of `run/mods`, synced by the `syncDevMods` Gradle task. None are shipped dependencies yet.
 
-- [x] **JEI** — dev only. Our machines have no recipe list, so there is little to register; it is in the dev env to find out what a recipe browser does with a recipe-less mod
+- [x] **JEI** — dev only, now with a written plugin. Our machines still have no recipe list; what the browser shows is the *material* table, as process cards (see below)
 - [x] **PonderLib** — the designated explanation channel (§8, *Documentation is a free sense*). Scenes teach verbs, never values or solutions. Promote to a real dependency when the first scene is written
 - [x] **Flywheel** — **yes, will be a real dependency.** Instanced rendering; without it every spinning shaft is its own draw call. Create's `SingleAxisRotatingVisual` / `RotatingInstance` are the reference (MIT)
 - [x] **GeckoLib** — **no.** It plays authored keyframe animations; our motion must be procedural, because a machine's visible state is a readout the player reasons from. A fixed-length animation decouples the visual from the mechanics, and a machine that visually lies contradicts §8
 - [x] **Cloth Config** — **no.** NeoForge's built-in config is sufficient, and our config surface should stay small: numbers here are design decisions, not user preferences
 - [x] **Registrate** — **no.** Saves registration boilerplate but hides what registration says. Legibility beats brevity on this project
 - [x] **Jade** in the dev environment (15.10.6). Compat not written yet — see below
-- [ ] **Jade / TheOneProbe** — *probably yes, done carefully.* A HUD that prints `1247 Tu` on a bare crucible gives away the thermometer and guts §8. One that shows *"really hot!!!"* until an instrument is installed, and figures after, is the adjectives rule on a HUD. Design it, don't just enable it
+- [x] **Jade / TheOneProbe** — **Jade, yes; TheOneProbe, no.** A HUD that prints `1247 Tu` on a bare crucible gives away the thermometer and guts §8. One that shows *"really hot!!!"* until an instrument is installed, and figures after, is the adjectives rule on a HUD. Written that way; still `compileOnly`, still not shipped. TOP would be a second copy of the same policy to keep honest, for no new capability
 - [x] **Mixin** — ships with NeoForge. The route for reworking the vanilla furnace/smoker/blast furnace (§15) without replacing the blocks
 
 Also decided in passing: **`src/generated/resources` is committed.** Datagen output is reviewable, and a diff on it is the cheapest way to see what a registry change actually did.
@@ -92,7 +92,7 @@ Built and compiling: rotation engine (`RotationNode` / `RotationNetwork` / `Rota
 
 Governed by §8's *what you need is free, what you have is a cost*. Write these together; they are one design, not three features.
 
-- [ ] **JEI: process cards, not recipes.** Render a `Deformation` as a spec sheet with **exact units**, because a requirement is published data:
+- [x] **JEI: process cards, not recipes.** Render a `Deformation` as a spec sheet with **exact units**, because a requirement is published data:
 
   ```
   COPPER PLATE
@@ -102,19 +102,30 @@ Governed by §8's *what you need is free, what you have is a cost*. Write these 
   Output    1 × Copper Plate
   ```
 
-  The process name (*Mechanical deformation*) is the **category tab**, not a line in the card. JEI's `IRecipeCategory<T>` takes any type, so this needs no vanilla `RecipeType` and no pretend recipes in the recipe book — which matters, because the hammer genuinely does not know how to make anything.
-- [ ] **Jade: adjectives only.** *"really hot!!!"* on a bare crucible; figures once a thermometer is installed, at that instrument's resolution. A machine's own card (`12 / 3 St`, `80 Su`) is fair game — §17 says those are printed on the block, not measured.
+  The process name (*Mechanical deformation*) is the **category tab**, not a line in the card. JEI's `IRecipeCategory<T>` takes any type, so this needs no vanilla `RecipeType` and no pretend recipes in the recipe book — which matters, because the hammer genuinely does not know how to make anything. Built as `compat/jei/`; the hammer is listed as the category's catalyst, which says *this machine deforms* and not *this machine makes copper plate*
+- [x] **Jade: adjectives only.** *"really hot!!!"* on a bare crucible; figures once a thermometer is installed, at that instrument's resolution. A machine's own card (`12 / 3 St`, `80 Su`) is fair game — §17 says those are printed on the block, not measured. Built as `compat/jade/`: speed bands and strain as words, the linkage's installed throw and the hammer's `St`/`Su` as exact figures
 - [x] **A labouring network smokes and creaks** at its sources — every 40 ticks when overloaded, every 80 when above 90% of capacity. Free under §8 because it is an adjective: it says *this one, and it is struggling* without handing over the Su ledger. Fixes the same silent-failure class as the mis-oriented linkage
-- [ ] **Debug Helmet, replacing all the scattered debug hooks.** One creative-only item that overrides every qualitative readout with the exact value the simulation holds. Delete `RotationNode#debugReport`, `MechanicalHammerBlockEntity#debugReport` and the three sneak-right-click handlers when it lands.
+- [x] **Debug Helmet, replacing all the scattered debug hooks.** One creative-only item that overrides every qualitative readout with the exact value the simulation holds. Delete `RotationNode#debugReport`, `MechanicalHammerBlockEntity#debugReport` and the three sneak-right-click handlers when it lands.
 
   It is a better dev tool than sneak-clicking every block, and it is thematically exact: the helmet is *perfect instrumentation*, the one thing §8 says a player may never actually buy. Keep it out of the normal creative tab so it never reads as a tier of thermometer.
-- [ ] Refine the workpiece tooltip once this exists: *needs 14 Fu* is a requirement and may be stated for free; *has 9 Fu* is state and waits for calipers.
+- [x] Refine the workpiece tooltip once this exists: *needs 14 Fu* is a requirement and may be stated for free; *has 9 Fu* is state and waits for calipers.
 - [x] **Clutch + Timer** — two blocks, not one. Stopping a shaft and deciding when are different jobs (§13), so the Timer is crude control and the Clutch is the mechanical actuator. Costs one block over the slice's budget and buys two things: the player can throw the clutch by hand before building any control at all, and slice 2's controller *replaces* the Timer instead of being a new idea. Disengaging splits the run, so the far side coasts — "clutches coast" needed no code, it falls out of the inertia model
 - [ ] **Calipers** — `16 / 20 Fu`, and deliberately *after* the timer
 - [ ] Flywheel-based rendering for spinning shafts; currently the model does not visibly turn
 - [ ] Real textures
 - [x] **Shaft placement QoL** — clicking a shaft while holding a shaft extends the run along its axis, the way Create does. Clicking an end face grows that way; clicking a side grows away from the player. Sneak to suppress it and place normally
-- [ ] **Delete the temporary debug readout** (`RotationNode#debugReport`, sneak-right-click). It hands out exact figures with no instrument, which is §8 backwards. It exists only because nothing visibly turns yet
+- [x] **Delete the temporary debug readout** (`RotationNode#debugReport`, sneak-right-click). It hands out exact figures with no instrument, which is §8 backwards. Gone, along with the four other `debugReport`s and every sneak-click handler; the Debug Helmet is its replacement
+
+### Information layer — decisions taken while building
+
+- **The requirement/state split is enforced in one file**, `client/Readout.java`. §8's rule is a rule about *wording*, and wording copied between a tooltip and a HUD drifts until one of them quietly starts printing a figure. Requirements and equipment specs are formatted at their call sites instead, because there is no rule about them to enforce.
+- **Strain is on the free side of the line, and that is deliberate.** "Straining" / "Overloaded" names no figure — it is the same adjective the smoke and creak already give at the sources, and without it a stalled factory is indistinguishable from a broken mod. There is no puzzle in a problem you cannot locate.
+- **Jade reads live figures through its own server data**, not through the block's render sync. The `Su` a `RotationNode` carries is a snapshot from the last recalculation, and target speed and inertia are never synced at all. Adjectives from stale figures would usually be right; the helmet could not be, and §8 says an instrument may become wrong but may never overstate its certainty. Consequence: **on a server without Jade, the HUD says nothing rather than guessing.**
+- **The deformation table is shipped to the client by our own packet**, on `OnDatapackSyncEvent`, rather than through JEI's hooks. It is a missing-data problem, not a JEI problem — solving it in JEI would mean every future display has to solve it again. JEI is then an optional *reader* of a plain list.
+- **JEI's cards are pushed from the runtime, not from `registerRecipes`.** JEI starts from the vanilla recipe sync, which lands in the configuration phase, while our table arrives in the play phase — so `registerRecipes` would see an empty table on a first join, and registering in both places would double every card.
+- **The Debug Helmet implements `Equipable` rather than extending `ArmorItem`.** ArmorItem would demand a registered armour material and an armour-layer texture, then render a missing-texture helmet, all to describe an item that gives no protection and should be invisible.
+- **Sneak-clicking the Mechanical Hammer now extracts** rather than printing a report. Placing a block against its face while sneaking never worked and still does not; nothing regressed, but it is a behaviour change worth knowing about.
+- **Not built, deliberately: any instrument.** There are still no calipers and no thermometer. `Readout.instrumented()` is a boolean standing where a per-quantity, per-resolution question belongs; the call sites are already shaped for the real answer.
 
 ### Slice discrepancies — reconciled
 

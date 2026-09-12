@@ -59,12 +59,8 @@ public class MechanicalHammerBlock extends Block implements EntityBlock {
                                                BlockHitResult hit) {
         if (!(level.getBlockEntity(pos) instanceof MechanicalHammerBlockEntity hammer))
             return InteractionResult.PASS;
-        if (!level.isClientSide) {
-            if (player.isShiftKeyDown())
-                hammer.debugReport(player);
-            else
-                give(player, hammer.removeWorkpiece());
-        }
+        if (!level.isClientSide)
+            give(player, hammer.removeWorkpiece());
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
 

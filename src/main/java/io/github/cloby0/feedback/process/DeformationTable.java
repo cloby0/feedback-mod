@@ -55,6 +55,11 @@ public class DeformationTable extends SimpleJsonResourceReloadListener {
         Feedback.LOGGER.info("Loaded {} deformation entries", entries.size());
     }
 
+    /** Every entry, in load order. Used to ship the table to the client for display. */
+    public List<Deformation> entries() {
+        return entries;
+    }
+
     /** What this stack turns into when worked, if anything does. */
     public Optional<Deformation> find(ItemStack stack) {
         for (Deformation entry : entries)

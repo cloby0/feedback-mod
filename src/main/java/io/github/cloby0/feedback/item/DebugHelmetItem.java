@@ -1,0 +1,58 @@
+package io.github.cloby0.feedback.item;
+
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Equipable;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+
+/**
+ * Perfect instrumentation, which is the one thing philosophy 8 says a player may never buy.
+ *
+ * <h2>What it is for</h2>
+ * Every readout in the mod is an adjective until an instrument says otherwise. That is the design,
+ * and it makes the mod almost impossible to <em>develop</em>: there is no honest way to ask a shaft
+ * what it is really doing. Sneak-clicking each block printed the answer to chat, which worked and
+ * was six copies of the same code scattered across five blocks.
+ * <p>
+ * This replaces all of it. Wear it and every qualitative readout -- Jade lines, the workpiece
+ * tooltip -- turns into the figure the simulation actually holds. It is a cheat, deliberately, and
+ * it is shaped like one: creative-only, out of the mod's creative tab, obtainable only by somebody
+ * who already knows it exists.
+ *
+ * <h2>Why it is not a thermometer</h2>
+ * Instruments are a real progression axis (§8: range, resolution, accuracy, response). This is not
+ * the top of that ladder and must never be allowed to read as it -- an instrument with infinite
+ * accuracy and no cost is not a better instrument, it is the absence of the mechanic. Keeping it
+ * out of the creative tab is what stops it being mistaken for tier five.
+ *
+ * <h2>Implementing Equipable rather than extending ArmorItem</h2>
+ * {@link Equipable} is what actually decides where a stack goes and gives the right-click swap for
+ * free. ArmorItem would additionally demand a registered armour material and an armour-layer
+ * texture, and would then render a missing-texture helmet on the player -- all to describe an item
+ * that provides no protection and should be invisible anyway.
+ */
+public class DebugHelmetItem extends Item implements Equipable {
+
+    public DebugHelmetItem(Properties properties) {
+        super(properties);
+    }
+
+    @Override
+    public EquipmentSlot getEquipmentSlot() {
+        return EquipmentSlot.HEAD;
+    }
+
+    @Override
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        return swapWithEquipmentSlot(this, level, player, hand);
+    }
+
+    /** Whether this player is currently reading exact figures instead of adjectives. */
+    public static boolean wornBy(Player player) {
+        return player != null && player.getItemBySlot(EquipmentSlot.HEAD).getItem() instanceof DebugHelmetItem;
+    }
+}

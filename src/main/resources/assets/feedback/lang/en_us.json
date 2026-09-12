@@ -6,13 +6,39 @@
   "item.feedback.copper_plate": "Copper Plate",
   "item.feedback.copper_foil": "Copper Foil",
   "item.feedback.copper_scrap": "Copper Scrap",
+  "item.feedback.debug_helmet": "Debug Helmet",
   "block.feedback.crank_linkage": "Crank Linkage",
   "block.feedback.mechanical_hammer": "Mechanical Hammer",
+  "block.feedback.clutch": "Clutch",
+  "block.feedback.timer": "Timer",
+  "feedback.timer.setting": "Wind: %s seconds",
+
   "feedback.workpiece.barely_marked": "Barely marked",
   "feedback.workpiece.taking_shape": "Taking shape",
   "feedback.workpiece.visibly_worked": "Visibly worked",
   "feedback.workpiece.nearly_there": "Nearly there",
-  "block.feedback.clutch": "Clutch",
-  "block.feedback.timer": "Timer",
-  "feedback.timer.setting": "Wind: %s seconds"
+  "feedback.workpiece.needs": "Needs %s Fu",
+
+  "feedback.readout.stopped": "Stopped",
+  "feedback.readout.turning_slowly": "Turning slowly",
+  "feedback.readout.turning": "Turning",
+  "feedback.readout.spinning_fast": "Spinning fast",
+  "feedback.readout.straining": "Straining",
+  "feedback.readout.overloaded": "Overloaded",
+  "feedback.readout.rpm": "%s RPM",
+  "feedback.readout.su": "%s / %s Su",
+  "feedback.readout.drive": "target %s RPM, inertia %s",
+  "feedback.readout.work": "%s / %s Fu",
+
+  "feedback.spec.strength": "%s / %s St",
+  "feedback.spec.load": "%s Su",
+  "feedback.spec.throw": "%s throw",
+  "feedback.throw.short": "Short",
+  "feedback.throw.long": "Long",
+
+  "feedback.jei.mechanical_deformation": "Mechanical deformation",
+  "feedback.jei.input": "Input",
+  "feedback.jei.work": "Work",
+  "feedback.jei.hardness": "Hardness",
+  "feedback.jei.output": "Output"
 }

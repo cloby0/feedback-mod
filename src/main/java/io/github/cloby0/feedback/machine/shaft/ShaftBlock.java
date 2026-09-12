@@ -19,7 +19,6 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.core.Vec3i;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.SoundType;
@@ -125,17 +124,6 @@ public class ShaftBlock extends RotatedPillarBlock implements EntityBlock, Rotat
         return Direction.get(along > blockAlong + 0.5
                 ? Direction.AxisDirection.NEGATIVE
                 : Direction.AxisDirection.POSITIVE, axis);
-    }
-
-    // TEMPORARY: sneak-right-click prints the network state. Development scaffolding, not a
-    // feature -- see RotationNode#debugReport.
-    @Override
-    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player,
-                                               BlockHitResult hit) {
-        if (player.isShiftKeyDown() && !level.isClientSide
-                && level.getBlockEntity(pos) instanceof ShaftBlockEntity node)
-            node.debugReport(player);
-        return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
     @Nullable

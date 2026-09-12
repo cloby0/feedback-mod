@@ -14,13 +14,11 @@ import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -140,24 +138,6 @@ public class MechanicalHammerBlockEntity extends BlockEntity implements Reciproc
         if (level == null)
             return;
         level.playSound(null, worldPosition, SoundEvents.ANVIL_LAND, SoundSource.BLOCKS, 0.15f, 1.6f);
-    }
-
-    /**
-     * TEMPORARY, like the rotation readout. Slice 1 says a part-worked ingot should <em>look</em>
-     * part-worked and need no instrument at all -- that is a rendering job which does not exist
-     * yet, and until it does this is the only way to see the mechanic working.
-     */
-    public void debugReport(Player player) {
-        if (workpiece.isEmpty()) {
-            player.displayClientMessage(Component.literal("[debug] hammer empty"), false);
-            return;
-        }
-        int worked = workpiece.getOrDefault(FDataComponents.WORK.get(), 0);
-        String progress = DeformationTable.get().find(workpiece)
-                .map(d -> String.format("%d / %d Fu  (hardness %.0f)", worked, d.work(), d.hardness()))
-                .orElse("cannot be worked further");
-        player.displayClientMessage(Component.literal(
-                String.format("[debug] %s  |  %s", workpiece.getHoverName().getString(), progress)), false);
     }
 
     public void sync() {

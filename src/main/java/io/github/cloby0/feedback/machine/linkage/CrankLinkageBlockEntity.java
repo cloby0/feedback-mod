@@ -10,8 +10,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -93,18 +91,6 @@ public class CrankLinkageBlockEntity extends RotationNode {
     @Override
     public float getInertia() {
         return FTuning.SHAFT_INERTIA;
-    }
-
-    @Override
-    public void debugReport(Player player) {
-        super.debugReport(player);
-        Direction input = getFacing().getOpposite();
-        player.displayClientMessage(Component.literal(
-                String.format("[debug] throw %s  |  %.0f St  |  in from %s%s  |  out to %s: %s",
-                        getThrow().getSerializedName(), getStrength(),
-                        input.getName(), getNetwork() == null ? " (no shaft)" : "",
-                        getFacing().getName(),
-                        getDriven() == null ? "nothing" : "a machine")), false);
     }
 
     @Override

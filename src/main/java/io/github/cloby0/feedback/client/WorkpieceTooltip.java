@@ -12,18 +12,17 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
 /**
- * Describes how far along a workpiece is, in words.
+ * Says what a workpiece needs, and describes how far along it is.
  *
- * <h2>Adjectives, not figures</h2>
- * Philosophy 8: the player's own senses report qualitatively and for free, and numbers must be
- * bought. Beat 1 ships no measuring tool at all, deliberately -- a part-worked ingot is visibly
- * flattening and eyes are sufficient for the problem beat 1 poses.
+ * <h2>The two halves are not the same kind of fact</h2>
+ * Philosophy 8, <em>what you need is free, what you have is a cost</em>, cuts straight through the
+ * middle of this tooltip. {@code Needs 14 Fu} is published data -- a handbook figure, true before
+ * the player owns anything, and stating it gates nothing. {@code Has 9 Fu} is the state of the
+ * object in your hand, and that is what calipers are for.
  * <p>
- * So this reports "visibly worked" and never {@code 22 / 30 Fu}, even though the exact figure is
- * sitting right there on the stack. The number is what calipers are <em>for</em>: they turn
- * "kinda flattened" into a reading, which is the whole reason a player buys them.
- * <p>
- * Tempting and wrong: a progress bar. That is a number wearing a picture.
+ * So the requirement prints as a figure and the progress prints as a word, on adjacent lines. That
+ * juxtaposition is the lesson: the player can see precisely what they are aiming at and only
+ * roughly where they are, which is the entire shape of the mod in two lines of tooltip.
  */
 @EventBusSubscriber(modid = Feedback.MOD_ID, value = Dist.CLIENT)
 public class WorkpieceTooltip {
@@ -36,17 +35,14 @@ public class WorkpieceTooltip {
         if (worked <= 0 || required <= 0)
             return;
 
-        event.getToolTip().add(Component.translatable(describe(worked / (float) required))
-                .withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
-    }
+        if (Readout.instrumented()) {
+            event.getToolTip().add(Component.translatable("feedback.readout.work",
+                    worked, required).withStyle(ChatFormatting.AQUA));
+            return;
+        }
 
-    private static String describe(float progress) {
-        if (progress < 0.25f)
-            return "feedback.workpiece.barely_marked";
-        if (progress < 0.5f)
-            return "feedback.workpiece.taking_shape";
-        if (progress < 0.75f)
-            return "feedback.workpiece.visibly_worked";
-        return "feedback.workpiece.nearly_there";
+        event.getToolTip().add(Component.translatable("feedback.workpiece.needs", required)
+                .withStyle(ChatFormatting.DARK_GRAY));
+        event.getToolTip().add(Readout.progress(worked, required));
     }
 }

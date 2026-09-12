@@ -14,10 +14,7 @@ import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.BlockHitResult;
 
 /**
  * Continuous rotation, paid for with real estate and a river rather than with fuel.
@@ -44,17 +41,6 @@ public class WaterWheelBlock extends RotatedPillarBlock implements EntityBlock, 
     @Override
     public boolean hasShaftTowards(LevelAccessor level, BlockPos pos, BlockState state, Direction face) {
         return face.getAxis() == state.getValue(AXIS);
-    }
-
-    // TEMPORARY: sneak-right-click prints the network state. Development scaffolding, not a
-    // feature -- see RotationNode#debugReport.
-    @Override
-    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player,
-                                               BlockHitResult hit) {
-        if (player.isShiftKeyDown() && !level.isClientSide
-                && level.getBlockEntity(pos) instanceof WaterWheelBlockEntity node)
-            node.debugReport(player);
-        return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
     @Nullable

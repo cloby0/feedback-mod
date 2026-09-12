@@ -88,11 +88,6 @@ public class CrankLinkageBlock extends Block implements EntityBlock, Rotatable {
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player,
                                                BlockHitResult hit) {
-        if (player.isShiftKeyDown()) {
-            if (!level.isClientSide && level.getBlockEntity(pos) instanceof CrankLinkageBlockEntity linkage)
-                linkage.debugReport(player);
-            return InteractionResult.sidedSuccess(level.isClientSide);
-        }
         if (!level.isClientSide) {
             Throw next = state.getValue(THROW) == Throw.SHORT ? Throw.LONG : Throw.SHORT;
             level.setBlockAndUpdate(pos, state.setValue(THROW, next));

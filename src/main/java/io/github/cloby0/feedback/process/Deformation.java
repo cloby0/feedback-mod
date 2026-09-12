@@ -3,6 +3,9 @@ package io.github.cloby0.feedback.process;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 
@@ -53,6 +56,21 @@ public record Deformation(Ingredient input, int work, float hardness, ItemStack 
             Codec.FLOAT.optionalFieldOf("hardness", 1f).forGetter(Deformation::hardness),
             ItemStack.CODEC.fieldOf("result").forGetter(Deformation::result)
     ).apply(instance, Deformation::new));
+
+    /**
+     * For sending the table to the client, which needs it only to <em>print</em> it.
+     *
+     * <h3>Why the client is told at all</h3>
+     * Philosophy 8: what a process requires is published data and costs nothing. The recipe
+     * browser is allowed to state {@code 14 Fu} exactly, on day one, with no instrument owned --
+     * so the figures have to get across. Nothing on the client ever computes with them.
+     */
+    public static final StreamCodec<RegistryFriendlyByteBuf, Deformation> STREAM_CODEC = StreamCodec.composite(
+            Ingredient.CONTENTS_STREAM_CODEC, Deformation::input,
+            ByteBufCodecs.VAR_INT, Deformation::work,
+            ByteBufCodecs.FLOAT, Deformation::hardness,
+            ItemStack.STREAM_CODEC, Deformation::result,
+            Deformation::new);
 
     /**
      * Fu this material absorbs from one blow of the given force, or 0 if the blow is too weak.

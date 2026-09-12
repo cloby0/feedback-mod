@@ -1,6 +1,7 @@
 package io.github.cloby0.feedback.registry;
 
 import io.github.cloby0.feedback.Feedback;
+import io.github.cloby0.feedback.item.DebugHelmetItem;
 
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -27,6 +28,15 @@ public class FItems {
     public static final DeferredItem<Item> COPPER_PLATE = ITEMS.registerSimpleItem("copper_plate");
     public static final DeferredItem<Item> COPPER_FOIL = ITEMS.registerSimpleItem("copper_foil");
     public static final DeferredItem<Item> COPPER_SCRAP = ITEMS.registerSimpleItem("copper_scrap");
+
+    /**
+     * Perfect instrumentation, and deliberately absent from {@link FCreativeTabs#MAIN}.
+     * <p>
+     * It is a development cheat, not the top of the instrument ladder -- see
+     * {@link DebugHelmetItem}. Anything reachable from the mod's own tab reads as content.
+     */
+    public static final DeferredItem<DebugHelmetItem> DEBUG_HELMET = ITEMS.register("debug_helmet",
+            () -> new DebugHelmetItem(new Item.Properties().stacksTo(1)));
 
     private FItems() {
     }
