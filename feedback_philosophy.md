@@ -488,6 +488,29 @@ Above those sits a different kind of instrument again: one that reports **change
 
 The rule generalizes past temperature without any new machinery. Mechanical work is qualitative for free — the ingot looks flattened — and numeric only with **calipers**, which turn *kinda flattened* into `16 / 20 Fu`. Pressure, concentration and the rest follow the same shape.
 
+### What you need is free. What you have is a cost.
+
+The adjectives rule needs a boundary, or it collapses into hiding things for their own sake. This is the boundary:
+
+> **Knowing what a process requires is free. Knowing what your equipment is currently doing is not.**
+
+A recipe is published data. Steel wants 1420–1480 Tu held for 600 ticks, heated no faster than 25 Tu/t — that is a figure from a handbook, and every real metallurgist has it. There is nothing to discover and nothing to gate. A recipe browser should state it in **exact units**, with no instrument owned and nothing unlocked.
+
+What costs something is the other half of the sentence: *is my crucible in that band right now?* Requirements are public; **state is measured**, and measurement is what instruments are for.
+
+This is the cleanest statement of §7 the document has. The recipe was never locked. The player can read precisely what steel needs on their first day, walk to a furnace, and still fail thirty times — because knowing the target and knowing where you are are different problems, and only the second one is for sale.
+
+It also settles the whole information layer, which otherwise gets argued case by case:
+
+| | Free | Costs |
+| --- | --- | --- |
+| **Mechanism** — how a thing works | Ponder scenes, §8 above | — |
+| **Requirement** — what a process needs | Recipe browser, exact figures | — |
+| **Equipment spec** — what a machine can deliver | Printed on the block (§17) | — |
+| **State** — what is happening right now | Adjectives only | Figures, per instrument tier |
+
+Everything a player could have learned from a manual is free. Everything they could only learn by *looking at their own factory* has to be instrumented. A tooltip may therefore say a workpiece needs 14 Fu; only calipers may say it has 9.
+
 ### Instruments never lie
 
 **An instrument may never display more figures than it can stand behind.** A device accurate to ±25 Tu reads `1250 Tu`, never `1256.3 Tu`. Display resolution is bounded by accuracy, always.

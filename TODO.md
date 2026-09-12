@@ -88,7 +88,26 @@ Built and compiling: rotation engine (`RotationNode` / `RotationNetwork` / `Rota
 - [x] **The `Fu` process** — 30 Fu to a plate, then plate → foil → scrap, as a datapack table
 - [x] **Workpiece progress is visible, in adjectives** — "Barely marked" → "Taking shape" → "Visibly worked" → "Nearly there". No figures: that is what calipers are for. The exact `Fu` is on the stack and deliberately not shown
 - [ ] **Workpiece should be visible in the machine too** — a block entity renderer showing what is on the anvil. The tooltip covers the lesson, but you currently cannot see that the hammer is occupied without clicking it
-- [ ] **Jade + JEI compat, written together.** They are the same design problem from two sides: what is this mod allowed to tell you for free? Jade must obey the adjectives rule — *"really hot!!!"* with no instrument, figures once one is installed — and JEI genuinely has nothing to show for a machine with no recipe list, which is correct and should be stated rather than papered over. A machine's own card (`12 / 3 St`, `80 Su`) is fair game on both: that is printed on the block in §17, not measured
+### Information layer — Jade, JEI, and the debug helmet
+
+Governed by §8's *what you need is free, what you have is a cost*. Write these together; they are one design, not three features.
+
+- [ ] **JEI: process cards, not recipes.** Render a `Deformation` as a spec sheet with **exact units**, because a requirement is published data:
+
+  ```
+  COPPER PLATE
+  Input     1 × Copper Ingot
+  Work      14 Fu
+  Hardness  1
+  Output    1 × Copper Plate
+  ```
+
+  The process name (*Mechanical deformation*) is the **category tab**, not a line in the card. JEI's `IRecipeCategory<T>` takes any type, so this needs no vanilla `RecipeType` and no pretend recipes in the recipe book — which matters, because the hammer genuinely does not know how to make anything.
+- [ ] **Jade: adjectives only.** *"really hot!!!"* on a bare crucible; figures once a thermometer is installed, at that instrument's resolution. A machine's own card (`12 / 3 St`, `80 Su`) is fair game — §17 says those are printed on the block, not measured.
+- [ ] **Debug Helmet, replacing all the scattered debug hooks.** One creative-only item that overrides every qualitative readout with the exact value the simulation holds. Delete `RotationNode#debugReport`, `MechanicalHammerBlockEntity#debugReport` and the three sneak-right-click handlers when it lands.
+
+  It is a better dev tool than sneak-clicking every block, and it is thematically exact: the helmet is *perfect instrumentation*, the one thing §8 says a player may never actually buy. Keep it out of the normal creative tab so it never reads as a tier of thermometer.
+- [ ] Refine the workpiece tooltip once this exists: *needs 14 Fu* is a requirement and may be stated for free; *has 9 Fu* is state and waits for calipers.
 - [ ] **Timer** — the slice's only automation before instruments
 - [ ] **Calipers** — `16 / 20 Fu`, and deliberately *after* the timer
 - [ ] Flywheel-based rendering for spinning shafts; currently the model does not visibly turn
