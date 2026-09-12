@@ -94,16 +94,18 @@ Built and compiling: rotation engine (`RotationNode` / `RotationNetwork` / `Rota
 - [x] **Shaft placement QoL** — clicking a shaft while holding a shaft extends the run along its axis, the way Create does. Clicking an end face grows that way; clicking a side grows away from the player. Sneak to suppress it and place normally
 - [ ] **Delete the temporary debug readout** (`RotationNode#debugReport`, sneak-right-click). It hands out exact figures with no instrument, which is §8 backwards. It exists only because nothing visibly turns yet
 
-### Slice discrepancies found while building
+### Slice discrepancies — reconciled
 
-- **"Thin plate" is in the chain but not in the roster.** `feedback_slice_01.md` writes the overrun as `ingot → plate → thin plate → foil → scrap`, but the 12-item list has only Plate, Foil and Scrap. Implemented as three stages. Either add the item or fix the line.
-- **"About 8 ticks, there is a plate" does not survive a coherent stroke model.** One blow per revolution puts a plate at ~30 ticks on a hand crank and ~120 on an 8 RPM water wheel. 8 ticks would need either enormous speeds or a blow that does the whole job. The slower figures are implemented; the slice line should probably change.
-- **`St` and `Fu` were the same number twice, and are now related by material hardness.** Nothing is strong enough to dent steel yet fails to slam copper, so work per blow cannot be a machine stat. It is `St ÷ hardness`, and hardness does both jobs: the floor below which nothing lands, and the divisor for how much of a bigger blow gets through. One property per material instead of two.
-- **Throw is power versus precision, and neither dominates.** An earlier model had throw change only `St`, which made the short throw strictly better — a dominated option, which is worse than no option. Now a hard blow on a soft material *overshoots*: short throw reaches a plate in 3 blows and ruins it by blow 5, long throw takes 10 and gives 7 blows of slack. The fast way is the one that is hard to stop in time, which is the mod's own thesis. Long throw is also what the bellows wants, so the component still reads two ways.
-- **Copper work values are now 14 / 9 / 20**, not the slice's 30 / 20 / 20. Chosen so a short throw skips plate entirely — one blow leaves an ingot, the second lands on foil. The slice doc still says 30 Fu; it should be updated or the deviation accepted.
-- **A fresh Crank Linkage defaults to the LONG throw.** A player who has not met overrun should be able to make what they aimed for; learning that a faster setting exists and destroys the workpiece is a better order than starting with a machine that only makes foil and no explanation.
-- **[OPEN] Is three blows of slack enough for the first lesson?** Capped at four by the `12 / 3` ratio. Widening the gap to `12 / 2` would give six. Depends whether copper should feel forgiving or merely survivable.
-- **`feedback_philosophy.md` §17 rewritten** for the hardness model, including why the dominated-option version was tempting. The preamble now states that the document is revised as the mod is built — everything except the §1/§2 identity.
+`feedback_slice_01.md` has been updated to match what is running. Kept here as a record of what moved and why:
+
+- **Copper work 30 → 14 / 9 / 20 Fu.** 30 made the overshoot lesson impossible to express; the plate→foil step has to cost less than one strong blow or the short throw cannot skip it.
+- **"Either crank works on copper" → the strong crank cannot make a plate at all.** Much better lesson, and it makes gearing a product selector rather than a speed setting.
+- **"Thin plate"** removed from the chain; it was never in the roster.
+- **"About 8 ticks, there is a plate"** dropped. One blow per revolution puts a plate at five blows on the gentle setting, two on the strong one.
+- **"Fifteen hammer swings"** → five, since a hand hammer's 3 St against copper's hardness 1 lands 3 Fu a swing.
+- **`Minimum force N St`** → `Hardness N` on every process card. One material property doing both jobs (§17).
+- **Hand crank drives nothing** is now stated in the slice as an `[OPEN]`, with the flywheel as the interesting resolution, rather than reading as a balance bug.
+- **Four lessons added** to the slice's table — all four emerged from building rather than from the draft.
 
 ### Decisions taken while building, worth revisiting
 

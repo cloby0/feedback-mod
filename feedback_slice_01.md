@@ -5,6 +5,8 @@
 > It feeds the other two documents rather than replacing them. The rules it discovers become **document 2 (mechanics)**; the objects it names become **document 3 (content)**. Nothing here overrides the philosophy — where this document and the philosophy disagree, the philosophy is right and this slice is wrong.
 >
 > **Every number here is a placeholder.** They exist so the slice can be reasoned about and played, not because they are balanced. Philosophy §19 still holds: exact values are not decided.
+>
+> **This document is revised as the slice is built.** Where it once said 30 Fu to a plate, it now says 14, because 30 made the overshoot lesson impossible to express. Where it said either crank works on copper, it now says the strong one cannot make a plate at all, because that turned out to be far better. Git holds the earlier versions; nothing here is preserved out of sentiment. The live figures are in `core/FTuning.java` and the deformation datapack — **where this document and the code disagree, the code is what is running and this document is what is wrong.**
 
 ---
 
@@ -39,16 +41,18 @@ COPPER PLATE
 
 Input          1 × Copper Ingot
 Process        Mechanical deformation
-Required work  30 Fu
-Minimum force  1 St
+Work           14 Fu
+Hardness       1
 Output         1 × Copper Plate
 ```
 
 Note what the recipe does not mention: any machine at all.
 
+Note also what it does not separately state: how hard a blow has to be. Hardness does that job as well — it is the floor below which nothing lands, *and* the divisor for how much of a bigger blow gets through (§17). Copper's hardness of 1 means every blow lands in full, which is exactly what makes it dangerous to hit hard.
+
 ### Doing it by hand
 
-A hammer applies roughly 2 Fu per swing at 3 St. Fifteen swings, one plate. It works, and it is exactly as tedious as fifteen swings sounds.
+A hand hammer swings at about 3 St. Against copper's hardness of 1 that is 3 Fu a swing, so five swings make a plate — and a sixth starts making foil. It works, and it is exactly as fiddly as counting swings sounds.
 
 This is §7's *possible* column, introduced in the first ten minutes and never taken away. A player can hand-hammer plates for the entire game if they want to. Nobody will.
 
@@ -75,16 +79,25 @@ Load       80 Su
 
 A hammer strikes **discretely**. Between blows it is travelling back up and applying nothing at all. That dead time is free early on and becomes expensive later, for reasons that only show up in the convergence.
 
-Both outcomes are printed on the machine. Which one the player gets is decided by the crank they bolted to it (§17), and the choice is binary — there is no throw number to tune, deliberately (§3).
+Both figures are printed on the machine. Which one the player gets is decided by the crank they bolted to it (§17), and the choice is binary — there is no throw number to tune, deliberately (§3).
 
-Feed it a copper ingot and drive it. Copper needs only 1 St, so **either crank works** — which is exactly why copper is the teaching material. The player can install the wrong one and still succeed, and only discover much later that the choice was ever meaningful.
+**A new linkage comes set to the long throw**, the gentle one, so a player who has never heard of overrun can make the thing they were aiming for. Driven that way the hammer lands 3 Fu a blow: a plate on the fifth, and three more blows before it is foil.
 
-After about 8 ticks, there is a plate.
-
-At tick 9 it is still hammering.
+Then they find the other setting, and it is four times faster.
 
 ```
-ingot → plate → thin plate → foil → scrap
+long throw    ingot · ingot · ingot · ingot · PLATE · · · foil
+short throw   ingot · FOIL
+```
+
+Short throw lands 12 Fu a blow — nearly a whole plate's worth — so the second blow finishes the plate *and carries straight through it into foil in the same stroke*. Plate is not merely quick to pass at that setting. It is **unreachable**.
+
+That is the slice's sharpest lesson and it needs no text to deliver it. The two settings are not fast and slow versions of one process. They make **different products**, chosen by a lever arm rather than by any recipe selector — a short-throw hammer is a foil machine. The player who wanted plates and fitted the strong crank gets a chest full of foil and has to work out why.
+
+There is an invariant underneath it worth knowing while tuning (§17): **the reaction window is the strength ratio.** For the strong setting to skip a state, that state must cost less than one strong blow — which caps the gentle setting's grace at the ratio between the two, in blows. `12 / 3` can never give more than four.
+
+```
+ingot → plate → foil → scrap
 ```
 
 **Every one of those is a real item**, and the foil is genuinely useful — it goes into the thermometer in beat 2. So the first overrun the player ever experiences is a *sidegrade* (§6), which is the correct lesson to teach first: the machine is not malfunctioning, and the extra state is not damage. It is a place further along the same physical axis. The player is the one who decided which point on that axis they wanted.
@@ -125,10 +138,20 @@ Rotation has to come from somewhere and travel through something.
 ```
 HAND CRANK      12 Su     while the player holds Right Click
 WATER WHEEL    256 Su     continuous, needs flowing water
-SHAFT / GEARBOX           transmits, with loss
+SHAFT                     free to install, not free to turn
 ```
 
-Connecting a second machine is not an unlock. It is an arithmetic problem: 256 Su of supply, 80 Su per hammer. Three hammers is fine. Four is not. Nothing says *requires tier 2*; the shaft simply cannot carry it.
+Connecting a second machine is not an unlock. It is an arithmetic problem: 256 Su of supply, 80 Su per hammer. Three hammers is fine. Four is not. Nothing says *requires tier 2*; the supply simply is not there.
+
+**Shafts are not free either.** Every one charges its bearing friction to the network, and that cost rises with speed. This has a consequence nobody has to be told: a network accelerates until its surplus torque runs out, so a long shaft run **finds its own top speed**. A crank rated 32 RPM turns three shafts at 32, five at 24, and ten at 12. Nothing refuses; it just goes slower. This is deliberately not a per-shaft throughput cap, which would produce the absurdity of a generator being *too good* for its own shafting.
+
+So *slow and wide* and *fast and narrow* become two real answers to the same problem, and nobody was asked to choose between them (§3).
+
+### The crank cannot drive the hammer
+
+Twelve Su against eighty. This is not an oversight and the player is meant to run into it.
+
+**[OPEN]** — but it does mean the hand crank currently drives *nothing at all* in the slice, which makes it a component whose entire purpose is to fail. That is one lesson too thin to justify a block. The interesting resolution is a **flywheel**: a weak source spinning up a heavy mass that discharges in bursts is exactly how a treadle hammer works, it would make inertia a thing the player builds with rather than merely observes, and it would give the crank a real job. Out of scope for this slice; recorded so it is not mistaken for a balance bug.
 
 This is where `Su` and `RPM` earn their keep (§17), and the player learns that infrastructure is a thing that exists before they learn anything about control.
 
@@ -354,8 +377,8 @@ STEEL PLATE
 Input          1 × Steel Ingot
 Process        Hot working
 Temperature    900–1100 Tu   ← must hold DURING the work
-Required work  60 Fu
-Minimum force  15 St
+Work           60 Fu
+Hardness       15
 Output         1 × Steel Plate
 
 Below 900 Tu → too cold, work does nothing, hammer wears
@@ -375,7 +398,9 @@ Three things fall out of it immediately, none of which needed designing.
 
 **Placement becomes a decision.** A hammer across the workshop from the crucible loses the heat in transit. The player will move the hammer next to the fire, and they will work out why without being told.
 
-**Speed matters as well as force.** Sixty Fu has to land before the ingot drops out of the window, so the player needs a high stroke rate *and* the short crank — and short throw at high `RPM` is the heaviest load the mechanical network has ever been asked for. The convergence squeezes force, speed, and `Su` budget simultaneously.
+**Speed matters as well as force.** Steel is stubborn enough that even an adequate blow barely registers — a 20 St hammer against hardness 15 lands one or two Fu at a time, so sixty Fu is *dozens* of blows and all of them have to fall before the ingot drops out of its temperature window. The player needs a high stroke rate **and** the short crank, and short throw at high `RPM` is the heaviest load the mechanical network has ever been asked for. The convergence squeezes force, speed and `Su` budget at once.
+
+Copper never taught this, because copper never resisted. A soft material hides the difference between a strong blow and a fast one; a hard material separates them and demands both.
 
 **Failure stays honest.** Falling out of the window wastes the heat and returns the ingot, matching beat 2's asymmetry exactly (§6). The player loses a trip to the fire, not the steel.
 
@@ -395,7 +420,9 @@ And notice what the two routes actually cost. The brute-force route spends **cap
 
 This is the first **coupled** difficulty in the game (§7), and it is the slice's graduation: the player is no longer running two independent systems. They are operating a process.
 
-And it is where the linkage stops being a curiosity. Steel demands 15 St. The hammer delivers **12 / 3** — so the long throw is hopeless, and the short throw is *still not enough.* No amount of RPM substitutes for force (§17).
+And it is where the linkage stops being a curiosity. Steel's hardness is 15. The hammer delivers **12 / 3** — so the long throw is hopeless, and the short throw is *still not enough.* No amount of RPM substitutes for force (§17).
+
+Note how completely the material has inverted the lesson. On copper the gentle crank was the *right* one and the strong crank destroyed the work; on steel the gentle crank does nothing at all and force is the only thing that matters. The player does not re-learn a rule here — they learn that the rule was never about the crank.
 
 The player needs both the short crank **and** a better hammer, and they will almost certainly try the hammer first, because that is what every other mod has trained them to do. Discovering that the expensive new machine also needs re-gearing is the lesson landing properly: **the equipment was never the whole answer.**
 
@@ -427,7 +454,7 @@ Mapped to the philosophy, because if a beat teaches nothing it should be cut:
 | Machines perform operations, not recipes | Hammer has no recipe list | §4 |
 | Machines do not know when to stop | Plate → foil → scrap | §1, §6 |
 | Overrun is sometimes another process | Foil is useful | §6 |
-| Manual production is real but miserable | 15 hammer swings | §7 |
+| Manual production is real but miserable | Five hammer swings, per plate, forever | §7 |
 | Timers automate before precision exists | The plate timer | §8 |
 | The recipe is not locked; the process is hard | Steel, attempted blind | §7 |
 | Ignorance is paid in raw material | Six stacks, two ingots | §7 |
@@ -437,18 +464,24 @@ Mapped to the philosophy, because if a beat teaches nothing it should be cut:
 | Better machines improve old work | 20 St hammer trivializes copper | §4, §14 |
 | Process history matters, not just state | Quenching | §7 |
 | Infrastructure has real limits | 256 Su, 80 Su per hammer | §10 |
+| Distance is free; sprawl is not | Shaft friction rises with speed, so a long run finds a lower top speed | §10, §17 |
 | Noise is real and learnable | Charcoal quality | §8 |
 | Strange things are useful before understood | Lava | §2 |
 | Senses give adjectives; numbers cost instruments | Glow vs. thermometer, flattening vs. calipers | §8 |
 | Revealing beats refining | Calipers refine; the thermometer reveals | §8 |
 | You are the controller until something replaces you | No logic block in the whole slice | §13 |
 | Motion has a shape, and force is geared not bought | Crank throw sets St on hammer and bellows | §10, §17 |
+| The strong setting is not the good setting | Short throw skips plate entirely and makes foil | §3, §6 |
+| Gearing selects a product, not a speed | Same hammer, same ingot, different output | §4, §6 |
+| Momentum is a thing you build with | Spin-up, coasting, and a network too loaded to start | §9, §13 |
 | Material carries state between machines | Hot ingot cooling in transit | §9 |
 | Attention and capital are interchangeable | Two hammers vs. a bigger wheel | §5, §15 |
 | Specialization is emergent, not declared | Smoker ceiling, blast furnace floor | §15 |
 | Automation buys attention, not capability | Crucible vs. blast furnace | §7, §15 |
 
-Twenty-two lessons, twelve items, seven new machines, one actuator, and no controller. Every one of the philosophy's load-bearing ideas appears at least once, in play, without a single tooltip explaining it.
+Twenty-six lessons, twelve items, seven new machines, one actuator, and no controller. Every one of the philosophy's load-bearing ideas appears at least once, in play, without a single tooltip explaining it.
+
+The last four were not in the original draft. They arrived while the slice was being built, out of rules that were already there — which is §5's composition test passing on the mod's own design process, and the reason the slice is written to be implemented early rather than finished on paper.
 
 ---
 
