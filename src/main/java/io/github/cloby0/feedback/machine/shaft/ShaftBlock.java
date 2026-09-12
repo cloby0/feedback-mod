@@ -16,7 +16,10 @@ import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
@@ -60,6 +63,17 @@ public class ShaftBlock extends RotatedPillarBlock implements EntityBlock, Rotat
     @Override
     public boolean hasShaftTowards(LevelAccessor level, BlockPos pos, BlockState state, Direction face) {
         return face.getAxis() == state.getValue(AXIS);
+    }
+
+    // TEMPORARY: sneak-right-click prints the network state. Development scaffolding, not a
+    // feature -- see RotationNode#debugReport.
+    @Override
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player,
+                                               BlockHitResult hit) {
+        if (player.isShiftKeyDown() && !level.isClientSide
+                && level.getBlockEntity(pos) instanceof ShaftBlockEntity node)
+            node.debugReport(player);
+        return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
     @Nullable

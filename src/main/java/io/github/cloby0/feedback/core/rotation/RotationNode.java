@@ -165,6 +165,20 @@ public abstract class RotationNode extends BlockEntity {
         return visualAngle;
     }
 
+    /**
+     * TEMPORARY. Prints this node's state to chat on a sneak-right-click.
+     * <p>
+     * This is scaffolding for development, not a feature, and it breaks 8 outright by handing
+     * out exact figures with no instrument. Delete it once shafts visibly turn and a real
+     * gauge exists -- until then there is no other way to tell whether the network works.
+     */
+    public void debugReport(net.minecraft.world.entity.player.Player player) {
+        player.displayClientMessage(net.minecraft.network.chat.Component.literal(
+                String.format("[debug] %.0f RPM  |  %.0f / %.0f Su%s",
+                        getRpm(), networkLoadSu, networkCapacitySu,
+                        isOverstressed() ? "  |  OVERSTRESSED" : "")), false);
+    }
+
     // --- persistence ------------------------------------------------------------------------
 
     @Override
