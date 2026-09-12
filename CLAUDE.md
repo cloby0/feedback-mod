@@ -4,13 +4,46 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repository is
 
-This is the repository for **Feedback**, a Minecraft technology mod. The mod has not been written yet — right now the repo contains only design documentation. The eventual mod source will live here alongside these documents.
+This is the repository for **Feedback**, a Minecraft technology mod. It is a design-first project: the mod was specified before a line of it was written, and the specification documents live here alongside the source.
 
-There is therefore **no build system, no test suite, and no code to run yet**. Do not invent build/run instructions.
+The design documents remain the spine of the project; the source is now being written against them.
 
-**Platform is decided: NeoForge on Minecraft 1.21.1.** Chosen over a newer version deliberately — the newer backend's data-driven item work suits a mod built on "properties and tags matter more than the id," but 1.21.1 is where the players are. Project layout is still undecided; ask rather than assume.
+**Platform: NeoForge on Minecraft 1.21.1**, built with **ModDevGradle**. 1.21.1 was chosen over a newer version deliberately — the newer backend's data-driven item work suits a mod built on "properties and tags matter more than the id," but 1.21.1 is where the players are.
 
-Until then, the work is design: reasoning about mechanics, filling in open questions, and turning the documents below into a concrete specification.
+## Build and run
+
+```bash
+./gradlew build          # jar -> build/libs/feedback-<version>.jar
+./gradlew runClient      # dev client
+./gradlew runData        # datagen -> src/generated/resources
+./gradlew runGameTestServer
+./build-and-deploy.sh    # build, then deploy to the Feedback PrismLauncher instance
+```
+
+`build-and-deploy.sh` clears its own stale `feedback-*.jar` from the instance `mods/` folder before copying, because two jars with one mod id is a launch crash. It touches nothing else in that folder and has no packwiz step — Feedback is a standalone mod, not a modpack coremod.
+
+Java 21 is the machine default and the correct toolchain; no `JAVA_HOME` override, unlike the sibling ForgeGradle repos.
+
+Versions live in `gradle.properties` — NeoForge `21.1.250`, ModDevGradle `2.0.147`, Parchment `2024.11.17`, Gradle `9.2.1` via the wrapper.
+
+## Source layout
+
+Root package `io.github.cloby0.feedback`. The package tree follows the mod's **separation of systems**, not Minecraft's registry categories — measurement, control and actuation are separate systems the player wires together, and the code says so:
+
+| Package | Holds |
+| --- | --- |
+| `registry/` | every `DeferredRegister` — one place to look |
+| `core/unit/` | the units of §17 as types, not loose floats |
+| `core/energy/` | the four networks; mechanical and thermal first |
+| `machine/` | physical operations. A machine class never names a recipe |
+| `process/` | operation definitions, completion, and overrun behaviour |
+| `instrument/` | sensors. Read-only by construction — an instrument has no way to act |
+| `control/` | controllers, timers, data links |
+| `actuator/` | things that start and stop a supply |
+| `data/` | datagen |
+| `client/` | renderers and screens |
+
+Create a package when there is something to put in it; don't scaffold empty ones.
 
 ## The documents
 
@@ -67,5 +100,6 @@ These are settled and constrain any proposal:
 
 1. **Write document 2 (mechanics).** Not started. `feedback_philosophy.md` defers to it by name throughout — unit arithmetic, per-energy sensor/actuator pairings, the thermal model, overrun band tuning, the vanilla vessel thermal bands.
 2. **Write document 3 (content).** Not started, and downstream of 2.
-3. **Slice 1 is fully drafted** in `feedback_slice_01.md` and every open decision at its end is now closed. The next choice is build-vs-spec — implement the slice, or write document 2 first. Slice 2 opens on tempering, damper and controller, which `feedback_slice_01.md` deliberately leaves dangling.
-4. **`TODO.md` is the working checklist** — source of truth for *what's next*, where `feedback_philosophy.md` stays source of truth for *why*. Keep it current as items close.
+3. **Project scaffold is done** — Gradle, run configs, Parchment, deploy script, mod entrypoint. The remaining §2 item is the data-driven recipe format (§15 wants compat authored as a table, not code).
+4. **Slice 1 is fully drafted** in `feedback_slice_01.md` and every open decision at its end is now closed. The next choice is build-vs-spec — implement the slice, or write document 2 first. Slice 2 opens on tempering, damper and controller, which `feedback_slice_01.md` deliberately leaves dangling.
+5. **`TODO.md` is the working checklist** — source of truth for *what's next*, where `feedback_philosophy.md` stays source of truth for *why*. Keep it current as items close.

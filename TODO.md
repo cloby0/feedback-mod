@@ -6,8 +6,8 @@ Working checklist. Source of truth for *what's next*; `feedback_philosophy.md` s
 
 ## 0. Housekeeping
 
-- [ ] Commit `feedback_philosophy.md` + `feedback_slice_01.md` (modified since `4020934`)
-- [ ] Fix stale item 3 in `CLAUDE.md` "Outstanding work" — says slice 1 has five open decisions incl. vanilla furnace; all five resolved
+- [x] Commit `feedback_philosophy.md` + `feedback_slice_01.md` (`7cafb5e`)
+- [x] Fix stale items in `CLAUDE.md` "Outstanding work"; added the three new hard rules (discrete options, two-answer problems, workpiece state)
 
 ---
 
@@ -20,16 +20,20 @@ Slice 1 is fully drafted and every open decision in it is closed. Two ways forwa
 
 Recommendation: build. Write doc 2 from what the build forces you to decide.
 
+**Decided: build.** Scaffold is done; next is beat 1 — Hand Crank, Water Wheel, Shaft, Crank Linkage, Mechanical Hammer, and the plate -> foil -> scrap overrun chain.
+
 ---
 
 ## 2. Project scaffold
 
 Platform decided: **NeoForge, Minecraft 1.21.1.**
 
-- [ ] Decide ModDevGradle vs. NeoGradle
-- [ ] Decide project layout / package structure
-- [ ] Gradle scaffold, run configs, Parchment mappings
+- [x] **ModDevGradle**, not NeoGradle — new mod, one MC version, Gradle config cache. NeoGradle only buys multi-version support
+- [x] Package structure — root `io.github.cloby0.feedback`, tree follows the mod's separation of systems (see `CLAUDE.md` "Source layout")
+- [x] Gradle scaffold, run configs, Parchment `2024.11.17`, `build-and-deploy.sh` to the PrismLauncher instance. NeoForge `21.1.250`, MDG `2.0.147`, Gradle `9.2.1`
 - [ ] Decide data-driven recipe format — philosophy §15 wants compat authored as a table, not code
+
+Also decided in passing: **`src/generated/resources` is committed.** Datagen output is reviewable, and a diff on it is the cheapest way to see what a registry change actually did.
 
 ---
 

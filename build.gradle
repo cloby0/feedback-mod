@@ -1,0 +1,105 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev' version '2.0.147'
+}
+
+version = mod_version
+group = mod_group_id
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+neoForge {
+    version = project.neo_version
+
+    parchment {
+        mappingsVersion = project.parchment_mappings_version
+        minecraftVersion = project.parchment_minecraft_version
+    }
+
+    // Fail the build on a stale or malformed AT entry rather than at runtime.
+    validateAccessTransformers = true
+
+    runs {
+        client {
+            client()
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+        server {
+            server()
+            programArgument '--nogui'
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+        data {
+            data()
+            programArguments.addAll '--mod', project.mod_id,
+                    '--all',
+                    '--output', file('src/generated/resources/').absolutePath,
+                    '--existing', file('src/main/resources/').absolutePath
+        }
+        gameTestServer {
+            type = 'gameTestServer'
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+        configureEach {
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+dependencies {
+    compileOnly 'org.jetbrains:annotations:26.0.1'
+}
+
+// neoforge.mods.toml needs the version numbers that only gradle.properties knows.
+tasks.named('processResources', ProcessResources).configure {
+    def props = [
+            minecraft_version      : minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            neo_version            : neo_version,
+            neo_version_range      : neo_version_range,
+            loader_version_range   : loader_version_range,
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_license            : mod_license,
+            mod_version            : mod_version,
+            mod_authors            : mod_authors,
+            mod_description        : mod_description,
+    ]
+    inputs.properties props
+    filesMatching(['META-INF/neoforge.mods.toml', 'pack.mcmeta']) {
+        expand props
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 21
+}
+
+java {
+    withSourcesJar()
+}
+
+tasks.named('jar', Jar).configure {
+    manifest.attributes([
+            'Specification-Title'   : mod_id,
+            'Specification-Vendor'  : mod_authors,
+            'Specification-Version' : '1',
+            'Implementation-Title'  : mod_name,
+            'Implementation-Version': mod_version,
+            'Implementation-Vendor' : mod_authors,
+    ])
+}
+
+repositories {
+    mavenLocal()
+}

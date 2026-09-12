@@ -1,0 +1,30 @@
+# Gradle
+.gradle/
+build/
+out/
+!gradle/wrapper/gradle-wrapper.jar
+
+# NeoForge dev runs
+run/
+runs/
+run-data/
+repo/
+
+# Generated assets are committed on purpose (datagen output is reviewable);
+# remove the next line if that ever stops being true.
+# src/generated/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.classpath
+.project
+.settings/
+bin/
+eclipse/
+
+# OS
+.DS_Store
