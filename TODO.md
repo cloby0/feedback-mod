@@ -33,6 +33,19 @@ Platform decided: **NeoForge, Minecraft 1.21.1.**
 - [x] Gradle scaffold, run configs, Parchment `2024.11.17`, `build-and-deploy.sh` to the PrismLauncher instance. NeoForge `21.1.250`, MDG `2.0.147`, Gradle `9.2.1`
 - [ ] Decide data-driven recipe format — philosophy §15 wants compat authored as a table, not code
 
+### Library decisions
+
+Dev environment currently loads **JEI**, **PonderLib** and **Flywheel** (transitive via Ponder) out of `run/mods`, synced by the `syncDevMods` Gradle task. None are shipped dependencies yet.
+
+- [x] **JEI** — dev only. Our machines have no recipe list, so there is little to register; it is in the dev env to find out what a recipe browser does with a recipe-less mod
+- [x] **PonderLib** — the designated explanation channel (§8, *Documentation is a free sense*). Scenes teach verbs, never values or solutions. Promote to a real dependency when the first scene is written
+- [x] **Flywheel** — **yes, will be a real dependency.** Instanced rendering; without it every spinning shaft is its own draw call. Create's `SingleAxisRotatingVisual` / `RotatingInstance` are the reference (MIT)
+- [x] **GeckoLib** — **no.** It plays authored keyframe animations; our motion must be procedural, because a machine's visible state is a readout the player reasons from. A fixed-length animation decouples the visual from the mechanics, and a machine that visually lies contradicts §8
+- [x] **Cloth Config** — **no.** NeoForge's built-in config is sufficient, and our config surface should stay small: numbers here are design decisions, not user preferences
+- [x] **Registrate** — **no.** Saves registration boilerplate but hides what registration says. Legibility beats brevity on this project
+- [ ] **Jade / TheOneProbe** — *probably yes, done carefully.* A HUD that prints `1247 Tu` on a bare crucible gives away the thermometer and guts §8. One that shows *"really hot!!!"* until an instrument is installed, and figures after, is the adjectives rule on a HUD. Design it, don't just enable it
+- [x] **Mixin** — ships with NeoForge. The route for reworking the vanilla furnace/smoker/blast furnace (§15) without replacing the blocks
+
 Also decided in passing: **`src/generated/resources` is committed.** Datagen output is reviewable, and a diff on it is the cheapest way to see what a registry change actually did.
 
 ---

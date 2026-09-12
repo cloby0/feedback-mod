@@ -55,8 +55,41 @@ neoForge {
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
+// Mods we want present in the dev client but never in our jar and never in our
+// published dependencies. FML in a dev run does not scan the runtime classpath for
+// mods, so putting them on it does nothing -- they have to land in the run's mods
+// folder. Sync (not Copy) so removing one here removes it from the folder too.
+configurations {
+    devMods
+}
+
+tasks.register('syncDevMods', Sync) {
+    from configurations.devMods
+    into file('run/mods')
+}
+
+// Client only: JEI and Ponder are both client-side, and a dedicated server refuses them.
+tasks.named('runClient') {
+    dependsOn 'syncDevMods'
+}
+
 dependencies {
     compileOnly 'org.jetbrains:annotations:26.0.1'
+
+    // JEI -- development only, never shipped.
+    // The API is compileOnly in case we ever write a plugin; the full mod goes in
+    // devMods so it actually loads. Feedback's machines have no recipe list to show,
+    // and we need to see first-hand what a recipe browser does with that.
+    compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
+    devMods "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
+
+    // PonderLib -- development only, never shipped (yet).
+    // Philosophy 8, "Documentation is a free sense", makes Ponder the designated
+    // explanation channel. No scenes exist yet, so this is here to experiment with,
+    // not to depend on. Promoting it to a real dependency is a deliberate later step.
+    // Pulls Flywheel in transitively; that is Ponder's own runtime dependency.
+    compileOnly "net.createmod.ponder:ponder-neoforge:${ponder_version}"
+    devMods "net.createmod.ponder:ponder-neoforge:${ponder_version}"
 }
 
 // neoforge.mods.toml needs the version numbers that only gradle.properties knows.
@@ -102,4 +135,16 @@ tasks.named('jar', Jar).configure {
 
 repositories {
     mavenLocal()
+    maven {
+        name = 'BlameJared'          // JEI
+        url = 'https://maven.blamejared.com'
+    }
+    maven {
+        name = 'CreateMod'           // PonderLib, Catnip, Flywheel
+        url = 'https://maven.createmod.net'
+    }
+    maven {
+        name = 'Fuzss'               // NeoForge Config API port, a Ponder runtime dep
+        url = 'https://raw.githubusercontent.com/Fuzss/modresources/main/maven'
+    }
 }

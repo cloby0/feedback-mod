@@ -538,6 +538,31 @@ That is a far better outcome than forbidding timers. The player was not stopped 
 
 A process that needs a sustained condition is not satisfied by a large burst. 10000 Tu for one second is not 1000 Tu for ten seconds. Most thermal processes should care about the **state of the material over time**, which makes heating rate a property of the interaction between heat source, material, and vessel — not a "furnace speed" stat.
 
+### Documentation is a free sense
+
+The same rule that governs instruments governs the mod's own explanations of itself, and it settles what the in-game documentation is allowed to say.
+
+> **Documentation is a free sense. It reports in adjectives.**
+
+The format follows from the mod's subject. Almost nothing here is a static fact — a hammer that does not stop, a plate degrading into foil, a vessel overshooting its target are all **behaviours over time**, and a page of text is the wrong instrument for them. The right one is a **Ponder-style animated scene**: the player watches the plate become foil become scrap and arrives at *nobody is going to turn this off* on their own. That is the entire pitch, shown rather than asserted.
+
+It is also the only honest format. A mod named Feedback, whose thesis is *observe, then reason*, should not explain itself with a wall of prose. The documentation should have the same epistemics as the thing it documents.
+
+**But this format is unusually dangerous here, and the danger is precise.** A worked scene is somebody's design, rendered in three dimensions, with arrows — and §5 says an automation problem with a single correct answer is not a problem. A scene demonstrating two hammers interleaved would delete the discovery it depicts. A scene naming steel's temperature band would hand over a figure that §7 intends to be paid for in failed batches. The waste *is* the gate, and documentation is quite capable of tunnelling straight through it.
+
+So the rule has a hard boundary:
+
+> **Show verbs. Never values, never solutions.**
+
+- **Yes** — a crank attaches to a shaft like this. A hammer strikes when driven. This sensor reads and does not act. The wire runs from here to there.
+- **No** — steel wants 1400 Tu. Here is a working closed-loop furnace. Put two hammers side by side.
+
+Mechanism is fair game; process is not. The test when writing any scene: **if changing one number in a balance pass would invalidate it, it is the wrong scene.** Mechanism is stable, process numbers are not, and a scene built on the stable half will not rot.
+
+There is real onboarding work inside that boundary, and it should not be underrated. *A machine with no recipe list* is unfamiliar enough that players will assume the mod is broken. Saying **yes, really — put anything in and drive it** is a verb, it is the single most necessary thing the mod has to communicate, and no amount of watching a machine will teach it.
+
+The corollary is what makes this load-bearing rather than decorative. **Naming a designated explanation channel is what prevents tooltip creep.** The alternative to a considered documentation policy is not silence; it is somebody patching a confusing machine at 2am by writing a tooltip that gives the answer away.
+
 ---
 
 ## 9. Machines Remember — and So Do Workpieces
