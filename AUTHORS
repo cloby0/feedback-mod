@@ -1,0 +1,16 @@
+Feedback — authors and copyright holders
+========================================
+
+Copyright (C) 2026 soundgoodizerfan
+
+  GitHub: cloby0 (subject to change — the name above is the attribution
+  that holds, the account handle is not)
+
+Design, direction and specification are entirely the author's: the mod was
+specified in feedback_philosophy.md and feedback_slice_01.md before a line
+of it was written, and the source is written against those documents.
+
+Portions of the implementation were written with AI assistance (Anthropic's
+Claude) under the author's direction and review. Anthropic claims no
+ownership of that output. Noted here for transparency, not because it
+divides the copyright.
