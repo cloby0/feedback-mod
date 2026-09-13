@@ -85,9 +85,8 @@ third-party resource-pack imports with their own separate terms, and TFC's are T
 
 ## Who owns it, and one honest caveat
 
-Copyright holder is **soundgoodizerfan** — see `AUTHORS`. The GitHub account is currently
-`cloby0` and is expected to change, which is why the attribution is to the name and not the
-handle.
+Copyright holder is **soundgoodizerfan** — see `AUTHORS`. The GitHub account handle now
+matches the attribution name.
 
 The caveat, recorded because it is genuinely unsettled rather than because it is a problem:
 **parts of this implementation were written with AI assistance under the author's direction.**

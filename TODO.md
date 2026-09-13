@@ -50,9 +50,23 @@ by size.
 - [ ] **The cover system (§4d).** Blocked on reading GregTech CEu Modern's first, which is a
   session's work by itself. Do not start the code before the read.
 
-- [ ] **Reading wear with calipers.** Decided, scoped and not built — see §4b "Reading wear".
-  Small: one `Quantity`, one `useOn`, a resolution figure, and a check that refuses to measure a
-  machine that is running. The design argument is already written in §8, so this is typing.
+- [x] **Reading wear with calipers.** Built. `Quantity.CONDITION`, `CalipersItem` reading at 5%
+  resolution, and a refusal while the machine is running. It was mostly typing, and the two places
+  it was not are worth keeping:
+  - **The seam is `onItemUseFirst`, not `useOn`.** NeoForge calls it ahead of any block
+    interaction, which turns out to be load-bearing rather than tidy: `MechanicalHammerBlock`
+    accepts whatever is held as a workpiece, so with a plain `useOn` the first act of a player
+    measuring a hammer would be forging their calipers into a plate. Taking the click in the item
+    also means no machine block knows instruments exist.
+  - **The reading is composed server-side, and that is not a formality.** Condition syncs only
+    when the *adjective* changes, so the client's copy is stale by up to a whole band — a 5%
+    figure read from it would be fiction. `Instruments.signed` was pulled out of
+    `Readout.reading` to make that possible: the attribution wording is one rule, and it now lives
+    in the common package with the client path delegating to it.
+
+  New: `machine/Wearing` — `getCondition()` and `isRunning()`, the read side only. Deliberately no
+  `wear(float)`: absorbing force stays private to the machine that does it, because what the
+  surplus *does* is the machine's own business.
 
 - [x] **`core/unit/` for rotation, and the machinery for every unit after.** Done. `Su`, `Rpm`,
   `Fu` (an int — work arrives in blows, and "one more blow" has to be arithmetic rather than a
@@ -128,7 +142,7 @@ Recommendation: build. Write doc 2 from what the build forces you to decide.
 Platform decided: **NeoForge, Minecraft 1.21.1.**
 
 - [x] **ModDevGradle**, not NeoGradle — new mod, one MC version, Gradle config cache. NeoGradle only buys multi-version support
-- [x] Package structure — root `io.github.cloby0.feedback`, tree follows the mod's separation of systems (see `CLAUDE.md` "Source layout")
+- [x] Package structure — root `io.github.soundgoodizerfan.feedback`, tree follows the mod's separation of systems (see `CLAUDE.md` "Source layout")
 - [x] Gradle scaffold, run configs, Parchment `2024.11.17`, `build-and-deploy.sh` to the PrismLauncher instance. NeoForge `21.1.250`, MDG `2.0.147`, Gradle `9.2.1`
 - [x] **Data-driven recipe format — settled by precedent rather than decree.** Four datapack tables now exist (`deformation`, `thermal_process`, `quench`, `fuel`), each a `SimpleJsonResourceReloadListener` over a record with a `Codec` and a `StreamCodec`, none of them a vanilla `RecipeType`. §15's "compat authored as a table" is satisfied. The pattern is deliberately copy-pasteable: a fifth table should cost an afternoon
 
@@ -373,7 +387,8 @@ Verified working in game: rotation network with inertia and coasting, shafts tha
 
 Cogs, the gearbox, `St` gearing and the hammer's force ceiling are now verified in game too.
 
-Built since and **not yet seen running**: the whole of beat 2 — see §4c.
+Also verified since: wear (battered/spent bands, spent-hammer-stops-steel, over-gear cap), calipers
+condition reading, and the whole of beat 2 heat, one steel ingot made start to finish — see §4c.
 
 ### Cogs and a gearbox — built and verified in game
 
@@ -400,10 +415,10 @@ Small Cog, Large Cog and Gearbox exist, along with the two rules that make geari
 - **One block entity type serves both cog sizes.** Size is a property of the block, not of its state, so drag and inertia are read off the block rather than stored and kept in step.
 - **A large cog is the closest thing beat 1 has to a flywheel** — four times a small cog's inertia — which was not the point of building it and is worth watching. §4b's hand-crank-drives-nothing `[OPEN]` wanted a flywheel as its interesting resolution, and one may have arrived early by accident.
 
-### Wear, and the one rule behind it — built, unverified
+### Wear, and the one rule behind it — built and verified in game
 
 Closed two `[OPEN]`s that turned out to be one question. **Force that cannot go into the work
-goes into the machine.** `./gradlew build` passes; nothing has been seen in game.
+goes into the machine.**
 
 - [x] **The linkage delivers raw force; the machine clamps itself.** `CrankLinkageBlockEntity`
   had been applying the driven machine's `getMaxStrength()` before handing the stroke over, which
@@ -430,20 +445,20 @@ goes into the machine.** `./gradlew build` passes; nothing has been seen in game
 - [x] **Rejected prior art recorded** — GregTech's maintenance is a flat chance per runtime hour
   and carries no information about whether the factory was built well. Written up in
   `THIRD-PARTY-LICENSES.md`. Wear-caused-only-by-misuse appears to be genuinely unprecedented
-- [ ] **Unverified by eye.** Unconfirmed: that a hammer left beating a cold ingot visibly reports
-  a marked then battered then spent head, that a spent hammer stops making steel plate while
-  still making copper plate, and that an over-geared hammer wears without ever exceeding its
-  stated ceiling
+- [x] **Verified by eye.** A hammer left beating a cold ingot visibly reports a marked then
+  battered then spent head, a spent hammer stops making steel plate while still making copper
+  plate, and an over-geared hammer wears without ever exceeding its stated ceiling
 - [ ] **[OPEN] There is no repair, and no way back.** Condition only ever falls, and the only
   recovery is breaking the block and placing a new one — which works, and is unsatisfying for
   something the mod otherwise treats as a physical object. The right answer is almost certainly a
   **Hammer Head** item: an upgrade you could point at (§4), replaced rather than repaired, and
   the same slot a *better* head would eventually go in to raise the ceiling. Deliberately not
   built tonight — it is new content, not a fix, and it wants the roster to stop moving first
-#### Reading wear — decided, not built
+#### Reading wear — built and verified in game
 
 **Calipers, by right-clicking the machine.** Decided in conversation; the reasoning is now in
-§8 as *Some readings are free; some cost an action*.
+§8 as *Some readings are free; some cost an action*. Verified: a stopped hammer reports a figure
+on the action bar, a driven one refuses, and the calipers no longer end up inside the hammer.
 
 - [x] **Calipers, not a new instrument.** A worn head has mushroomed — it is wider and shorter
   than it was — and reading how far a piece of metal has deformed is exactly what calipers
@@ -469,23 +484,24 @@ goes into the machine.** `./gradlew build` passes; nothing has been seen in game
   multiplies the spec sheet directly: a hammer at 72% delivers 72% of the force stamped on it.
   Rescaling so that spent reads 0% would look tidier and would destroy the one property that
   makes the number worth having
-- [ ] **Build it.** Small and scoped: add `Quantity.CONDITION`; `CalipersItem.canRead` returns
-  true for `WORK` and `CONDITION`, with a coarse `resolution(CONDITION)` — 5% for the crude pair,
-  finer later; a `useOn` on the item that refuses while the machine is running and otherwise
-  reports the figure. `Instrument` already takes resolution per quantity, so nothing in the
-  interface has to move
+- [x] **Built.** `Quantity.CONDITION`, `FTuning.CALIPERS_RESOLUTION_CONDITION` at 5%,
+  `CalipersItem.onItemUseFirst`, `machine/Wearing`, and
+  `CrankLinkageBlockEntity.isDriving(level, pos)`. `Instrument` did not have to move, as predicted.
+  Worth noting the coarseness cuts the wrong way at exactly one end: the free bands are 2, 13, 20
+  and 35 points wide, so 5% is finer than the eye everywhere except the *top* — a sound hammer
+  reads 100% whether it has taken one wasted blow or none. Right failure for a crude pair; the
+  figure is bought to watch the number move, not to catch the first mistake
 - [x] **"Running" is drawing Su.** Decided — intuitive, and consistent without being a
   simulation. **But the code does not support it yet, and this is the thing to know before
   starting:** `getLoadSu()` is a flat figure, so `CrankLinkageBlockEntity` reports the hammer's
   80 Su whether the run is turning or not. A stopped-but-connected hammer books 80 Su on the
   ledger today, so "drawing Su" is currently always true and cannot refuse anything
-- [ ] **[OPEN] So which fix?** Two, and they are not the same size. Test the *linkage's stroke
-  rate* instead, which is equivalent in practice and works today — or make machine load actually
-  fall to zero on a stopped run, which is arguably more correct in general (drag is already
-  `Su/RPM` and goes to zero at rest; only machine load is flat) and is a rotation-network change
-  with knock-on effects on the Su ledger, overstress at rest, and whether a loaded network can
-  start at all. Take the cheap one for the calipers; the second is its own task and wants deciding
-  on its own merits rather than as a side effect of an instrument
+- [x] **Took the cheap one.** `CrankLinkageBlockEntity.isDriving` asks the six neighbours whether a
+  linkage is facing this block and turning above `STOPPED_RPM_THRESHOLD`. Building it clarified
+  *why* that is the right shape and not merely the cheap one: a reciprocating machine has no idea
+  whether it is working — it is told, one stroke at a time, and between strokes it looks exactly
+  like a stopped one. "Is this hammer running" is a question about the shaft, the same way
+  overstress is a question about the network rather than about any node
 - [x] **The reading does not go stale. Decided: (a).** Two builds. **(a)** the click reports the live figure
   and forgets it. **(b)** the click stamps the figure *and the tick* onto the machine — the same
   two-component trick `ItemHeat` already uses — so the HUD thereafter shows what it read the last
@@ -501,16 +517,19 @@ goes into the machine.** `./gradlew build` passes; nothing has been seen in game
 - [ ] **[OPEN] Wear has no visual.** It is a Jade line and nothing else. A block state at the
   battered and spent bands would make it readable without the HUD, which is where a free sense
   belongs; queued behind real models, since there is nothing to batter yet
-- [ ] **[OPEN] Only the hammer wears.** The rule is general and `wear()` is not — it is private to
-  `MechanicalHammerBlockEntity`, and the constants are `HAMMER_`-prefixed. Correct for one
-  machine; the moment a second one absorbs force it wants to be a small interface next to
-  `StrengthPair`, the same way `Instrument` was built before there were two instruments
+- [ ] **[OPEN] Only the hammer wears — and now only half of that is open.** The *read* side is
+  general: `machine/Wearing` exists, and a second wearing machine costs one `implements` and
+  nothing at the instrument. The *write* side is still `MechanicalHammerBlockEntity.wear()`, private,
+  with `HAMMER_`-prefixed constants. That split was deliberate rather than lazy — the consequence
+  of a wasted blow is the machine's own business (a bellows takes the same surplus as nothing at
+  all), so there is no shared `wear(float)` to write until a second machine disagrees about what
+  absorbing force *means*
 
 ---
 
-## 4c. Beat 2 — heat — built, unverified
+## 4c. Beat 2 — heat — built and verified in game
 
-All of beat 2 compiles, boots on a dedicated server, and loads its four datapack tables. **Nothing has been seen running.** Loading a world and making one steel ingot is the first thing to do next session.
+All of beat 2 compiles, boots on a dedicated server, loads its four datapack tables, and has now been played: one steel ingot made start to finish.
 
 - [x] **Thermal core** — `core/thermal/`. `ThermalBody` (temperature + mass), `HeatSource` (flame temperature, no mass), `Heat` (the maths), `ItemHeat` (a workpiece's own heat). Flow is driven by a *difference*, not a flat rate — see `Heat` for why the flat version made insulation a trap
 - [x] **Workpiece heat, everywhere** — a stamp plus a timestamp on the stack, computed on demand. Cools in a chest, a hopper, an unloaded chunk, or a mod we have never heard of, because nothing has to remember to cool it. Cooling is linear, not exponential; the reasoning is in `Heat.cooled`
@@ -525,7 +544,7 @@ All of beat 2 compiles, boots on a dedicated server, and loads its four datapack
 - [x] **Hot working** — the hammer gates on the workpiece's own temperature, which is where the two beats meet
 - [x] **Four datapack tables** — `deformation`, `thermal_process`, `quench`, `fuel`. This settles §2's data-driven recipe format by precedent
 - [x] **Jade and JEI** — thermal cards, adjectives on the HUD, exact requirements in the browser. A sealed vessel says *sealed*, not nothing
-- [ ] **Nothing is verified by eye.** Unconfirmed: that a crucible over a lit firebox climbs, that the bellows raises it past 1420, that the strip cuts a clutch, that a small crucible visibly burns the batch where a large one does not, that an ingot cools on the walk to the hammer, and that quenching in water produces hardened steel
+- [x] **Verified by eye.** A crucible over a lit firebox climbs, the bellows raises it past 1420, the strip cuts a clutch, a small crucible visibly burns the batch where a large one does not, an ingot cools on the walk to the hammer, and quenching in water produces hardened steel
 - [ ] Real models. Every beat 2 block is a vanilla texture on a box
 
 ### Numbers, simulated but not played

@@ -28,6 +28,8 @@
   "feedback.readout.condition.marked": "Head is marked",
   "feedback.readout.condition.battered": "Head is battered",
   "feedback.readout.condition.spent": "Head is spent",
+  "feedback.readout.condition.figure": "%s%% condition",
+  "feedback.readout.condition.running": "Stop the machine before measuring it",
   "feedback.readout.overloaded": "Overloaded",
   "feedback.readout.rpm": "%s RPM",
   "feedback.readout.su": "%s / %s Su",

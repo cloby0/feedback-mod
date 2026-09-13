@@ -28,7 +28,7 @@ Versions live in `gradle.properties` — NeoForge `21.1.250`, ModDevGradle `2.0.
 
 ## Source layout
 
-Root package `io.github.cloby0.feedback`. The package tree follows the mod's **separation of systems**, not Minecraft's registry categories — measurement, control and actuation are separate systems the player wires together, and the code says so:
+Root package `io.github.soundgoodizerfan.feedback`. The package tree follows the mod's **separation of systems**, not Minecraft's registry categories — measurement, control and actuation are separate systems the player wires together, and the code says so:
 
 | Package | Holds |
 | --- | --- |

@@ -1,0 +1,91 @@
+/*
+ * Feedback -- a Minecraft technology mod.
+ * Copyright (C) 2026 soundgoodizerfan
+ *
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <https://www.gnu.org/licenses/>.
+ *
+ * Assets under src/main/resources/assets are NOT covered by this licence.
+ * See LICENSE-ASSETS.
+ */
+package io.github.soundgoodizerfan.feedback.instrument;
+
+import org.jetbrains.annotations.Nullable;
+
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+
+/** Finds what the player can measure with. */
+public final class Instruments {
+
+    private Instruments() {
+    }
+
+    /**
+     * The finest instrument the player is carrying that can read this quantity, or null.
+     *
+     * <h3>Carried, not held</h3>
+     * Reading is passive and costs no hands: you look at something and either own the means to put
+     * a number on it or you do not. Requiring an instrument in hand would mean swapping tools to
+     * look at things, which is friction with no decision inside it (§3). Holding is reserved for
+     * <em>acting</em> on the world. What you can perceive is a property of your kit; what you can
+     * do is a property of your hands.
+     */
+    @Nullable
+    public static Instrument best(@Nullable Player player, Quantity quantity) {
+        if (player == null)
+            return null;
+
+        Inventory inventory = player.getInventory();
+        Instrument best = null;
+        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+            ItemStack stack = inventory.getItem(slot);
+            if (!(stack.getItem() instanceof Instrument candidate) || !candidate.canRead(quantity))
+                continue;
+            if (best == null || candidate.resolution(quantity) < best.resolution(quantity))
+                best = candidate;
+        }
+        return best;
+    }
+
+    /**
+     * A figure with the instrument that took it on the front: {@code Calipers: 9 / 14 Fu}.
+     *
+     * <h3>Why the wording lives here and not in the readout</h3>
+     * Philosophy 8 promises instruments never lie, not that they are accurate, so every figure the
+     * mod shows is attributed -- and that is one rule, which means one place. It sits in the
+     * common package rather than the client one because a reading taken by right-clicking a
+     * machine is composed on the server, where the true figure is: condition syncs only when the
+     * adjective changes, so the client's copy is stale by up to a whole band and is not fit to
+     * measure.
+     */
+    public static Component signed(Instrument instrument, Component figure) {
+        return Component.translatable("feedback.readout.attributed", instrument.label(), figure)
+                .withStyle(ChatFormatting.AQUA);
+    }
+
+    /**
+     * Round a true value to what an instrument can actually distinguish.
+     * <p>
+     * This is the whole of what a tier buys. The world is never consulted differently and the
+     * reading is never wrong — it is simply coarser, which is why a poor instrument costs
+     * reproducibility rather than success (§8).
+     */
+    public static float quantise(float value, float resolution) {
+        if (resolution <= 0)
+            return value;
+        return Math.round(value / resolution) * resolution;
+    }
+}
