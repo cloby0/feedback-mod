@@ -418,6 +418,116 @@ public final class FTuning {
     public static final float INSULATION_LEAK_FACTOR = 0.8f;
     public static final int INSULATION_MAX_BLOCKS = 4;
 
+    // --- vanilla vessels (§15) --------------------------------------------------------------
+
+    /**
+     * Invented. Above this, a food-type cooking recipe burns instead of finishing, in Tu.
+     *
+     * <h3>Why food and metal are told apart by recipe type, not a material table</h3>
+     * The fallback (see {@link #FALLBACK_WORK_PER_200_TICKS}) exists so that no recipe in any
+     * installed mod is uncraftable, which rules out a hand-authored temperature per material --
+     * that is exactly the per-item table the fallback is there to avoid needing. Vanilla's own
+     * {@code minecraft:smoking} recipe type already says "this is food"; reusing it is a
+     * heuristic, not a physical measurement, and it is licensed by the same sentence that
+     * licenses the rest of the fallback: a compatibility shim, not a model of the world.
+     * <p>
+     * Set below a plain furnace's charcoal equilibrium on purpose -- an unwatched furnace
+     * burning its food is the mod's own core pitch (§1) landing on a block the player has
+     * walked past since their first night. Nobody wrote that rule either.
+     */
+    public static final Tu FOOD_MAX_TU = new Tu(400f);
+
+    /**
+     * Invented. Below this, a metal-type (smelting or blasting) cooking recipe does not progress
+     * at all, in Tu.
+     *
+     * <h3>What this actually gates</h3>
+     * A plain furnace fed only {@code logs} (760 Tu, see the {@code fuel} table) settles under
+     * this line and simply cannot smelt ore -- fed charcoal or coal it clears it easily. That was
+     * not tuned to be a lesson; it fell out of picking one number for each side and is worth
+     * keeping regardless.
+     */
+    public static final Tu METAL_MIN_TU = new Tu(800f);
+
+    /**
+     * Invented. Hard ceiling on a Smoker's own temperature, in Tu -- the one explicit band wall
+     * in §15, because leak and mass alone do not produce one.
+     *
+     * <h3>Why this is a clamp and the Furnace gets none</h3>
+     * {@link #FIRE_CONDUCTANCE} (0.6) dominates any leak this file could reasonably pick, so
+     * every vessel's equilibrium sits close to its fire's own temperature almost regardless of
+     * leak -- mass changes how fast a vessel gets there and how much fuel noise it smooths out,
+     * not how hot it tops out. A Smoker specialised by leak alone would still smelt ore given a
+     * hot enough fuel, which is a whitelist by another name and exactly what §15 is written
+     * against. So it gets a real physical wall instead: below {@link #METAL_MIN_TU}, comfortably
+     * above {@link #FOOD_MAX_TU}. The Furnace and the Crude Blast Furnace get no such clamp --
+     * their whole difference from each other and from this is mass and leak, which is the
+     * genuinely emergent half of the claim. The Smoker is the one place the mechanism is
+     * declared rather than discovered, and this should say so rather than pretend otherwise.
+     */
+    public static final Tu SMOKER_CEILING_TU = new Tu(600f);
+
+    /**
+     * Invented. Furnace thermal mass and leak -- the generalist, mediocre at both bands.
+     *
+     * <h3>No ceiling, on purpose</h3>
+     * Unlike the Smoker, the Furnace's mediocrity is not a wall; it is <em>unreliability</em>.
+     * Low mass means it tracks its fire's own noise almost directly, so a smelt in progress can
+     * dip under {@link #METAL_MIN_TU} mid-hold on a rough batch of fuel and stall rather than
+     * fail outright (§6) -- and the same low mass clears {@link #FOOD_MAX_TU} quickly if nobody
+     * comes back, so an unwatched furnace burns its food. Both are real behaviour under one pair
+     * of numbers, not two rules.
+     */
+    public static final ThermalMass FURNACE_MASS = new ThermalMass(20f);
+    public static final Conductance FURNACE_LEAK = new Conductance(0.05f);
+
+    /**
+     * Invented. Smoker thermal mass and leak -- as low as the Furnace's, deliberately. Its
+     * specialisation is entirely {@link #SMOKER_CEILING_TU}; these two numbers only make it
+     * heat up fast and cheaply, which is the other half of "twitchy" (§15).
+     */
+    public static final ThermalMass SMOKER_MASS = new ThermalMass(15f);
+    public static final Conductance SMOKER_LEAK = new Conductance(0.05f);
+
+    /**
+     * Invented. Crude Blast Furnace thermal mass and leak -- higher mass than either of our own
+     * crucibles, deliberately. It is a sealed refractory box built for exactly one job, and §15
+     * calls it "genuinely stable for a primitive device" -- a claim this file should not make
+     * cheaply by giving it a worse leak than the Furnace and calling it a day.
+     *
+     * <h3>The floor is not a third number</h3>
+     * §15 describes the Crude Blast Furnace as having its own high floor, worded as if it were a
+     * wall the way the Smoker's ceiling is. It is not modelled as one here -- that would mean a
+     * real bistable "roaring or out" combustion state, which is simulation the mod does not need
+     * (does modelling it create a choice the player does not already have from watching the
+     * climb?). What high mass actually buys is <em>time</em>: the climb through the low-Tu zone,
+     * where it would ruin food or fail to smelt, is short relative to how long it then holds
+     * {@link #METAL_MIN_TU} and above once it gets there -- the same claim in practice, with no
+     * state machine underneath it. Recorded here so it is not mistaken for an oversight and
+     * re-added as a third number later.
+     */
+    public static final ThermalMass BLAST_FURNACE_MASS = new ThermalMass(300f);
+    public static final Conductance BLAST_FURNACE_LEAK = new Conductance(0.01f);
+
+    /**
+     * Invented. Work required for a 200-tick (vanilla's own default) cooking recipe to finish,
+     * under the fallback that governs every vanilla and modded smelting recipe this mod has not
+     * hand-authored a {@code ThermalProcess} for.
+     *
+     * <h3>The reference constant, computed rather than guessed at</h3>
+     * Philosophy 15: "one unspecified smelt costs one-eighth of the total heat one piece of coal
+     * yields in a plain stone furnace." Taken literally -- the {@code coal} fuel entry burns at
+     * 1180 Tu for 2400 ticks, so held at exactly its own flame temperature for its whole burn it
+     * delivers {@code (1180 - 20) * 2400 = 2,784,000} Work. An eighth of that is 348,000, which
+     * is what is here. A recipe that declares a longer cooking time scales this up proportionally
+     * rather than asking for a higher temperature, per the same section.
+     * <p>
+     * "Held at exactly its flame temperature" is an idealisation -- the real vessel approaches it
+     * and never quite arrives -- but the alternative is a constant that depends on which vessel's
+     * mass and leak you plug in, and the doc calls this <em>the</em> reference constant, singular.
+     */
+    public static final float FALLBACK_WORK_PER_200_TICKS = 348_000f;
+
     /**
      * What a full draught of air multiplies a fuel's flame temperature by.
      *

@@ -2,6 +2,11 @@ modLoader = "javafml"
 loaderVersion = "${loader_version_range}"
 license = "${mod_license}"
 
+# The Furnace, Smoker and Crude Blast Furnace (§15) -- the one place the mod mixes into a vanilla
+# class rather than adding one. See feedback.mixins.json and mixin/AbstractFurnaceVesselMixin.
+[[mixins]]
+config = "${mod_id}.mixins.json"
+
 [[mods]]
 modId = "${mod_id}"
 version = "${mod_version}"

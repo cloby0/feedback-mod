@@ -40,12 +40,9 @@ by size.
   this entry promised: see §3c. The Hand Hammer had to be built first, because a copper plate
   needed a Mechanical Hammer and a Mechanical Hammer needs copper plates.
 
-- [ ] **The Crude Blast Furnace and the vanilla thermal bands (§15).** Biggest missing
-  *lesson* in the slice, and the sharpest claim §7 makes — that the demanding material was
-  available the whole time, by hand, before any instrument — currently has nothing to land on.
-  Deferred purely on size: thermal bands on the furnace, smoker and blast furnace via mixin,
-  plus the fallback smelting constant, is a subsystem rather than a feature. Needs a session
-  with room, not the tail of one. Detail in §4c "Still open after beat 2".
+- [x] **The Crude Blast Furnace and the vanilla thermal bands (§15).** Built. `./gradlew build`
+  passes and a dedicated server mixes all three mixins into their targets and boots clean —
+  **nothing has been seen running.** Detail in §4e.
 
 - [ ] **The cover system (§4d).** Blocked on reading GregTech CEu Modern's first, which is a
   session's work by itself. Do not start the code before the read.
@@ -619,6 +616,100 @@ time.
 - [ ] `ThermalBody.hasThermowell()` is already the right seam — a vessel declaring whether it
   can be got at is exactly "does this block accept covers", narrowed to one quantity. Widen it
   rather than replacing it
+
+---
+
+## 4e. The Crude Blast Furnace and vanilla thermal bands — built, unverified
+
+§15 landed. The Furnace, Smoker and Crude Blast Furnace are real thermal vessels now — each is
+its own fire and its own body, on the same `(fire - vessel)` physics the crucible runs on — and
+§7's sharpest claim finally has somewhere to land: the demanding material was available the whole
+time, by hand, before any instrument. `./gradlew build` passes and a dedicated server mixes all
+three mixins into their targets and boots with no errors. **Nothing has been seen running** —
+making one steel ingot in a Crude Blast Furnace with no thermometer installed is the first thing
+to do next session.
+
+- [x] **One mixin on the shared abstract base, two small siblings.**
+  `mixin/AbstractFurnaceVesselMixin` targets `AbstractFurnaceBlockEntity` — the one place in the
+  mod something is genuinely mixed in rather than added, because there is no other seam. It
+  cancels the vanilla tick outright and hands the whole thing to
+  `core/thermal/VanillaVessels.tick`, which knows nothing about Mixin. `SmokerVesselMixin` and
+  `BlastFurnaceVesselMixin` are plain method overrides on the two concrete subclasses — no
+  `implements` clause, no shadow, just a same-signature method the JVM dispatches normally once
+  woven in
+- [x] **The vessel is its own fire.** Unlike the crucible, there is no separate firebox — the
+  fuel slot is lit straight off the same `FuelTable` the firebox already reads, so a pack that
+  teaches its own coke a hotter flame teaches it to the Blast Furnace for free. `HeatSource` is
+  implemented too, which means a crucible someone places on top of a lit vanilla furnace now
+  reads its live flame temperature automatically, through `HeatSource.below`'s existing
+  `instanceof` check — nobody wrote that, it fell out of the interface being generic
+- [x] **Recipe-type whitelists actually came off.** `process/VanillaFallback` pools vanilla's
+  `smelting`, `blasting` and `smoking` recipe types and searches all three for any vessel's
+  input, returning the shortest-cooking-time match. Which block it is sitting in decides nothing;
+  only temperature does. A recipe's own type is read exactly once after that, as a heuristic for
+  "is this food" (`isFood`) — a fact vanilla already published about the recipe, not an identity
+  check on the item
+- [x] **The fallback, computed rather than guessed at.** `FTuning.FALLBACK_WORK_PER_200_TICKS`
+  (348,000) is philosophy 15's "one-eighth of one coal's total heat" taken literally: the `coal`
+  fuel entry (1180 Tu, 2400 ticks) held at its own flame temperature for its whole burn yields
+  `(1180-20)*2400 = 2,784,000` Work; an eighth of that is what is here. A recipe's own cooking
+  time scales it proportionally, per the same section
+- [x] **Two classes, not a per-material table.** `FOOD_MAX_TU` (400) and `METAL_MIN_TU` (800) are
+  the whole of the food/metal split, straight off vanilla's own `smoking` vs. everything-else
+  distinction. Crossing `FOOD_MAX_TU` destroys the item outright, on the tick it crosses, same
+  rule as steel's spoil point. Below `METAL_MIN_TU` a metal-type recipe simply does not progress
+  — no refusal, no message, matching §6
+- [x] **The Smoker gets one real clamp; the Furnace and Blast Furnace get none.**
+  `SMOKER_CEILING_TU` (600) is a genuine hard wall, because `FIRE_CONDUCTANCE` (0.6) dominates any
+  leak this file could reasonably pick — every vessel's equilibrium sits close to its fire's own
+  temperature almost regardless of leak, so a Smoker specialised by leak alone would still smelt
+  ore given a hot fuel. The Furnace and Blast Furnace differ from each other by mass and leak
+  only, which is the genuinely emergent half of the claim
+- [x] **The Blast Furnace's floor is time, not a wall.** Considered and rejected: mirroring the
+  Smoker with a second explicit clamp. What high mass buys is checked, not assumed — the vessel's
+  climb rate is highest near ambient and falls as it nears equilibrium, so at typical fuel
+  temperatures the dwell time below `FOOD_MAX_TU` comes out shorter than a food recipe's cooking
+  time, so food is destroyed on the way past exactly as §15 says, with no bistable "roaring or
+  out" state machine underneath it. `feedback_philosophy.md` §15 now records this arithmetic —
+  see "Built as one wall, not two"
+- [x] **Fuel table extended for parity**, since the reworked furnace only lights off `FuelTable`
+  and no longer consults vanilla's own fuel map: `planks` (700 Tu), `lava_bucket` (1200 Tu,
+  matching `FIRE_TU_LAVA`, zero spread — a lava-fed furnace is as stable as the puddle it come
+  from), `blaze_rod` (1400 Tu, hotter than charcoal, a real reason to bring one back from the
+  Nether). Everything vanilla considered fuel but that has no entry here — wool, saplings, tools,
+  note blocks — simply does not light one of these three blocks any more, the same rule the
+  firebox already lives by
+- [x] **A furnace can genuinely fail to smelt ore now**, and it was not tuned to be a lesson — it
+  fell out of picking one number for each side. A plain furnace fed only `logs` (760 Tu) settles
+  under `METAL_MIN_TU` (800) and cannot smelt at all; fed charcoal or coal it clears the line
+  easily. Worth keeping regardless of whether it was intended twice over
+- [x] **An unwatched furnace burns its own food**, on any fuel, given enough time — a charcoal
+  equilibrium sits over 1100 Tu, far past `FOOD_MAX_TU`. Nobody wrote that rule either; it is the
+  mod's own core pitch landing on a block the player has walked past since their first night
+- [x] **`block.minecraft.blast_furnace` renamed** to "Crude Blast Furnace" via a lang key
+  override, per the slice doc — room left for a fancier multiblock later without a naming
+  collision
+- [x] **Mixin wiring is new to this project and is now the precedent.** `feedback.mixins.json` +
+  a `[[mixins]]` block in `neoforge.mods.toml`. No refmap, no annotation processor, no extra
+  Gradle plugin — confirmed against ModDevGradle's own `testproject` rather than assumed, because
+  the toolchain docs do not cover mixins at all. `compatibilityLevel: JAVA_21` is accepted even
+  though Mixin 0.8.7 only formally supports up to `JAVA_17` (logged as a downgrade, not an error);
+  Ponder's own mixins hit the same ceiling already, so this is a pre-existing condition of the
+  dependency set and not something this pass introduced
+- [ ] **Unverified by eye.** Nothing confirmed yet: that a lit furnace actually climbs and shows
+  fire/light, that a Blast Furnace clears steel's window on bellows air the way the crucible does,
+  that a Smoker genuinely refuses to smelt ore no matter the fuel, that food left too long
+  anywhere burns, and that `logs` alone really cannot smelt ore in a plain furnace
+- [ ] **[OPEN] The container screen's flame icon and progress arrow are cosmetic placeholders.**
+  Vanilla's own `litTime`/`litDuration`/`cookingProgress`/`cookingTotalTime` fields are untouched
+  on purpose — reading and writing them from a mixin on a *static* tick method needs a cast
+  through the target's own woven type, which this pass chose not to risk. The block's `LIT`
+  state (fire, light, particles) is kept honest because it costs nothing extra; the GUI does not
+  reflect real progress yet. Small, bounded, and known — not started
+- [ ] **[OPEN] The fuel slot still accepts anything vanilla considers fuel.** `canPlaceItem` was
+  not touched, so an item with no `FuelTable` entry can still be inserted and will simply sit
+  there inertly rather than being rejected. Cosmetic UX gap, not a correctness one
+- [ ] Real models — none of this changed any art, and none needed to
 
 ---
 
