@@ -54,9 +54,13 @@ import net.minecraft.world.level.block.state.BlockState;
  *
  * <h2>Why it exists, and why it is worse</h2>
  * The slice's best thermal vessel is the sealed blast furnace, and everything good about it
- * follows from being closed -- which is also why an instrument cannot be got at the inside of it.
- * The player's best vessel and their first instrument are mutually exclusive and no amount of
- * iron fixes it. The way out is not a better furnace; it is a vessel with a hole in it.
+ * follows from being closed. A carried thermometer can still be dipped through the door for one
+ * manual reading -- see {@code ThermometerItem#onItemUseFirst} -- so a sealed vessel was never
+ * truly unmeasurable. What it refuses is being <em>watched</em>: no ambient reading, no HUD card,
+ * no cover ever auto-attaching a sensor to it ({@link ThermalBody#hasThermowell()}). That is
+ * exactly what a controller needs and a manual spot check cannot give it, so the player's best
+ * vessel and their first automated loop are still mutually exclusive, and no amount of iron fixes
+ * it. The way out is not a better furnace; it is a vessel with a hole in it.
  * <p>
  * So the crucible is <b>not an upgrade</b>. It is slower and clumsier than the thing it does not
  * replace, and it is the only one of the two that can ever be part of a loop. What the player

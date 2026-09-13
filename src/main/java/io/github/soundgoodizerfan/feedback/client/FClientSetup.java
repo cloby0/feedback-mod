@@ -21,7 +21,9 @@ package io.github.soundgoodizerfan.feedback.client;
 
 import io.github.soundgoodizerfan.feedback.Feedback;
 import io.github.soundgoodizerfan.feedback.core.rotation.RotationNode;
+import io.github.soundgoodizerfan.feedback.machine.vessel.ThermalVesselScreen;
 import io.github.soundgoodizerfan.feedback.registry.FBlockEntities;
+import io.github.soundgoodizerfan.feedback.registry.FMenus;
 
 import dev.engine_room.flywheel.lib.visualization.SimpleBlockEntityVisualizer;
 
@@ -31,6 +33,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 
 /**
  * Client registration. The whole class is {@link Dist#CLIENT}, and has to be: Flywheel is a
@@ -67,6 +70,11 @@ public class FClientSetup {
         rotatingVisual(FBlockEntities.HAND_CRANK.get());
         rotatingVisual(FBlockEntities.WATER_WHEEL.get());
         rotatingVisual(FBlockEntities.CLUTCH.get());
+    }
+
+    @SubscribeEvent
+    public static void registerScreens(RegisterMenuScreensEvent event) {
+        event.register(FMenus.THERMAL_VESSEL.get(), ThermalVesselScreen::new);
     }
 
     private static <T extends RotationNode> void rotatingVisual(BlockEntityType<T> type) {

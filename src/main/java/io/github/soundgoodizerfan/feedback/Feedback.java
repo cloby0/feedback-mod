@@ -24,6 +24,7 @@ import io.github.soundgoodizerfan.feedback.registry.FCapabilities;
 import io.github.soundgoodizerfan.feedback.registry.FBlocks;
 import io.github.soundgoodizerfan.feedback.registry.FCreativeTabs;
 import io.github.soundgoodizerfan.feedback.registry.FDataComponents;
+import io.github.soundgoodizerfan.feedback.registry.FMenus;
 import io.github.soundgoodizerfan.feedback.registry.FRecipes;
 import io.github.soundgoodizerfan.feedback.registry.FItems;
 
@@ -59,6 +60,7 @@ public class Feedback {
         FBlocks.register(modBus);
         FItems.register(modBus);
         FBlockEntities.register(modBus);
+        FMenus.register(modBus);
         FCreativeTabs.register(modBus);
         FDataComponents.register(modBus);
         FCapabilities.register(modBus);

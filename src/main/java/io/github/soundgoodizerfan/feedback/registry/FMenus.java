@@ -1,0 +1,48 @@
+/*
+ * Feedback -- a Minecraft technology mod.
+ * Copyright (C) 2026 soundgoodizerfan
+ *
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <https://www.gnu.org/licenses/>.
+ *
+ * Assets under src/main/resources/assets are NOT covered by this licence.
+ * See LICENSE-ASSETS.
+ */
+package io.github.soundgoodizerfan.feedback.registry;
+
+import io.github.soundgoodizerfan.feedback.Feedback;
+import io.github.soundgoodizerfan.feedback.machine.vessel.ThermalVesselMenu;
+
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.flag.FeatureFlags;
+import net.minecraft.world.inventory.MenuType;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
+
+/** One menu type, shared by all three {@code VesselKind}s -- the layout never varies with kind. */
+public class FMenus {
+
+    public static final DeferredRegister<MenuType<?>> MENUS =
+            DeferredRegister.create(BuiltInRegistries.MENU, Feedback.MOD_ID);
+
+    public static final DeferredHolder<MenuType<?>, MenuType<ThermalVesselMenu>> THERMAL_VESSEL =
+            MENUS.register("thermal_vessel",
+                    () -> new MenuType<>(ThermalVesselMenu::new, FeatureFlags.VANILLA_SET));
+
+    private FMenus() {
+    }
+
+    public static void register(IEventBus modBus) {
+        MENUS.register(modBus);
+    }
+}

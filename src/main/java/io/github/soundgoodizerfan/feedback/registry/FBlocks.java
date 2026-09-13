@@ -34,6 +34,8 @@ import io.github.soundgoodizerfan.feedback.machine.crank.HandCrankBlock;
 import io.github.soundgoodizerfan.feedback.machine.hammer.MechanicalHammerBlock;
 import io.github.soundgoodizerfan.feedback.machine.linkage.CrankLinkageBlock;
 import io.github.soundgoodizerfan.feedback.machine.shaft.ShaftBlock;
+import io.github.soundgoodizerfan.feedback.machine.vessel.ThermalVesselBlock;
+import io.github.soundgoodizerfan.feedback.machine.vessel.VesselKind;
 import io.github.soundgoodizerfan.feedback.machine.waterwheel.WaterWheelBlock;
 
 import net.minecraft.world.level.block.Block;
@@ -177,6 +179,35 @@ public class FBlocks {
                     .strength(1.5f)
                     .sound(SoundType.COPPER)
                     .noOcclusion()));
+
+    /**
+     * An independent block, not a reworked vanilla one -- see {@code ThermalVesselBlockEntity}'s
+     * class doc for why. Same strength/sound as vanilla's own furnace family; the texture is
+     * vanilla's too (all art is placeholder), only the block and everything behind it are ours.
+     */
+    public static final DeferredBlock<ThermalVesselBlock> FURNACE = BLOCKS.register("furnace",
+            () -> new ThermalVesselBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.STONE)
+                    .strength(3.5f)
+                    .sound(SoundType.STONE)
+                    .lightLevel(state -> state.getValue(ThermalVesselBlock.LIT) ? 13 : 0),
+                    VesselKind.FURNACE));
+
+    public static final DeferredBlock<ThermalVesselBlock> SMOKER = BLOCKS.register("smoker",
+            () -> new ThermalVesselBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.STONE)
+                    .strength(3.5f)
+                    .sound(SoundType.STONE)
+                    .lightLevel(state -> state.getValue(ThermalVesselBlock.LIT) ? 13 : 0),
+                    VesselKind.SMOKER));
+
+    public static final DeferredBlock<ThermalVesselBlock> BLAST_FURNACE = BLOCKS.register("blast_furnace",
+            () -> new ThermalVesselBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.METAL)
+                    .strength(3.5f)
+                    .sound(SoundType.METAL)
+                    .lightLevel(state -> state.getValue(ThermalVesselBlock.LIT) ? 13 : 0),
+                    VesselKind.BLAST_FURNACE));
 
     private FBlocks() {
     }

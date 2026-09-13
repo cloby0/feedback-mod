@@ -494,7 +494,7 @@ The adjectives rule needs a boundary, or it collapses into hiding things for the
 
 > **Knowing what a process requires is free. Knowing what your equipment is currently doing is not.**
 
-A recipe is published data. Steel wants 1420–1480 Tu held for 600 ticks, heated no faster than 25 Tu/t — that is a figure from a handbook, and every real metallurgist has it. There is nothing to discover and nothing to gate. A recipe browser should state it in **exact units**, with no instrument owned and nothing unlocked.
+A recipe is published data. Steel wants 1350–1410 Tu held for 600 ticks, heated no faster than 25 Tu/t — that is a figure from a handbook, and every real metallurgist has it. There is nothing to discover and nothing to gate. A recipe browser should state it in **exact units**, with no instrument owned and nothing unlocked.
 
 What costs something is the other half of the sentence: *is my crucible in that band right now?* Requirements are public; **state is measured**, and measurement is what instruments are for.
 

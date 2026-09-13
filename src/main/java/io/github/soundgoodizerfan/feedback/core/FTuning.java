@@ -453,19 +453,31 @@ public final class FTuning {
      * Invented. Hard ceiling on a Smoker's own temperature, in Tu -- the one explicit band wall
      * in §15, because leak and mass alone do not produce one.
      *
+     * <h3>Below {@link #FOOD_MAX_TU}, not above it -- got backwards once already</h3>
+     * The first version of this wall sat at 600: below {@link #METAL_MIN_TU} (800), and — the
+     * reasoning actually written down here at the time — "comfortably above {@code
+     * FOOD_MAX_TU}." That was exactly backwards, and it shipped a Smoker that burned its own food
+     * just as fast as a plain Furnace. The mistake was treating "cannot reach metal's floor" as
+     * the whole of what a *food* appliance needs, when the real requirement is the mirror image:
+     * it must never reach food's ceiling either. {@link #FIRE_CONDUCTANCE} (0.6) against this
+     * mass makes a lit vessel close most of the gap to its fire's temperature in well under a
+     * second -- far faster than any food recipe's own cook time -- so a wall merely *below*
+     * metal's floor still leaves the whole 400-800 Tu gap for the climb to blow straight through
+     * on the way. The wall has to sit under {@link #FOOD_MAX_TU} instead, so the vessel settles
+     * there and holds, rather than crossing it in transit.
+     *
      * <h3>Why this is a clamp and the Furnace gets none</h3>
-     * {@link #FIRE_CONDUCTANCE} (0.6) dominates any leak this file could reasonably pick, so
-     * every vessel's equilibrium sits close to its fire's own temperature almost regardless of
-     * leak -- mass changes how fast a vessel gets there and how much fuel noise it smooths out,
-     * not how hot it tops out. A Smoker specialised by leak alone would still smelt ore given a
-     * hot enough fuel, which is a whitelist by another name and exactly what §15 is written
-     * against. So it gets a real physical wall instead: below {@link #METAL_MIN_TU}, comfortably
-     * above {@link #FOOD_MAX_TU}. The Furnace and the Crude Blast Furnace get no such clamp --
-     * their whole difference from each other and from this is mass and leak, which is the
-     * genuinely emergent half of the claim. The Smoker is the one place the mechanism is
+     * {@link #FIRE_CONDUCTANCE} dominates any leak this file could reasonably pick, so every
+     * vessel's equilibrium sits close to its fire's own temperature almost regardless of leak --
+     * mass changes how fast a vessel gets there and how much fuel noise it smooths out, not how
+     * hot it tops out. A Smoker specialised by leak alone would still smelt ore given a hot
+     * enough fuel, which is a whitelist by another name and exactly what §15 is written against.
+     * So it gets a real physical wall instead. The Furnace and the Crude Blast Furnace get no
+     * such clamp -- their whole difference from each other and from this is mass and leak, which
+     * is the genuinely emergent half of the claim. The Smoker is the one place the mechanism is
      * declared rather than discovered, and this should say so rather than pretend otherwise.
      */
-    public static final Tu SMOKER_CEILING_TU = new Tu(600f);
+    public static final Tu SMOKER_CEILING_TU = new Tu(380f);
 
     /**
      * Invented. Furnace thermal mass and leak -- the generalist, mediocre at both bands.

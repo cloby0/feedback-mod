@@ -200,12 +200,12 @@ STEEL
 
 Input          1 × Iron Ingot, 1 × Charcoal
 Process        Carburizing
-Temperature    1420–1480 Tu
+Temperature    1350–1410 Tu
 Hold           600 t (30 s)
 Max heating    5 Tu/t
 Output         1 × Steel Ingot
 
-Overshoot past ~1540 Tu → Burnt Iron (spoil)
+Overshoot past ~1470 Tu → Burnt Iron (spoil)
 Undershoot         → unchanged Iron Ingot (nothing happens)
 ```
 
@@ -249,9 +249,11 @@ That is the progression moment, and no recipe unlocked. The player gained *infor
 
 The Crude Blast Furnace is sealed, and everything good about it follows from being closed (§15).
 
-**Built differently from this draft, and the change is worth keeping.** The thermometer is *not* a cover — it is a carried instrument, exactly like the calipers, because reading is passive and costs no hands (§3). The wall is enforced from the other side instead: a vessel declares whether it can be got at, through `ThermalBody.hasThermowell()`, and a sealed one refuses to be read by **any** instrument. That is a fact about the furnace rather than a rule about this item, so it stays true for every instrument we ever add, and the player learns *this cannot be measured* rather than *I have failed to look properly*.
+**Built differently from this draft, and the change is worth keeping — twice now.** The thermometer is *not* a cover — it is a carried instrument, exactly like the calipers, because reading is passive and costs no hands (§3). The wall was first enforced from the other side: a vessel declares whether it can be got at, through `ThermalBody.hasThermowell()`, and a sealed one refused to be read by **any** instrument, full stop.
 
-**This is the wall the slice is actually built around**, and it survives the change intact. The player's best thermal vessel and their first instrument are mutually exclusive, and no amount of iron fixes it. They cannot measure the thing that works. They cannot automate the thing they can measure.
+That first version was tempting because it made "sealed" and "measurable" the same fact asked two ways, and it was wrong for conflating two actions that cost two different things. Watching a gauge is free and continuous; sticking a thermometer through the door for one reading is a real, costed action — the same distinction the calipers already draw between reading an item in hand and reading a machine you have to walk up and touch (§8). A sealed vessel can still be dipped into by hand. What it refuses is being *watched*: no ambient reading, no HUD card, no cover ever auto-attaching a sensor to it. That is exactly what a controller needs and a one-off dip cannot give it.
+
+**This is the wall the slice is actually built around**, and it survives the correction, just narrower than first stated. The player's best thermal vessel and their first *automated loop* are mutually exclusive, and no amount of iron fixes it. They can check the thing that works, by hand, whenever they're standing in front of it. They cannot leave it running unattended and trust a reading. They cannot automate the thing they can watch for free.
 
 The way out is not a better furnace. It is a vessel that was *designed to be measured* — which is the crucible, and which is why it exists.
 

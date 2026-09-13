@@ -65,6 +65,9 @@ public class FCreativeTabs {
                         output.accept(FItems.BURNT_IRON.get());
                         output.accept(FItems.HARDENED_STEEL.get());
                         output.accept(FItems.STEEL_PLATE.get());
+                        output.accept(FItems.FURNACE.get());
+                        output.accept(FItems.SMOKER.get());
+                        output.accept(FItems.BLAST_FURNACE.get());
                     })
                     .build());
 

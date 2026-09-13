@@ -3,11 +3,11 @@
     { "item": "minecraft:iron_ingot" },
     { "item": "minecraft:charcoal" }
   ],
-  "min_temperature": 1420,
-  "max_temperature": 1480,
+  "min_temperature": 1350,
+  "max_temperature": 1410,
   "hold_ticks": 600,
   "max_heating": 5,
   "result": { "id": "feedback:steel_ingot" },
-  "spoil_temperature": 1540,
+  "spoil_temperature": 1470,
   "spoiled": { "id": "feedback:burnt_iron" }
 }

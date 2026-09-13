@@ -70,17 +70,27 @@ public interface ThermalBody {
     }
 
     /**
-     * Whether an instrument can be got at the inside of this body.
+     * Whether this body can be watched <em>passively</em> -- an ambient carried reading, a Jade
+     * card, and eventually a cover's auto-attached sensor. It says nothing about a one-off manual
+     * reading; see the next paragraph.
      *
-     * <h3>This is the wall beat 2 is built around</h3>
-     * The slice's best thermal vessel is the sealed blast furnace, and everything good about it
-     * follows from being closed. A vessel that can be measured has to be <em>opened</em>, which
-     * costs it exactly the stability that made the sealed one good. So the player's best vessel
-     * and their first instrument are mutually exclusive, and no amount of iron fixes it -- the
-     * way out is a vessel designed to be measured, which is what the crucible is for.
+     * <h3>What this wall actually gates, after getting it wrong once</h3>
+     * The first version of this rule made a sealed vessel refuse <em>any</em> instrument outright,
+     * on the theory that "sealed" and "measurable" should be the same fact asked two ways. That
+     * conflated two different actions that cost two different things: watching a gauge is free and
+     * continuous, sticking a thermometer through the door for one reading is a real, costed action
+     * -- the same distinction {@code CalipersItem} already draws between reading an item you are
+     * holding and reading a machine you have to walk up to and touch (§8, "a reading is passive
+     * when taking it is free, and an action when taking it costs something"). A sealed vessel can
+     * still be dipped into by hand; what it refuses is a sensor that watches it for nothing, which
+     * is exactly what a cover or a HUD card would be. See {@code ThermometerItem#onItemUseFirst}
+     * for the manual path this no longer blocks.
      * <p>
-     * Modelling it here rather than as a rule about which instruments attach to what keeps a
-     * thermometer a plain carried instrument: it reads whatever will let itself be read.
+     * The wall this still builds is a real one, just narrower than originally stated: the
+     * player's best sealed vessel cannot be <em>automated</em> against, because a controller needs
+     * a continuous signal and a manual dip only ever answers for the instant it was taken. The way
+     * out for automation is still a vessel designed to be watched, which is what the crucible is
+     * for -- it was never really competing with a spot check.
      */
     default boolean hasThermowell() {
         return true;

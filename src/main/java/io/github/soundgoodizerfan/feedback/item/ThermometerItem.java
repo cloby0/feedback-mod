@@ -20,11 +20,18 @@
 package io.github.soundgoodizerfan.feedback.item;
 
 import io.github.soundgoodizerfan.feedback.core.FTuning;
+import io.github.soundgoodizerfan.feedback.core.thermal.ThermalBody;
 import io.github.soundgoodizerfan.feedback.instrument.Instrument;
+import io.github.soundgoodizerfan.feedback.instrument.Instruments;
 import io.github.soundgoodizerfan.feedback.instrument.Quantity;
 
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
 
 /**
  * Copper foil, a sealed tube, and something that expands.
@@ -50,10 +57,19 @@ import net.minecraft.world.item.Item;
  *
  * <h2>Why it is carried rather than attached</h2>
  * Same argument as the calipers: reading is passive and costs no hands. The slice's wall -- that
- * the player's best vessel cannot be measured -- is not enforced by making this a cover, but by
- * the vessels themselves, through {@code ThermalBody.hasThermowell}. A sealed furnace refuses to
- * be read by <em>any</em> instrument, which is a fact about the furnace rather than a rule about
- * this item, and it stays true for every instrument we ever add.
+ * the player's best vessel cannot be <em>automated</em> against -- is not enforced by making this
+ * a cover, but by the vessels themselves, through {@link ThermalBody#hasThermowell()}. It gates
+ * the ambient, continuous reading a HUD card or a future cover would give for free; it is a fact
+ * about the vessel rather than a rule about this item, and it stays true for every instrument we
+ * ever add.
+ *
+ * <h2>Sealed is not the same as unreadable</h2>
+ * {@link #onItemUseFirst} lets a carried thermometer take one manual reading of any {@link
+ * ThermalBody} at all, sealed or not -- the same shape as {@code CalipersItem} reading a wearing
+ * machine: a real action, taken by walking up and touching the thing, priced by costing a click
+ * rather than by being refused outright. What a seal still buys the vessel is that nobody is
+ * watching it for free; it says nothing about whether the player standing in front of it right
+ * now can dip a probe through the door.
  */
 public class ThermometerItem extends Item implements Instrument {
 
@@ -74,5 +90,28 @@ public class ThermometerItem extends Item implements Instrument {
     @Override
     public Component label() {
         return Component.translatable("feedback.instrument.thermometer");
+    }
+
+    /**
+     * Puts the thermometer on whatever was clicked, sealed or not. See the class doc for why this
+     * bypasses {@code hasThermowell} rather than checking it -- that flag is about who gets to
+     * watch for free, not about whether one deliberate dip is allowed.
+     */
+    @Override
+    public InteractionResult onItemUseFirst(ItemStack stack, UseOnContext context) {
+        Level level = context.getLevel();
+        Player player = context.getPlayer();
+        if (player == null || !(level.getBlockEntity(context.getClickedPos()) instanceof ThermalBody body))
+            return InteractionResult.PASS;
+
+        if (!level.isClientSide)
+            player.displayClientMessage(read(body), true);
+        return InteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    private Component read(ThermalBody body) {
+        float shown = Instruments.quantise(body.getTemperature().value(), resolution(Quantity.TEMPERATURE));
+        return Instruments.signed(this,
+                Component.translatable("feedback.readout.tu", Math.round(shown)));
     }
 }

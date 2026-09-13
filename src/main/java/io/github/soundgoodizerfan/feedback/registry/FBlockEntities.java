@@ -32,6 +32,9 @@ import io.github.soundgoodizerfan.feedback.machine.gearbox.GearboxBlockEntity;
 import io.github.soundgoodizerfan.feedback.machine.hammer.MechanicalHammerBlockEntity;
 import io.github.soundgoodizerfan.feedback.machine.linkage.CrankLinkageBlockEntity;
 import io.github.soundgoodizerfan.feedback.machine.shaft.ShaftBlockEntity;
+import io.github.soundgoodizerfan.feedback.machine.vessel.ThermalVesselBlock;
+import io.github.soundgoodizerfan.feedback.machine.vessel.ThermalVesselBlockEntity;
+import io.github.soundgoodizerfan.feedback.machine.vessel.VesselKind;
 import io.github.soundgoodizerfan.feedback.machine.waterwheel.WaterWheelBlockEntity;
 
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -110,6 +113,18 @@ public class FBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<BimetallicStripBlockEntity>> BIMETALLIC_STRIP =
             BLOCK_ENTITIES.register("bimetallic_strip", () -> BlockEntityType.Builder
                     .of(BimetallicStripBlockEntity::new, FBlocks.BIMETALLIC_STRIP.get())
+                    .build(null));
+
+    /**
+     * One type for all three vessels -- {@link VesselKind} is read off the block at the
+     * position, not the type, the same way the crucible's two sizes share one type.
+     */
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ThermalVesselBlockEntity>> THERMAL_VESSEL =
+            BLOCK_ENTITIES.register("thermal_vessel", () -> BlockEntityType.Builder
+                    .of((pos, state) -> new ThermalVesselBlockEntity(pos, state,
+                                    state.getBlock() instanceof ThermalVesselBlock block
+                                            ? block.getKind() : VesselKind.FURNACE),
+                            FBlocks.FURNACE.get(), FBlocks.SMOKER.get(), FBlocks.BLAST_FURNACE.get())
                     .build(null));
 
     private FBlockEntities() {

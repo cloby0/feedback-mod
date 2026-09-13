@@ -10,6 +10,61 @@ Candidates weighed on 2026-09-12 and deliberately not taken that night. Each one
 here so a fresh session can start on it without re-deriving the scope. Ordered by value, not
 by size.
 
+- [ ] **JEI take-over: hide vanilla's smelting/blasting/smoking, dynamically publish every pooled
+  recipe as our own.** Scoped 2026-09-13, not started, and is the direct follow-on to §4f. The
+  Furnace, Smoker and Blast Furnace are independent blocks now that never touch vanilla's
+  `AbstractFurnaceBlockEntity`. `process/VanillaFallback` still pools every vanilla/modded
+  `smelting`/`blasting`/`smoking` recipe for anything without a hand-authored `ThermalProcess` —
+  but JEI still shows those under its own built-in "Furnace"/"Smoking"/"Blasting" categories,
+  catalyzed by the now-inert vanilla blocks, which is exactly backwards: our vessels are the only
+  thing that can actually run them any more.
+
+  Three pieces, all in `compat/jei/`:
+
+  1. **Hide the vanilla categories.** In `FeedbackJeiPlugin.onRuntimeAvailable`, call
+     `runtime.getRecipeManager().hideRecipeCategory(...)` for
+     `mezz.jei.api.constants.RecipeTypes.SMELTING`, `.SMOKING`, `.BLASTING`. Confirmed present on
+     the classpath (`jei-1.21.1-common-api` 19.54.0.429): `IRecipeManager.hideRecipeCategory
+     (RecipeType<?>)` is a real, public, abstract method there today.
+
+  2. **A new category for pooled recipes — do not stretch `ThermalProcessCategory` to cover
+     both.** That class's whole card (min/max/hold/spoil, all exact Tu) is real published data
+     about a hand-authored `ThermalProcess`. A pooled `VanillaFallback` recipe has no such figures
+     — only the same two floors every vessel already enforces, `FTuning.FOOD_MAX_TU` and
+     `METAL_MIN_TU` — so a card inventing an exact window for one would violate §8's own rule in
+     the other direction ("a requirement is published data"): this requirement was never written
+     down by anyone, and a card pretending otherwise is the mistake. New
+     `VanillaFallbackCategory implements IRecipeCategory<RecipeHolder<AbstractCookingRecipe>>`,
+     showing input → output and the free adjective for whichever floor applies (food: something
+     like "needs to be hot enough to cook"; metal: `Readout`-style banded language off
+     `METAL_MIN_TU`), never an exact figure. Catalysts: `FItems.FURNACE`, `FItems.SMOKER`,
+     `FItems.BLAST_FURNACE` — all three; which vessel can actually *reach* a given recipe's floor
+     is a fact the card can say in words, not a fact about which block gets to claim it (§15, no
+     whitelists).
+
+  3. **Source the entries from JEI itself, not a second recipe-pooling pass.**
+     `IRecipeManager.createRecipeLookup(RecipeTypes.SMELTING).get()` (and `.SMOKING`, `.BLASTING`)
+     already returns JEI's own deduplicated, already-resolved recipes across every installed mod —
+     the same shape `VanillaFallback.find` already searches, so this does not need a second
+     pooling mechanism written. Union the three lookups, skip any recipe whose input already
+     matches a hand-authored `ThermalProcess` (`ThermalProcessTable.get().entries()` gives the
+     ingredient lists to check against, so steel does not *also* show as a generic smelting card),
+     register what's left under the new category in `onRuntimeAvailable` the same way
+     `FeedbackJeiPlugin.publishThermal` already pushes `ThermalProcess` cards.
+
+  **Left for whoever picks this up to decide, not pre-answered here:** whether the pooled-recipe
+  card should say which floor applies in so many words (probably yes, one line); whether a recipe
+  gated on `METAL_MIN_TU` should still list the Smoker as a catalyst even though it never means to
+  get that hot, or only Furnace/Blast Furnace — leaning toward listing all three and letting the
+  stated floor speak for itself (consistent with "precision is never a hard gate" generalising to
+  "capability is never a hard gate" either, but this is a judgement call worth a second opinion
+  before writing it, not a settled fact like the three pieces above).
+
+  **Already true, nothing to do here:** vanilla's own in-GUI recipe book (the bookmark-flip
+  toggle) doesn't apply to these screens at all any more — `ThermalVesselScreen` never adds one,
+  since it is not `AbstractFurnaceScreen` and never inherited `RecipeBookComponent`'s ghost-fill.
+  There is nothing to remove; it was never there to begin with.
+
 - [x] **`core/unit/` — the units of §17 as types.** Done for thermal. **The open question was
   answered: records, but only at the boundaries.** Four thin records — `Tu`, `TuRate`,
   `ThermalMass`, `Conductance` — each with one accessor *named for its dimension*
@@ -556,7 +611,7 @@ Worked out arithmetically and recorded here because they are the whole balance a
 | climb rate in band, full air | 7.9 Tu/t | 0.79 Tu/t |
 | swing per 20 t read interval | **159 Tu, peaks 1599** | 16 Tu, peaks 1456 |
 
-Steel's window is 1420–1480 Tu and iron burns above 1540. So a bare charcoal fire **cannot** make steel at any patience (1172 Tu, a real hard gate), air is the only way across, and the same thermostat that holds a large crucible in the window drives a small one straight past the spoil point. Carburizing's 5 Tu/t heating limit then makes the small crucible reset its hold on every stroke — it is not *locked out*, it needs a gentler, carefully geared draught, which is §7's rule that precision never gates hard.
+Steel's window was 1420–1480 Tu and iron burned above 1540 at the time this table was measured; both have since moved down 70 Tu (to 1350–1410 / 1470) because the Crude Blast Furnace, rebuilt as an independent block with its own fuel table, could not reliably reach the old window even fully bellows-blown on its hottest fuel (blaze rod, 1400 Tu unblown) -- see the "total conversion" section below. The table's own figures are frozen at the old window and not re-simulated. So a bare charcoal fire **cannot** make steel at any patience (1172 Tu, a real hard gate), air is the only way across, and the same thermostat that holds a large crucible in the window drives a small one straight past the spoil point. Carburizing's 5 Tu/t heating limit then makes the small crucible reset its hold on every stroke — it is not *locked out*, it needs a gentler, carefully geared draught, which is §7's rule that precision never gates hard.
 
 ### Decisions taken while building beat 2
 
@@ -616,18 +671,27 @@ time.
 - [ ] `ThermalBody.hasThermowell()` is already the right seam — a vessel declaring whether it
   can be got at is exactly "does this block accept covers", narrowed to one quantity. Widen it
   rather than replacing it
+- [x] **Narrowed once already, before the cover system exists.** It used to gate *any* instrument
+  outright; it now gates only passive/ambient reading (a HUD card, and eventually a cover's
+  auto-attach). A carried thermometer can still take one manual reading of a sealed vessel —
+  see `ThermometerItem.onItemUseFirst` — the same shape as calipers reading a wearing machine.
+  Worth remembering when covers arrive: the cover is the *ambient* watcher this flag was always
+  actually about, not a second gate on top of the manual dip
 
 ---
 
-## 4e. The Crude Blast Furnace and vanilla thermal bands — built, unverified
+## 4e. The Crude Blast Furnace and vanilla thermal bands — superseded, see §4f
 
-§15 landed. The Furnace, Smoker and Crude Blast Furnace are real thermal vessels now — each is
-its own fire and its own body, on the same `(fire - vessel)` physics the crucible runs on — and
-§7's sharpest claim finally has somewhere to land: the demanding material was available the whole
-time, by hand, before any instrument. `./gradlew build` passes and a dedicated server mixes all
-three mixins into their targets and boots with no errors. **Nothing has been seen running** —
-making one steel ingot in a Crude Blast Furnace with no thermometer installed is the first thing
-to do next session.
+**This whole section describes a mixin pass that has since been ripped out and replaced.** Every
+mixin it names below was deleted on 2026-09-13, the same day it was first actually played: the
+first real in-game test found that redoing a vanilla block's GUI from inside a mixin meant
+fighting one vanilla-internals assumption at a time, and each one only surfaced by crashing
+(`Slot.index` never set on a substituted slot, `canPlaceItem` hardcoded per index, an arrow baked
+into the background texture rather than drawn dynamically, and more). §4f is the replacement —
+three independent blocks, no vanilla class touched at all — and is the current source of truth for
+this system. The bullets below are kept as a record of what was *learned* (the food/metal split,
+the recipe pooling, the Smoker's ceiling) which all carried over into §4f unchanged; only the
+*implementation* they describe is gone.
 
 - [x] **One mixin on the shared abstract base, two small siblings.**
   `mixin/AbstractFurnaceVesselMixin` targets `AbstractFurnaceBlockEntity` — the one place in the
@@ -700,16 +764,127 @@ to do next session.
   fire/light, that a Blast Furnace clears steel's window on bellows air the way the crucible does,
   that a Smoker genuinely refuses to smelt ore no matter the fuel, that food left too long
   anywhere burns, and that `logs` alone really cannot smelt ore in a plain furnace
-- [ ] **[OPEN] The container screen's flame icon and progress arrow are cosmetic placeholders.**
-  Vanilla's own `litTime`/`litDuration`/`cookingProgress`/`cookingTotalTime` fields are untouched
-  on purpose — reading and writing them from a mixin on a *static* tick method needs a cast
-  through the target's own woven type, which this pass chose not to risk. The block's `LIT`
-  state (fire, light, particles) is kept honest because it costs nothing extra; the GUI does not
-  reflect real progress yet. Small, bounded, and known — not started
+- [x] **The GUI is redone: input and fuel only, no output slot, a real heat gauge.** Closes the
+  flame-icon/arrow placeholder above. `mixin/AbstractFurnaceMenuMixin` and
+  `mixin/AbstractFurnaceScreenMixin` (+ `AbstractContainerScreenAccessor`, an accessor mixin for
+  the position/size fields `@Shadow` can't reach one class up without a refmap). Nothing was
+  found to change in vanilla's own 3-slot container — slot 2 (vanilla's output) is moved
+  off-screen for the Furnace and Smoker, and turned into a real second *input* for the Blast
+  Furnace, at the same position, so it can hold charcoal alongside iron. `litTime`/`litDuration`
+  are real (repurposed, not new plumbing) and drive the flame icon honestly for the first time;
+  `cookingProgress` is repurposed to carry temperature to the client instead of a cook-tick count
+  nothing outside vanilla's own arrow needed. The gauge itself is banded, not a smooth fill — the
+  same ten `HEAT_BAND_TOPS` `Readout` already names in words, so it is no more precise than the
+  free sense it stands in for (§8)
+- [x] **Every finished item now replaces its input in place — no result slot, on any of the
+  three.** Follows straight from the core pitch: a machine cannot tell when it's done, so it was
+  always wrong for the "done" item to travel somewhere safe. A batch heats and turns over as one
+  mass (no spare slot to park a partial result in, unlike the crucible's open inventory), so a
+  bigger stack costs proportionally more accrued work rather than finishing item-by-item
+- [x] **Steel is reachable in a Blast Furnace now.** `core/thermal/VanillaVessels.tick` checks
+  `ThermalProcessTable` (iron + charcoal, hold-time, spoil — the same multi-ingredient path the
+  crucible runs) before falling back to `VanillaFallback`'s single-item vanilla recipes. The
+  Furnace and Smoker never expose the second slot, so it stays permanently empty for them and
+  they fall straight through to the vanilla pool — no vessel needed to be told it is the ore
+  machine (§15)
+- [x] **`ThermalBody.hasThermowell()` narrowed, and the Furnace stopped being sealed.** See the
+  cover-system section above for the seam change. The Furnace has an open door you can watch the
+  fire through and was never actually sealed like the Smoker or the Blast Furnace — treating all
+  three identically was a simplification that didn't survive contact with the real objects
 - [ ] **[OPEN] The fuel slot still accepts anything vanilla considers fuel.** `canPlaceItem` was
   not touched, so an item with no `FuelTable` entry can still be inserted and will simply sit
   there inertly rather than being rejected. Cosmetic UX gap, not a correctness one
+- [ ] **[OPEN] The heat gauge has no hover tooltip.** Calipers and the thermometer both narrate a
+  reading through chat; the gauge is silent about which band it's showing beyond the colour.
+  Probably fine — it's the free sense, not an instrument — but worth a second look once a cover
+  can actually sit on one of these and something needs to react to a number
 - [ ] Real models — none of this changed any art, and none needed to
+
+---
+
+## 4f. Total conversion: independent vessel blocks — built and verified in game
+
+2026-09-13. Feedback stopped reworking vanilla's Furnace/Smoker/Blast Furnace in place and started
+replacing them outright — `feedback:furnace`, `feedback:smoker`, `feedback:blast_furnace`, three
+new blocks with vanilla's own textures (placeholder art, unchanged) and none of vanilla's classes
+in their hierarchy. Vanilla's own three blocks are still in the game, inert: their crafting
+recipes are disabled (`data/minecraft/recipe/{furnace,smoker,blast_furnace}.json`, overridden with
+a `neoforge:false` condition), so a normal playthrough never obtains one. This is a genuinely
+different mod now, not a rebalance of vanilla's, and that is the direction this was pointed at on
+purpose (see the session log if the phrase "total conversion" needs the context).
+
+**Verified by a player, in game, same session:** placing all three, cooking food to completion in
+the Smoker (previously impossible, see below), making steel in the Blast Furnace with a bellows
+and a blaze rod, pulling a workpiece out and reading its temperature by hovering it.
+
+- [x] **One class, one `VesselKind` enum.** `machine/vessel/ThermalVesselBlockEntity` implements
+  `Container`, `MenuProvider`, `ThermalBody`, `HeatSource`, `Blown` directly — no vanilla
+  furnace class anywhere in its ancestry. `VesselKind` (`FURNACE`/`SMOKER`/`BLAST_FURNACE`) is the
+  entire difference between the three, same as §15 always described it: mass, leak, ceiling,
+  `hasThermowell`. One `BlockEntityType`, shared by all three blocks, exactly like the crucible's
+  two sizes already shared one.
+- [x] **Nine generic slots, not three fixed ones.** No slot means input, reagent or output any
+  more — `ThermalProcessTable` is checked against the whole nine-slot inventory first (steel can
+  be satisfied by any two of them, and there is finally a free slot to place a result in, so this
+  went back to the crucible's own per-unit completion model rather than the whole-stack workaround
+  the old three-slot mixin needed), and whatever it doesn't touch falls through to
+  `VanillaFallback` independently, per slot. The fuel slot is separate and set apart in the GUI —
+  with nine equivalent workpiece slots there is no one slot for fuel to visually feed.
+- [x] **Food actually cooks now.** Two compounding bugs, both fixed: (1) food was completing on
+  the same accrued-temperature-above-ambient integral as metal, scaled off a metal-smelting
+  constant (`FALLBACK_WORK_PER_200_TICKS`, "an eighth of a coal's total heat") that no food recipe
+  could ever satisfy before the vessel's own climb crossed `FOOD_MAX_TU` and destroyed it — food
+  now counts plain ticks in band instead, exactly vanilla's own cook-time model, just gated by
+  temperature instead of a lit-fire boolean. (2) `SMOKER_CEILING_TU` was 600, *above*
+  `FOOD_MAX_TU` (400) — the original reasoning for 600 ("comfortably above FOOD_MAX_TU") was
+  backwards; a fire this size closes most of the gap to its own flame temperature in well under a
+  second, so a wall merely below metal's floor still leaves the whole gap for the climb to blow
+  through on the way past. Lowered to 380, under food's own ceiling, so the Smoker settles there
+  and holds rather than crossing it in transit.
+- [x] **Steel's window moved down 70 Tu — 1350–1410, spoils at 1470** (was 1420–1480 / 1540).
+  Verified in-game reason, not simulated: even a blaze rod (1400 Tu unblown, the hottest fuel in
+  `FuelTable`) fully bellows-blown couldn't reliably *hold* inside the old window rather than
+  swinging past it — the numbers in §4c's simulated table are frozen at the old window and were
+  not re-derived. `feedback_slice_01.md` and `feedback_philosophy.md` updated to match.
+- [x] **The bellows works on a vessel directly.** `ThermalVesselBlockEntity implements Blown` —
+  a vessel is its own fire (§15), so it takes air the same way `FireboxBlockEntity` does, without
+  a separate firebox as the middleman. Caught two bugs building this: the interface was simply
+  missing at first (bellows had nothing to call `addAir` on), and once added, `tickServer` was
+  still computing its own `fireTu` inline from the raw unblown flame temperature instead of calling
+  the now-air-aware `getFireTu()` — so the multiplier existed and was never actually read. Worth
+  knowing for tuning a rig: at `STROKES_PER_RPM_PER_TICK` (0.00625) and `BELLOWS_AIR_LONG` (30),
+  8 RPM only sustains ~1.5 air/tick against the `FIREBOX_AIR_PER_TICK` (4) needed for a full blow
+  — the flame swings between unblown and heavily-blown rather than holding steady at low RPM.
+- [x] **A workpiece is stamped with real temperature when it leaves, not before.** A custom
+  `HeatStampingSlot` on the nine workpiece slots (`ThermalVesselMenu`) calls `ItemHeat.set` in
+  `onTake`, same "stamped at the moment it leaves" rule the crucible's own `removeItem` already
+  follows. A mid-cook item has no component of its own for exactly this reason, which is why the
+  GUI's own tooltip override (below) has to read the vessel's live reading instead for those slots.
+- [x] **Item temperature is visible by hovering it, anywhere — a new global tooltip listener, not
+  a GUI feature.** `client/ItemHeatTooltip` (`ItemTooltipEvent`) adds `Readout.temperatureReading`
+  to any stack carrying the `TEMPERATURE` component, in any inventory, any mod's screen. This is
+  deliberately the free sense (§8) an eye already has, not something bought by owning a
+  thermometer — a carried thermometer only sharpens the same line from an adjective to a figure,
+  through the same `Readout` call every other reading already goes through.
+- [x] **Two Screen bugs, both "missing a call vanilla makes for you when you extend its class,"
+  and both easy to miss because nothing else broke.** `AbstractContainerScreen.render()` does
+  *not* call `renderTooltip()` on its own — every vanilla screen overrides `render()` and calls it
+  explicitly after `super.render()` (see `AbstractFurnaceScreen`) — so `ThermalVesselScreen` never
+  showed *any* tooltip, for anything, until `render()` was overridden to add that one call. The
+  temperature-tooltip feature above shipped first and looked broken; the actual bug had nothing to
+  do with temperature.
+- [ ] **[OPEN] JEI still shows vanilla's own smelting/blasting/smoking categories**, catalyzed by
+  the now-inert vanilla blocks. Scoped as its own pick-up-list item below — see "JEI take-over."
+- [ ] **[OPEN] The fuel slot still accepts anything `FuelTable` recognises but nothing vanilla
+  doesn't** — the inverse of the old mixin pass's gap. A `FuelSlot.mayPlace` override already
+  exists (`ThermalVesselMenu`); nothing further needed unless a fuel item wants to be *rejected*
+  for a reason `FuelTable` itself does not already encode.
+- [ ] **[OPEN] Making the raw vanilla furnace/smoker/blast furnace block itself inert** (rather
+  than merely uncraftable) was considered and deliberately not done — it would mean mixin-patching
+  `newBlockEntity`/`getTicker`/`openContainer` on three vanilla block classes, exactly the fragile,
+  one-crash-at-a-time surgery this whole rewrite exists to get away from, to guard against an edge
+  case (another mod or a datapack handing the player a vanilla furnace) that disabling the
+  recipe already covers for a normal playthrough.
 
 ---
 
