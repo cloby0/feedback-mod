@@ -39,3 +39,7 @@ platform is neoforge, minecraft 1.21.1.
 ## license
 
 code is GPL-3.0-or-later. assets are all rights reserved. see `LICENSING.md`.
+
+## ai usage
+
+i'm not gonna sit here and lie to you. i, soundgoodizerfan, just flat out don't code java at all. i've made modPACKS, but never a mod. so yeah, i think on paper, that means this is vibecoded. but i have been going out of my way to commit to optimization, infrastructure, and actual fun in the mod. i haven't just been, like, sitting here one-shotting feature after feature. i HAVE actually been sitting here, watching every output. making sure things are coded in a smart way (as far as i can tell), and making sure that the game mechanics are ACTUALLY fun to practice, not just fun on paper. still though, if you're a java dev looking at this repo, and you think you'd do better than claude is, PLEASE message me. i dont LIKE that this mod is vibecoded, but i dont want to learn java for this because then the code will probably suck.
