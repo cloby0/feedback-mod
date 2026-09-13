@@ -293,9 +293,22 @@ public class RotationNetwork {
 
         dropStale(members);
         for (RotationNode member : members.keySet()) {
+            // Friction and mass are referred to the network's own shaft through the square of the
+            // gear ratio, which is the standard result and not a fudge: a geared-up branch turns
+            // faster, so its bearings eat more and its mass is harder to accelerate, both by the
+            // same factor twice over. It is also the answer to "does gearing cost anything" --
+            // it does, continuously, without a rule having to say so.
+            //
+            // A machine's working draw is deliberately NOT referred. Referring it would make a
+            // geared-down machine cost the network less -- fewer blows a second is less power --
+            // which is physically right and a real balance decision, since it turns a gear train
+            // into a way of fitting more hammers on one wheel. Left flat for now because 80 Su is
+            // a figure stamped on the block (§17), and a spec that changed with the gearing would
+            // stop being one.
+            float referred = member.getRatio() * member.getRatio();
             newStaticLoad += member.getLoadSu();
-            newDrag += member.getDragSuPerRpm();
-            newInertia += member.getInertia();
+            newDrag += member.getDragSuPerRpm() * referred;
+            newInertia += member.getInertia() * referred;
         }
 
         inertia = newInertia;

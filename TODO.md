@@ -87,13 +87,11 @@ Built and compiling: rotation engine (`RotationNode` / `RotationNetwork` / `Rota
 - [x] **Crank Linkage** — short/long throw, swapped by right-clicking it; rotation to reciprocation
 - [x] **The `Fu` process** — 30 Fu to a plate, then plate → foil → scrap, as a datapack table
 - [x] **Workpiece progress is visible, in adjectives** — "Barely marked" → "Taking shape" → "Visibly worked" → "Nearly there". No figures: that is what calipers are for. The exact `Fu` is on the stack and deliberately not shown
-- [ ] **Workpiece should be visible in the machine too** — a block entity renderer showing what is on the anvil. The tooltip covers the lesson, but you currently cannot see that the hammer is occupied without clicking it
+- [x] **Workpiece is visible in the machine too** — `client/MechanicalHammerRenderer` draws it lying on the anvil. Not decoration: beat 1 is meant to be readable by eye, and it cannot be if finding out what a machine holds means pulling the item out of it
 ### Information layer — Jade, JEI, and the debug helmet
 
 - [x] **Every reading is signed by the instrument that took it** — `Calipers: 9 / 14 Fu`. A bare figure is unfalsifiable, and §8 promises instruments never lie while saying nothing about them being *accurate*. Once drift and recalibration are real, a player looking at a bad batch must know which instrument to distrust, and two tiers disagreeing has to read as informative rather than broken
 - [x] **The `Instrument` interface** — `instrument/{Quantity,Instrument,Instruments}`. An item declares `canRead(Quantity)`, `resolution(Quantity)`, `label()`; `Instruments.best(player, quantity)` finds the finest one carried. Calipers and the Debug Helmet are declarations now. **A thermometer is one class and touches no display code.** `Instruments.quantise()` applies resolution, which is the whole of what a tier buys
-- [ ] ~~The `Instrument` interface is still not built.~~ `Readout.source(Quantity)` hardcodes calipers and the helmet. The agreed shape: an item declares `canRead(Quantity)`, `resolution(Quantity)`, `label()`, and `Instruments.best(player, quantity)` finds the finest one carried — so a thermometer is one declaration and touches no display code. Do this before the thermometer, not after
-
 
 Governed by §8's *what you need is free, what you have is a cost*. Write these together; they are one design, not three features.
 
@@ -188,21 +186,34 @@ Downstream of doc 2. The roster: every item, material, machine, cover, process.
 
 ## 4b. Next session — start here
 
-Everything below is verified working in game: rotation network with inertia and coasting, shafts that visibly turn (Flywheel, jar-in-jar), Clutch + Timer, Mechanical Hammer with the overrun chain, Calipers, JEI process cards, Jade in adjectives, Debug Helmet.
+Verified working in game: rotation network with inertia and coasting, shafts that visibly turn (Flywheel, jar-in-jar), Clutch + Timer, Mechanical Hammer with the overrun chain, Calipers, JEI process cards, Jade in adjectives, Debug Helmet.
 
-### Cogs and a gearbox — the agreed next job
+Built since and **not yet seen running**: Small Cog, Large Cog, Gearbox, gearing that multiplies `St`, and the hammer's force ceiling. Loading a world and meshing two cogs is the first thing to do next session.
 
-**Most of this already exists.** `RotationPropagator.ratioBetween(level, from, to)` returns a `float` and every downstream piece — `assignRatios`, `RotationNode.ratio`, the visual, phase — was written for arbitrary ratios including negative ones. Today it only ever returns `1` (shaft to shaft) or `0` (not coupled). Cogs are mostly *content*, not engine work.
+### Cogs and a gearbox — built
 
-- [ ] **Small and large cog**, Create's ratios: small↔small `-1` (meshing reverses), large↔small `-2`, small↔large `-0.5`. A negative ratio already means "turns the other way" everywhere.
-- [ ] **Gearbox** — cross-axis transfer. Needs `ratioBetween` to stop requiring a shared axis, which is the one genuine engine change.
-- [ ] Decide whether gearing costs `Su` beyond a shaft's drag. A gear train that is free makes speed conversion a non-decision
-- [x] **Gear ratios change `St`** — decided, written into §17. Gearing down multiplies force per blow and divides blow rate, so work per second is unchanged; what changes is whether a blow clears a material's hardness floor at all. This is the *second answer* to the force problem §5 wants: a short throw is free but spends precision, a gear train keeps the gentle blow's control and spends capital and space.
-- [ ] **Every machine needs a maximum `St`** — a ceiling set by its construction, not its drive. *A paper blade at a million RPM still will not cut steel.* Without it, one long gear train makes every hammer equivalent and the force axis collapses into how many cogs you were willing to place. This is also what keeps a better machine worth buying once gearing exists: gearing reaches a ceiling, only a better machine raises it.
-  - Needs a figure on the Mechanical Hammer's card alongside `12 / 3 St`
-  - **[OPEN]** What happens when the drive exceeds the ceiling? Cheapest is a silent clamp. More interesting: the surplus is still drawn as `Su`, so over-gearing costs power for nothing and the ceiling is discoverable through the ledger rather than a tooltip. Most interesting and the biggest commitment: the machine wears or breaks, which matches "each cutoff has its own failure character"
-- [ ] **[OPEN] Does gearing need an ongoing cost?** It preserves work per second, so a built gear train buys force for free. That may be right — a real gearbox does exactly that, and cogs, space and the ceiling are genuine costs. Revisit if gearing turns out to dominate every other route to force
+Small Cog, Large Cog and Gearbox exist, along with the two rules that make gearing mean something. `./gradlew build` passes and the mod loads on a dedicated server; **nothing is verified by eye yet** — see the unchecked items below.
+
+- [x] **Small and large cog**, Create's ratios: small↔small `-1` (meshing reverses), large↔small `-2`, small↔large `-0.5`. `RotationPropagator.ratioBetween` was already written for arbitrary signed ratios, so the engine change was one hook on `Rotatable` — `meshRatioTowards` — and cogs were content after all
+- [x] **Gearbox** — cross-axis transfer at 1:1. It presents a shaft on all six faces and answers a *sign* per face through the new `Rotatable.shaftSignTowards`, so `ratioBetween` stopped requiring a shared axis without knowing what a gearbox is
+- [x] **Decided: gearing costs nothing beyond the cogs and their drag.** Friction and mass are now referred through the square of the gear ratio in `RotationNetwork.recalculate`, which is the standard result rather than a balance rule — so a geared-up branch pays continuously for turning faster, on its own. A surcharge on top would be a rule restating what the physics already says
+- [x] **Gear ratios change `St`** — decided, written into §17, and implemented: `CrankLinkageBlockEntity` multiplies the machine's stated force by the reciprocal of its own speed ratio. Blows land harder and fall less often, work per second is unchanged, and what changes is whether a blow clears a material's hardness floor at all
+- [x] **Every machine states a maximum `St`** — `StrengthPair.getMaxStrength()`, `24 St` on the Mechanical Hammer, and on its Jade card beside `12 / 3 St`. Twice the short throw, so gearing buys exactly one genuine doubling past the strongest setting the block has
+  - **[OPEN]** still open, and deliberately: exceeding the ceiling is a **silent clamp** today. The two better answers are unchanged — charge the surplus as `Su` so over-gearing costs power for nothing and the limit is discoverable through the ledger, or let the machine wear and break, which matches "each cutoff has its own failure character" and is the larger commitment
+- [ ] **Nothing is verified by eye.** Unconfirmed: that meshed cogs visibly turn opposite ways, that a large cog beside a small one runs at half its speed on screen, that a gearbox actually drives the shaft round the corner, and that a geared-down hammer lands blows a plain one cannot
+- [ ] Real models. Both cogs are a placeholder disc on a shaft and the gearbox is a copper box with three shafts through it
+- [ ] **[OPEN] Does gearing need an ongoing cost?** Narrowed by building, not closed — see §17. The referral above makes *speed* cost; a machine's working draw is still a flat figure, so gearing *down* to reach a hardness floor remains free apart from the cogs
 - Taking Create's two cog sizes wholesale is fine and deliberate — the rotation layer is openly Create-inspired, their code is MIT, and the mod's originality is in overrun and instrumentation rather than in inventing a third cog. **Their assets are All Rights Reserved: models and textures must be ours.**
+
+#### Decisions taken while building the cogs
+
+- **Cogs mesh face to face, not diagonally.** Create requires large-to-small to be diagonal because its large cog is visibly bigger than one block and its teeth reach the corner. Every block here is still a one-metre cube of placeholder art, so a diagonal rule would be one the player cannot see and therefore cannot learn. Revisit with real models — it is the one part of cogs that *is* engine work, since the propagator would have to scan the twelve diagonal neighbours as well as the six faces.
+- **A cog inherits the axis of whatever it is placed against**, sneak to override. Clicked-face placement is right for a shaft, whose axis is the direction you are building, and wrong for a cog, which almost always goes onto the line you just clicked or beside the cog you just placed. Without this, meshing two cogs meant fighting the placement rule.
+- **In line along the axis is not meshing.** Two cogs stacked on one shaft are bolted to it and turn as one; only cogs set side by side in the same plane engage teeth. Both cases fall out of the same two methods and neither needed a special rule.
+- **The gearbox reverses anything opposite and agrees or disagrees by corner.** Its faces are driven off a common crown, so the signs are geometry rather than preference — and there is no consistent rule where every ninety-degree turn reverses, because the three axis pairs cannot all be negative at once. Taking the sign from the face's own axis direction is consistent by construction. Getting the direction you want is therefore a placement problem, which is the intent: the gearbox has no setting on it (§3), and a player who needs the other way round adds a cog.
+- **The gearbox does not visibly turn.** It is a housing; its gears are inside it. No visualizer, no fallback renderer, and it stays in the chunk mesh — which also means it is the one rotating block that cannot vanish when Flywheel's backend is off.
+- **One block entity type serves both cog sizes.** Size is a property of the block, not of its state, so drag and inertia are read off the block rather than stored and kept in step.
+- **A large cog is the closest thing beat 1 has to a flywheel** — four times a small cog's inertia — which was not the point of building it and is worth watching. §4b's hand-crank-drives-nothing `[OPEN]` wanted a flywheel as its interesting resolution, and one may have arrived early by accident.
 
 ## 5. Slice 2
 

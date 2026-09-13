@@ -208,8 +208,10 @@ public class RotationPropagator {
     /**
      * Speed multiplier from {@code from} to {@code to}, or 0 when they are not coupled.
      * <p>
-     * Only shaft-to-shaft coupling exists today, which is always 1:1. Gearing returns a real
-     * ratio here -- negative to reverse direction -- and nothing else needs to change.
+     * Two ways to be coupled, and they are different physical things. Teeth <em>mesh</em>, which
+     * reverses direction and changes speed by the ratio of the two gears. A shaft <em>runs
+     * through</em>, which is always the same speed -- though not necessarily the same direction,
+     * since a gearbox drives its faces off separate bevels.
      */
     private static float ratioBetween(Level level, RotationNode from, RotationNode to) {
         BlockState stateFrom = from.getBlockState();
@@ -223,10 +225,18 @@ public class RotationPropagator {
             return 0;
 
         Direction face = Direction.getNearest(diff.getX(), diff.getY(), diff.getZ());
+
+        float mesh = rotatableFrom.meshRatioTowards(stateFrom, face, stateTo);
+        if (mesh != 0)
+            return mesh;
+
         boolean coupled = rotatableFrom.hasShaftTowards(level, from.getBlockPos(), stateFrom, face)
                 && rotatableTo.hasShaftTowards(level, to.getBlockPos(), stateTo, face.getOpposite());
+        if (!coupled)
+            return 0;
 
-        return coupled ? 1 : 0;
+        return rotatableFrom.shaftSignTowards(stateFrom, face)
+                * rotatableTo.shaftSignTowards(stateTo, face.getOpposite());
     }
 
     private static RotationNode nodeAt(Level level, BlockPos pos) {

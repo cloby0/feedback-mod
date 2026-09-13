@@ -454,7 +454,10 @@ That is §14's difficulty curve in one component. The new material did not deman
 
 **Process variables (2):** `Fu`/`St` mechanical work · `Tu` temperature
 
-Within §20's budget. Nothing in it exists to pad the tech tree.
+**Added since, over budget and deliberately (3):** Small Cog · Large Cog · Gearbox
+*(§17 gave the force problem a second answer — re-gear the drive rather than fit a shorter throw — and an answer the player cannot buy a part for is not an answer. Cogs are also what make the Mechanical Hammer's `St` ceiling mean anything: without gearing, no drive ever reaches it. The gearbox is the smallest thing that lets a gear train turn a corner, which a shaft-only factory otherwise forbids.)*
+
+Within §20's budget as drafted, and three blocks over it as built. Nothing in it exists to pad the tech tree.
 
 ---
 

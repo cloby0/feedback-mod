@@ -19,4 +19,29 @@ public interface Rotatable {
 
     /** Whether a shaft sticks out of this block toward {@code face}, so a neighbour can couple to it. */
     boolean hasShaftTowards(LevelAccessor level, BlockPos pos, BlockState state, Direction face);
+
+    /**
+     * Which way the shaft on {@code face} turns relative to this block's own rotation: +1 with it,
+     * -1 against it.
+     * <p>
+     * Almost everything answers +1, because a shaft bolted through a block turns with it. A
+     * gearbox does not: its faces are driven by separate bevels off a common crown, so the shafts
+     * it couples are not all turning the same way.
+     */
+    default float shaftSignTowards(BlockState state, Direction face) {
+        return 1;
+    }
+
+    /**
+     * Gear ratio when this block meshes teeth with the neighbour across {@code face}, or 0 when
+     * they do not mesh.
+     * <p>
+     * Meshing is not shaft coupling and the two must not be confused: coupled blocks share a
+     * shaft and therefore one speed, while meshed teeth drive each other at a ratio and in
+     * opposite directions. Returned as speed-of-neighbour over speed-of-self, negative because
+     * meshing reverses.
+     */
+    default float meshRatioTowards(BlockState state, Direction face, BlockState other) {
+        return 0;
+    }
 }

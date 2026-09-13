@@ -70,11 +70,36 @@ public class CrankLinkageBlockEntity extends RotationNode {
 
     /**
      * Force behind each stroke. The linkage does not decide this on its own -- the machine states
-     * what it can deliver at each throw, and the linkage picks which of the two applies.
+     * what it can deliver at each throw, the drive's gearing multiplies it, and the machine's own
+     * construction caps the result.
      */
     public float getStrength() {
         Reciprocating driven = getDriven();
-        return driven instanceof StrengthPair pair ? pair.getStrength(getThrow()) : 0;
+        if (!(driven instanceof StrengthPair pair))
+            return 0;
+        return Math.min(pair.getStrength(getThrow()) * getGearAdvantage(), pair.getMaxStrength());
+    }
+
+    /**
+     * How much the gearing between the source and this linkage multiplies the force behind a blow.
+     *
+     * <h2>Why this is the reciprocal of the speed ratio</h2>
+     * A gear train trades speed for force and keeps the product: turn at half the speed and you
+     * turn with twice the torque. The linkage already runs at its own geared speed, so blows fall
+     * half as often on their own -- work per second is unchanged, and what changes is whether any
+     * one blow clears the material's hardness floor at all. That is philosophy §5's second answer
+     * to the force problem: the short throw spends precision, a gear train spends capital and
+     * space.
+     *
+     * <h2>The caveat worth knowing</h2>
+     * Ratios are measured against whichever node the run is anchored to, which is the driving
+     * source whenever there is one. A run with no source at all is coasting, and its anchor is
+     * arbitrary -- so the force behind a blow struck purely on momentum is scaled against nothing
+     * in particular. Left alone: a coasting run is stopping, and nothing is asking it for work.
+     */
+    private float getGearAdvantage() {
+        float ratio = Math.abs(getRatio());
+        return ratio == 0 ? 1 : 1 / ratio;
     }
 
     @Override

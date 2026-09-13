@@ -79,6 +79,28 @@ public final class FTuning {
      */
     public static final float SHAFT_INERTIA = 2f;
 
+    /**
+     * Invented. A cog drags like a shaft; a large one drags half again as much.
+     *
+     * <h3>What gearing costs</h3>
+     * Nothing beyond this, and deliberately. Friction and mass are already referred through the
+     * square of the gear ratio (see {@link io.github.cloby0.feedback.core.rotation.RotationNetwork}),
+     * so a geared-up branch charges the network more simply by turning faster -- and a gear train
+     * costs cogs, space, and the drag of every one of them. A real gearbox takes no continuous
+     * payment for the force it gives either; what it takes is capital. Adding a surcharge on top
+     * would be a rule saying what the physics already says.
+     */
+    public static final float SMALL_COG_DRAG_SU_PER_RPM = 0.1f;
+    public static final float LARGE_COG_DRAG_SU_PER_RPM = 0.15f;
+
+    /** Invented. A large cog is a heavier wheel, and the only flywheel beat 1 has. */
+    public static final float SMALL_COG_INERTIA = 3f;
+    public static final float LARGE_COG_INERTIA = 12f;
+
+    /** Invented. A gearbox is a crowded little box of bevels: more friction than a bare shaft. */
+    public static final float GEARBOX_DRAG_SU_PER_RPM = 0.2f;
+    public static final float GEARBOX_INERTIA = 4f;
+
     /** Invented. A generator is a lump of mass too; without this a bare source has no momentum. */
     public static final float HAND_CRANK_INERTIA = 4f;
     /** Invented, and deliberately large -- this is why a water wheel coasts so visibly. */
@@ -127,6 +149,21 @@ public final class FTuning {
 
     /** SLICE: 80 Su, against the water wheel's 256. Three hammers fit; four do not. */
     public static final float HAMMER_LOAD_SU = 80f;
+
+    /**
+     * Invented. The most St this hammer can land, however it is geared.
+     *
+     * <h3>Why a ceiling exists</h3>
+     * Gearing down multiplies force per blow without limit, so without a ceiling one long gear
+     * train makes every hammer in the game equivalent and the force axis collapses into how many
+     * cogs somebody was willing to place. A paper blade at a million RPM still will not cut steel:
+     * what a machine can deliver is a property of its construction, not of its drive.
+     * <p>
+     * Twice the short throw, so gearing buys exactly one genuine doubling past the strongest
+     * setting the block has -- enough for the trade to be worth making, not enough to replace
+     * buying a better machine. Raising the ceiling is what a better machine is <em>for</em>.
+     */
+    public static final float HAMMER_MAX_ST = 24f;
 
     // Work per blow is deliberately NOT a figure here. It is force divided by the material's
     // hardness -- see Deformation. A machine states the force it can deliver; what that

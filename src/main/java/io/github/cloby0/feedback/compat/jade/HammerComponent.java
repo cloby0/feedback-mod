@@ -46,6 +46,8 @@ public class HammerComponent implements IBlockComponentProvider {
         tooltip.add(Component.translatable("feedback.spec.strength",
                 Readout.number(hammer.getStrength(Throw.SHORT)),
                 Readout.number(hammer.getStrength(Throw.LONG))));
+        tooltip.add(Component.translatable("feedback.spec.ceiling",
+                Readout.number(hammer.getMaxStrength())));
         tooltip.add(Component.translatable("feedback.spec.load", Readout.number(hammer.getLoadSu())));
 
         ItemStack workpiece = hammer.getWorkpiece();

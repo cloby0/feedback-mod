@@ -76,6 +76,11 @@ public class MechanicalHammerBlockEntity extends BlockEntity implements Reciproc
     }
 
     @Override
+    public float getMaxStrength() {
+        return FTuning.HAMMER_MAX_ST;
+    }
+
+    @Override
     public float getLoadSu() {
         return FTuning.HAMMER_LOAD_SU;
     }

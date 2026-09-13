@@ -2,7 +2,10 @@ package io.github.cloby0.feedback.registry;
 
 import io.github.cloby0.feedback.Feedback;
 import io.github.cloby0.feedback.control.timer.TimerBlock;
+import io.github.cloby0.feedback.core.FTuning;
 import io.github.cloby0.feedback.machine.clutch.ClutchBlock;
+import io.github.cloby0.feedback.machine.cog.CogBlock;
+import io.github.cloby0.feedback.machine.gearbox.GearboxBlock;
 import io.github.cloby0.feedback.machine.crank.HandCrankBlock;
 import io.github.cloby0.feedback.machine.hammer.MechanicalHammerBlock;
 import io.github.cloby0.feedback.machine.linkage.CrankLinkageBlock;
@@ -25,6 +28,35 @@ public class FBlocks {
                     .mapColor(MapColor.WOOD)
                     .strength(2.0f)
                     .sound(SoundType.WOOD)
+                    .noOcclusion()));
+
+    /**
+     * Two sizes, one block class. Small meshed with small is 1:1 reversed; large against small
+     * doubles the speed and halves the force, and the other way round going the other way.
+     */
+    public static final DeferredBlock<CogBlock> SMALL_COG = BLOCKS.register("small_cog",
+            () -> new CogBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.WOOD)
+                    .strength(2.0f)
+                    .sound(SoundType.WOOD)
+                    .noOcclusion(),
+                    1, 5, 4,
+                    FTuning.SMALL_COG_DRAG_SU_PER_RPM, FTuning.SMALL_COG_INERTIA));
+
+    public static final DeferredBlock<CogBlock> LARGE_COG = BLOCKS.register("large_cog",
+            () -> new CogBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.WOOD)
+                    .strength(2.0f)
+                    .sound(SoundType.WOOD)
+                    .noOcclusion(),
+                    2, 8, 4,
+                    FTuning.LARGE_COG_DRAG_SU_PER_RPM, FTuning.LARGE_COG_INERTIA));
+
+    public static final DeferredBlock<GearboxBlock> GEARBOX = BLOCKS.register("gearbox",
+            () -> new GearboxBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.METAL)
+                    .strength(3.0f)
+                    .sound(SoundType.COPPER)
                     .noOcclusion()));
 
     public static final DeferredBlock<HandCrankBlock> HAND_CRANK = BLOCKS.register("hand_crank",

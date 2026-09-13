@@ -1,6 +1,9 @@
 {
   "itemGroup.feedback": "Feedback",
   "block.feedback.shaft": "Shaft",
+  "block.feedback.small_cog": "Small Cog",
+  "block.feedback.large_cog": "Large Cog",
+  "block.feedback.gearbox": "Gearbox",
   "block.feedback.hand_crank": "Hand Crank",
   "block.feedback.water_wheel": "Water Wheel",
   "item.feedback.copper_plate": "Copper Plate",
@@ -28,6 +31,7 @@
   "feedback.readout.drive": "target %s RPM, inertia %s",
   "feedback.readout.work": "%s / %s Fu",
   "feedback.spec.strength": "%s / %s St",
+  "feedback.spec.ceiling": "%s St ceiling",
   "feedback.spec.load": "%s Su",
   "feedback.spec.throw": "%s throw",
   "feedback.throw.short": "Short",

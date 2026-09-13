@@ -1,0 +1,28 @@
+{
+  "parent": "block/block",
+  "textures": {
+    "body": "minecraft:block/stripped_spruce_log",
+    "teeth": "minecraft:block/dark_oak_planks",
+    "particle": "minecraft:block/dark_oak_planks"
+  },
+  "elements": [
+    {
+      "from": [0, 6, 0],
+      "to": [16, 10, 16],
+      "faces": {
+        "north": { "texture": "#teeth" }, "south": { "texture": "#teeth" },
+        "west":  { "texture": "#teeth" }, "east":  { "texture": "#teeth" },
+        "up":    { "texture": "#body" },  "down":  { "texture": "#body" }
+      }
+    },
+    {
+      "from": [6, 0, 6],
+      "to": [10, 16, 10],
+      "faces": {
+        "north": { "texture": "#body" }, "south": { "texture": "#body" },
+        "west":  { "texture": "#body" }, "east":  { "texture": "#body" },
+        "up":    { "texture": "#body" }, "down":  { "texture": "#body" }
+      }
+    }
+  ]
+}

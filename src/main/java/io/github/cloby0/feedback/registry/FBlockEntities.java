@@ -3,7 +3,9 @@ package io.github.cloby0.feedback.registry;
 import io.github.cloby0.feedback.Feedback;
 import io.github.cloby0.feedback.control.timer.TimerBlockEntity;
 import io.github.cloby0.feedback.machine.clutch.ClutchBlockEntity;
+import io.github.cloby0.feedback.machine.cog.CogBlockEntity;
 import io.github.cloby0.feedback.machine.crank.HandCrankBlockEntity;
+import io.github.cloby0.feedback.machine.gearbox.GearboxBlockEntity;
 import io.github.cloby0.feedback.machine.hammer.MechanicalHammerBlockEntity;
 import io.github.cloby0.feedback.machine.linkage.CrankLinkageBlockEntity;
 import io.github.cloby0.feedback.machine.shaft.ShaftBlockEntity;
@@ -23,6 +25,17 @@ public class FBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ShaftBlockEntity>> SHAFT =
             BLOCK_ENTITIES.register("shaft", () -> BlockEntityType.Builder
                     .of(ShaftBlockEntity::new, FBlocks.SHAFT.get())
+                    .build(null));
+
+    /** One type for both cog sizes: the difference is entirely in the block, not in the state. */
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CogBlockEntity>> COG =
+            BLOCK_ENTITIES.register("cog", () -> BlockEntityType.Builder
+                    .of(CogBlockEntity::new, FBlocks.SMALL_COG.get(), FBlocks.LARGE_COG.get())
+                    .build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<GearboxBlockEntity>> GEARBOX =
+            BLOCK_ENTITIES.register("gearbox", () -> BlockEntityType.Builder
+                    .of(GearboxBlockEntity::new, FBlocks.GEARBOX.get())
                     .build(null));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<HandCrankBlockEntity>> HAND_CRANK =

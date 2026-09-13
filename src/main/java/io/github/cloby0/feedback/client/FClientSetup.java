@@ -31,6 +31,7 @@ public class FClientSetup {
         event.registerBlockEntityRenderer(FBlockEntities.MECHANICAL_HAMMER.get(), MechanicalHammerRenderer::new);
 
         event.registerBlockEntityRenderer(FBlockEntities.SHAFT.get(), RotatingRenderer::new);
+        event.registerBlockEntityRenderer(FBlockEntities.COG.get(), RotatingRenderer::new);
         event.registerBlockEntityRenderer(FBlockEntities.HAND_CRANK.get(), RotatingRenderer::new);
         event.registerBlockEntityRenderer(FBlockEntities.WATER_WHEEL.get(), RotatingRenderer::new);
         event.registerBlockEntityRenderer(FBlockEntities.CLUTCH.get(), RotatingRenderer::new);
@@ -43,6 +44,7 @@ public class FClientSetup {
     @SubscribeEvent
     public static void registerVisualizers(FMLClientSetupEvent event) {
         rotatingVisual(FBlockEntities.SHAFT.get());
+        rotatingVisual(FBlockEntities.COG.get());
         rotatingVisual(FBlockEntities.HAND_CRANK.get());
         rotatingVisual(FBlockEntities.WATER_WHEEL.get());
         rotatingVisual(FBlockEntities.CLUTCH.get());

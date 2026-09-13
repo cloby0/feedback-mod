@@ -21,6 +21,9 @@ public class FCreativeTabs {
                     .icon(() -> new ItemStack(FItems.SHAFT.get()))
                     .displayItems((params, output) -> {
                         output.accept(FItems.SHAFT.get());
+                        output.accept(FItems.SMALL_COG.get());
+                        output.accept(FItems.LARGE_COG.get());
+                        output.accept(FItems.GEARBOX.get());
                         output.accept(FItems.HAND_CRANK.get());
                         output.accept(FItems.WATER_WHEEL.get());
                         output.accept(FItems.CRANK_LINKAGE.get());
