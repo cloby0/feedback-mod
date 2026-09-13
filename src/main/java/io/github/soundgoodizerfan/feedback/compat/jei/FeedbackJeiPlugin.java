@@ -20,6 +20,7 @@
 package io.github.soundgoodizerfan.feedback.compat.jei;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 import io.github.soundgoodizerfan.feedback.Feedback;
 import io.github.soundgoodizerfan.feedback.process.ClientDeformations;
@@ -30,7 +31,9 @@ import io.github.soundgoodizerfan.feedback.registry.FItems;
 
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
+import mezz.jei.api.constants.RecipeTypes;
 import mezz.jei.api.recipe.IRecipeManager;
+import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.registration.IRecipeCategoryRegistration;
 import mezz.jei.api.registration.IRecipeCatalystRegistration;
 import mezz.jei.api.runtime.IJeiRuntime;
@@ -38,6 +41,10 @@ import mezz.jei.api.runtime.IJeiRuntime;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.AbstractCookingRecipe;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.RecipeHolder;
 
 /**
  * Puts the deformation table in the recipe browser without pretending it is a recipe book.
@@ -58,6 +65,13 @@ import net.minecraft.resources.ResourceLocation;
  * {@code hideRecipes} before each push is what makes a second push idempotent: a {@code /reload}
  * can deliver a fresh table without JEI restarting, and without this the old cards would linger
  * alongside the new ones.
+ *
+ * <h2>Vanilla's own categories are hidden here too</h2>
+ * The Furnace, Smoker and Blast Furnace never touch a vanilla block class any more (§4f), so
+ * JEI's built-in smelting/blasting/smoking categories describe blocks that no longer exist in a
+ * normal playthrough. {@link VanillaFallbackCategory} replaces them with cards for whatever
+ * {@link io.github.soundgoodizerfan.feedback.process.VanillaFallback} would actually run, pooled
+ * straight from JEI's own recipe manager rather than a second search.
  */
 @JeiPlugin
 public class FeedbackJeiPlugin implements IModPlugin {
@@ -68,6 +82,8 @@ public class FeedbackJeiPlugin implements IModPlugin {
     private static List<Deformation> published;
     @Nullable
     private static List<ThermalProcess> publishedThermal;
+    @Nullable
+    private static List<RecipeHolder<AbstractCookingRecipe>> publishedFallback;
 
     @Override
     public ResourceLocation getPluginUid() {
@@ -78,7 +94,8 @@ public class FeedbackJeiPlugin implements IModPlugin {
     public void registerCategories(IRecipeCategoryRegistration registration) {
         registration.addRecipeCategories(
                 new DeformationCategory(registration.getJeiHelpers().getGuiHelper()),
-                new ThermalProcessCategory(registration.getJeiHelpers().getGuiHelper()));
+                new ThermalProcessCategory(registration.getJeiHelpers().getGuiHelper()),
+                new VanillaFallbackCategory(registration.getJeiHelpers().getGuiHelper()));
     }
 
     /**
@@ -92,6 +109,11 @@ public class FeedbackJeiPlugin implements IModPlugin {
         // materials at all. A vessel is where a thermal process happens.
         registration.addRecipeCatalysts(ThermalProcessCategory.TYPE,
                 FItems.SMALL_CRUCIBLE.get(), FItems.LARGE_CRUCIBLE.get());
+        // All three, deliberately, even though the Smoker will never clear METAL_MIN_TU: which
+        // one can actually reach a card's printed floor is a fact the card states in words, not a
+        // fact this list gets to decide (§15, no whitelists).
+        registration.addRecipeCatalysts(VanillaFallbackCategory.TYPE,
+                FItems.FURNACE.get(), FItems.SMOKER.get(), FItems.BLAST_FURNACE.get());
     }
 
     @Override
@@ -99,8 +121,18 @@ public class FeedbackJeiPlugin implements IModPlugin {
         runtime = jeiRuntime;
         published = null;
         publishedThermal = null;
+        publishedFallback = null;
+        // Our vessels are the only things left that can run these; vanilla's own built-in
+        // categories now describe blocks that are permanently inert (§4f).
+        IRecipeManager recipes = jeiRuntime.getRecipeManager();
+        recipes.hideRecipeCategory(RecipeTypes.SMELTING);
+        recipes.hideRecipeCategory(RecipeTypes.BLASTING);
+        recipes.hideRecipeCategory(RecipeTypes.SMOKING);
         ClientDeformations.onChanged(FeedbackJeiPlugin::publish);
-        ClientThermalProcesses.onChanged(FeedbackJeiPlugin::publishThermal);
+        ClientThermalProcesses.onChanged(() -> {
+            publishThermal();
+            publishFallback();
+        });
     }
 
     @Override
@@ -108,6 +140,7 @@ public class FeedbackJeiPlugin implements IModPlugin {
         runtime = null;
         published = null;
         publishedThermal = null;
+        publishedFallback = null;
     }
 
     private static void publish() {
@@ -128,5 +161,49 @@ public class FeedbackJeiPlugin implements IModPlugin {
             recipes.hideRecipes(ThermalProcessCategory.TYPE, publishedThermal);
         publishedThermal = ClientThermalProcesses.get();
         recipes.addRecipes(ThermalProcessCategory.TYPE, publishedThermal);
+    }
+
+    /**
+     * Sourced from JEI's own recipe manager, not a second pooling pass -- {@code createRecipeLookup}
+     * already returns the same deduplicated, cross-mod recipes {@link
+     * io.github.soundgoodizerfan.feedback.process.VanillaFallback#find} searches at runtime.
+     * Filtered against the client's copy of {@link io.github.soundgoodizerfan.feedback.process.ThermalProcessTable}
+     * so steel does not also show up as a generic smelting card once something hand-authored
+     * already claims its input.
+     */
+    private static void publishFallback() {
+        if (runtime == null)
+            return;
+        IRecipeManager recipes = runtime.getRecipeManager();
+        List<ThermalProcess> handAuthored = ClientThermalProcesses.get();
+        List<RecipeHolder<AbstractCookingRecipe>> pooled = Stream.of(
+                        lookup(recipes, RecipeTypes.SMELTING),
+                        lookup(recipes, RecipeTypes.BLASTING),
+                        lookup(recipes, RecipeTypes.SMOKING))
+                .flatMap(stream -> stream)
+                .filter(recipe -> !claimed(recipe, handAuthored))
+                .toList();
+        if (publishedFallback != null)
+            recipes.hideRecipes(VanillaFallbackCategory.TYPE, publishedFallback);
+        publishedFallback = pooled;
+        recipes.addRecipes(VanillaFallbackCategory.TYPE, publishedFallback);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <R extends AbstractCookingRecipe> Stream<RecipeHolder<AbstractCookingRecipe>> lookup(
+            IRecipeManager recipes, RecipeType<RecipeHolder<R>> type) {
+        return recipes.createRecipeLookup(type).get()
+                .map(holder -> (RecipeHolder<AbstractCookingRecipe>) (RecipeHolder<?>) holder);
+    }
+
+    /** Whether some hand-authored {@link ThermalProcess} already answers for this input. */
+    private static boolean claimed(RecipeHolder<AbstractCookingRecipe> recipe, List<ThermalProcess> handAuthored) {
+        Ingredient recipeInput = recipe.value().getIngredients().get(0);
+        for (ThermalProcess process : handAuthored)
+            for (Ingredient input : process.inputs())
+                for (ItemStack stack : recipeInput.getItems())
+                    if (input.test(stack))
+                        return true;
+        return false;
     }
 }

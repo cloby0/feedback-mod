@@ -10,8 +10,31 @@ Candidates weighed on 2026-09-12 and deliberately not taken that night. Each one
 here so a fresh session can start on it without re-deriving the scope. Ordered by value, not
 by size.
 
-- [ ] **JEI take-over: hide vanilla's smelting/blasting/smoking, dynamically publish every pooled
-  recipe as our own.** Scoped 2026-09-13, not started, and is the direct follow-on to §4f. The
+- [x] **JEI take-over: hide vanilla's smelting/blasting/smoking, dynamically publish every pooled
+  recipe as our own.** Built 2026-09-13, direct follow-on to §4f. `./gradlew build` passes;
+  **unverified by eye** -- nothing confirmed yet that the vanilla categories are actually gone
+  from the browser or that a pooled card renders correctly. The three pieces below as scoped,
+  all landed as planned; the two open judgement calls were both taken the way this entry leaned.
+
+  - `FeedbackJeiPlugin.onRuntimeAvailable` calls `hideRecipeCategory` for JEI's `SMELTING`,
+    `BLASTING`, `SMOKING`.
+  - New `VanillaFallbackCategory implements IRecipeCategory<RecipeHolder<AbstractCookingRecipe>>` --
+    input, output, and one free-adjective line: `Component.translatable("feedback.jei.floor.food")`
+    for food, `Readout.temperature(FTuning.METAL_MIN_TU)` wrapped in `feedback.jei.floor.metal` for
+    metal. Never an exact figure, matching `ThermalProcessCategory`'s own reasoning in the other
+    direction.
+  - `FeedbackJeiPlugin.publishFallback` unions JEI's own `createRecipeLookup` for all three vanilla
+    types (no second pooling pass), filters out anything whose input a hand-authored
+    `ThermalProcess` (via `ClientThermalProcesses`) already claims, republishes on the same
+    `ClientThermalProcesses.onChanged` hook `publishThermal` already used.
+  - **Both judgement calls resolved in favour of the option this entry already leaned toward:**
+    the card states the floor in words rather than staying silent about which applies, and all
+    three vessels are registered as the category's catalyst rather than narrowing to Furnace/Blast
+    Furnace -- consistent with "capability is never a hard gate" and with `ThermalProcessCategory`
+    already doing the same for hand-authored recipes.
+
+  **Original scoping note, kept for the record** -- the three pieces it named are exactly what
+  got built:
   Furnace, Smoker and Blast Furnace are independent blocks now that never touch vanilla's
   `AbstractFurnaceBlockEntity`. `process/VanillaFallback` still pools every vanilla/modded
   `smelting`/`blasting`/`smoking` recipe for anything without a hand-authored `ThermalProcess` —
