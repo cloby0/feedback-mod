@@ -150,7 +150,8 @@ feels.
 
 ### Taken: a hand tool that survives the craft
 
-`item/HandHammerItem`, `process/HandDeformationRecipe`.
+`item/HandToolItem`, `item/HandHammerItem`, `item/HandToolCrafting`,
+`process/HandDeformationRecipe`.
 
 GregTech's crafting-table tools are not a recipe type and not a special ingredient. A tool is
 an ordinary ingredient matched by tag, and the entire mechanism is that its **crafting
@@ -162,11 +163,23 @@ does the rest. Feedback's Hand Hammer works exactly that way, on NeoForge's
 Design read, code written here. Nothing was copied; the file is nine lines of logic and the
 shape is the borrowed part.
 
-**Deliberately not taken from GregTech:** the surrounding apparatus. GTCEu indexes nine
-crafting tools by a character symbol in a recipe pattern (`'h'` is a hard hammer) and matches
-them through `craftingTags`, which is the right answer for nine tools and pure overhead for
-one. Feedback matches `instanceof HandHammerItem` and will keep doing so until there is a
-second tool to justify a registry.
+**Partly taken:** that hand tools are a *kind* of thing rather than a list of unrelated items.
+GregTech's `GTToolType` is a real abstraction and it is right to have one. Feedback's version
+is `HandToolItem`, a superclass declaring a strength, a sound and the durability rule, and the
+recipe matches `instanceof HandToolItem`.
+
+**Deliberately not taken:** the indexing apparatus around it. GTCEu addresses its nine tools by
+a character symbol in a recipe pattern (`'h'` is a hard hammer) and matches them through
+`craftingTags`, which is the right answer when tools appear as ingredients in dozens of
+authored recipes and pure overhead when there is one dynamic recipe that accepts any of them.
+Nor is there a registry of which tools perform which operations: a tool that does not strike
+declares `0` St and is refused by the material's own hardness floor, so the strength is the
+whole answer.
+
+**Also taken, and then moved:** GregTech plays its tool's sound from inside
+`definition$getCraftingRemainingItem`. Feedback plays it from `ItemCraftedEvent` instead --
+same idea, but a side effect hidden in a getter that both logical sides call is a worse place
+for it than an event that fires once when a craft actually happens.
 
 **Deliberately not taken from TerraFirmaCraft either**, which solves the same problem with an
 anvil block and a forging minigame. That is a much larger and much better mechanic than this

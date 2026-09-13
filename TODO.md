@@ -237,6 +237,20 @@ a copper plate needs a Mechanical Hammer, a Mechanical Hammer needs copper plate
 - [x] **Hand Hammer** — 3 St, 250 durability. Deliberately the same figure as the Mechanical
   Hammer's long throw, so the gentle machine is doing exactly what the arm was doing without
   ever getting bored, which is the whole of what beat 1 has to say
+- [x] **`HandToolItem`, the shared shape** — a hand tool is a strength, a sound, and the fact
+  that it survives the craft one point worse, and all three are identical for every tool that
+  will ever exist. Built before the second tool for the same reason `Instrument` was built
+  before the thermometer. Subclasses decide almost nothing: `getStrength()` is the whole of
+  what makes one tool different, because §17 says what an application accomplishes is
+  `St / hardness` and therefore a property of the material. **There is no registry of which
+  tools do which operations** — a tool that does not strike declares `0` St and is refused by
+  the hardness floor, so the strength is the whole answer
+- [x] **Hand work makes a noise** — `HandToolCrafting`, on `ItemCraftedEvent`. The Mechanical
+  Hammer's own `ANVIL_LAND`, quieter and with a little pitch jitter, because the two are
+  landing the same blow through the same code and should be recognisable as the same thing.
+  Free under §8: a noise is an adjective, naming no figure, exactly like the smoke and creak a
+  labouring network already makes. Throttled to one per player per tick, so shift-clicking a
+  stack gives one sharp report instead of sixty-four at once
 - [x] **It swings in a crafting grid**, not at a block. Hammer plus one workpiece, one craft
   per blow, the workpiece handed back with 3 more `Fu` on it. `HandDeformationRecipe` is an
   adapter over `DeformationTable` and not a fifth table — delete it and no fact about copper
@@ -245,7 +259,10 @@ a copper plate needs a Mechanical Hammer, a Mechanical Hammer needs copper plate
   and 1402 advancements on a dedicated server, no parse errors
 - [ ] **Nothing is verified by eye.** Unconfirmed: that five crafts make a plate and a sixth
   makes foil, that shift-click runs a stack into scrap, that the hammer wears one point a
-  swing and dies at 250, and that the whole roster is reachable in survival
+  swing and dies at 250, that the clang fires once per craft and once per shift-click, and
+  that the whole roster is reachable in survival.
+  **A GameTest would settle most of this without a window** — the recipe is pure server logic,
+  so a test that feeds a `CraftingInput` five times and asserts a plate is cheap. Not written
 
 ### Decisions taken while building
 
@@ -265,6 +282,10 @@ a copper plate needs a Mechanical Hammer, a Mechanical Hammer needs copper plate
 - **A wasted swing costs nothing.** The Mechanical Hammer wears on force that could not go
   into the work; a hand hammer has no equivalent, because the grid never offers the craft. You
   cannot mis-swing at something you were never able to lift.
+- **The noise is an event, not a getter.** GregTech plays its tool sound from inside
+  `getCraftingRemainingItem`, which works, but it is a side effect hidden in a getter that both
+  logical sides call. `ItemCraftedEvent` fires once, when a craft actually happened, and hands
+  over the grid to look at.
 - **The level reaches `assemble` by ThreadLocal.** A workpiece computes its temperature from a
   stamp and a tick, so a blow needs a clock, and `assemble` is the one place vanilla does not
   pass one — `CraftingMenu.slotChangedCraftingGrid` holds the level and drops it. NeoForge has

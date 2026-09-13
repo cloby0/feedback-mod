@@ -56,7 +56,7 @@ A hand hammer swings at about 3 St. Against copper's hardness of 1 that is 3 Fu 
 
 This is §7's *possible* column, introduced in the first ten minutes and never taken away. A player can hand-hammer plates for the entire game if they want to. Nobody will.
 
-**It swings in a crafting grid.** Hammer and workpiece in any crafting table, and one craft is one blow — the ingot comes back out of the result slot with 3 more `Fu` on it, five times, and then it is a plate. The hammer loses a point of durability each swing. There is no block to place and no minigame; hand work is meant to be tedious rather than skilful, because a hand route that was *fun* would compete with the machine instead of motivating it.
+**It swings in a crafting grid.** Hammer and workpiece in any crafting table, and one craft is one blow — the ingot comes back out of the result slot with 3 more `Fu` on it, five times, and then it is a plate. The hammer loses a point of durability each swing, and each swing **clangs**: the Mechanical Hammer's own anvil sound, quieter, because the two are landing the same blow and should be recognisable as the same thing. There is no block to place and no minigame; hand work is meant to be tedious rather than skilful, because a hand route that was *fun* would compete with the machine instead of motivating it.
 
 Two things fall out of that choice, and both were the reason for it:
 

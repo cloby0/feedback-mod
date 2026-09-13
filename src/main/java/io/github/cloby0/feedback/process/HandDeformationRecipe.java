@@ -19,7 +19,7 @@
  */
 package io.github.cloby0.feedback.process;
 
-import io.github.cloby0.feedback.item.HandHammerItem;
+import io.github.cloby0.feedback.item.HandToolItem;
 import io.github.cloby0.feedback.registry.FRecipes;
 
 import net.minecraft.core.HolderLookup;
@@ -31,7 +31,7 @@ import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.Level;
 
 /**
- * Hand hammer plus one workpiece, anywhere in the grid. One craft is one blow.
+ * A hand tool plus one workpiece, anywhere in the grid. One craft is one application.
  *
  * <h2>Why this is a vanilla RecipeType when nothing else in the mod is</h2>
  * The mod's four process tables (deformation, thermal_process, quench, fuel) are deliberately not
@@ -74,7 +74,7 @@ public class HandDeformationRecipe extends CustomRecipe {
     }
 
     /**
-     * Exactly one hammer and exactly one workpiece, and the blow has to be one that could land.
+     * Exactly one hand tool and one workpiece, and the blow has to be one that could land.
      *
      * <p>A swing that accomplishes nothing -- steel too hard, an ingot gone cold, a piece of scrap
      * with nowhere left to go -- simply fails to match, so the grid offers no craft and the player
@@ -106,7 +106,7 @@ public class HandDeformationRecipe extends CustomRecipe {
         return result == null ? ItemStack.EMPTY : result;
     }
 
-    // The hammer comes back one point more damaged, via HandHammerItem#getCraftingRemainingItem.
+    // The tool comes back one point more damaged, via HandToolItem#getCraftingRemainingItem.
     // Vanilla's default getRemainingItems walks every slot and asks each stack for its remainder,
     // so there is nothing to override here -- which is the whole reason the durability lives on the
     // item rather than in this class.
@@ -129,7 +129,7 @@ public class HandDeformationRecipe extends CustomRecipe {
      * @return the stack the blow would produce, or null if there is no blow to land
      */
     private static ItemStack find(CraftingInput input, Level level) {
-        ItemStack hammer = ItemStack.EMPTY;
+        ItemStack tool = ItemStack.EMPTY;
         ItemStack workpiece = ItemStack.EMPTY;
 
         for (int i = 0; i < input.size(); i++) {
@@ -137,29 +137,32 @@ public class HandDeformationRecipe extends CustomRecipe {
             if (stack.isEmpty())
                 continue;
 
-            if (stack.getItem() instanceof HandHammerItem) {
-                if (!hammer.isEmpty())
-                    return null;    // two hammers is not two blows
-                hammer = stack;
+            if (stack.getItem() instanceof HandToolItem) {
+                if (!tool.isEmpty())
+                    return null;    // two tools is not two blows
+                tool = stack;
             } else {
                 if (!workpiece.isEmpty())
-                    return null;    // one workpiece at a time; a hammer hits one thing
+                    return null;    // one workpiece at a time; a tool works one thing
                 workpiece = stack;
             }
         }
 
-        if (hammer.isEmpty() || workpiece.isEmpty())
+        if (tool.isEmpty() || workpiece.isEmpty())
             return null;
 
         // A stack of ingots under one hammer would be one blow spread across sixty-four of them,
-        // which is not a thing a hammer can do. Crafting one at a time is the cost of hand work.
+        // which is not a thing a hammer can do. Working one at a time is the cost of hand work.
         if (workpiece.getCount() != 1)
             return null;
 
         if (level == null)
             return null;
 
-        float strength = ((HandHammerItem) hammer.getItem()).getStrength();
+        // Any hand tool, not only the hammer. A tool that does not strike declares 0 St and is
+        // refused below the material's hardness floor a line later, so there is no list anywhere of
+        // which tools deform -- the strength is the whole answer.
+        float strength = ((HandToolItem) tool.getItem()).getStrength();
         Deforming.Blow blow = Deforming.strike(workpiece, strength, level);
         return blow.landed() ? blow.result() : null;
     }

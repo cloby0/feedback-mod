@@ -21,8 +21,8 @@ package io.github.cloby0.feedback.item;
 
 import io.github.cloby0.feedback.core.FTuning;
 
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
 
 /**
  * The slowest way to make anything, and it never stops working.
@@ -46,56 +46,32 @@ import net.minecraft.world.item.ItemStack;
  * whole stack straight past plate into foil into scrap, which is beat 1's entire lesson delivered
  * by the player's own hand, at their own pace, on the material chosen for being forgiving.
  *
- * <h2>Where the reference came from</h2>
- * The durability mechanism is GregTech CEu Modern's shape (LGPL-3.0, conveyable under GPL-3.0):
- * a tool is an ordinary crafting ingredient whose <em>remainder</em> is itself, one point more
- * damaged. See {@code IGTTool#definition$getCraftingRemainingItem}. Read, not copied.
- *
- * <p>Deliberately <em>not</em> taken from GregTech: its tool ingredients are matched by tag and
- * indexed by a symbol in a recipe pattern, which is a system for the nine crafting tools it has.
- * One tool needs no registry of tools.
- *
- * <p>Deliberately not taken from TerraFirmaCraft either, which solves the same problem with an
- * anvil block and a forging minigame. That is a far larger and far better mechanic than this slice
- * has any use for; hand work here is meant to be tedious, not skilful.
- *
  * <h2>It does not wear on a wasted swing</h2>
  * The Mechanical Hammer absorbs force that cannot go into the work, because a machine geared past
  * what its head can take is a mistake the machine records. A hand hammer has no equivalent: a swing
  * that cannot land is a craft the grid never offers, so nothing is spent and nothing is damaged.
  * You cannot mis-swing at something you were never able to lift.
+ *
+ * @see HandToolItem for the durability rule and the reasoning behind the shared shape
  */
-public class HandHammerItem extends Item {
+public class HandHammerItem extends HandToolItem {
 
     public HandHammerItem(Properties properties) {
         super(properties);
     }
 
-    /**
-     * How hard this lands, in St. A property of the tool, divided by the material's hardness to
-     * find what a blow actually accomplishes (§17) -- which is why 3 St is a plate in five swings
-     * and is simply nothing at all against steel's hardness of 15.
-     */
+    @Override
     public float getStrength() {
         return FTuning.HAND_HAMMER_ST;
     }
 
     /**
-     * The hammer survives the craft, one point worse.
-     *
-     * <p>Vanilla's {@code Recipe#getRemainingItems} calls this for every slot, so the recipe itself
-     * needs no durability code. A hammer damaged past its limit returns empty and is destroyed,
-     * which is vanilla's own behaviour for a broken tool rather than a rule invented here.
+     * The Mechanical Hammer's own blow, quieter. Deliberately the same sound rather than a hand
+     * version of it: the two are landing the same blow through the same code, and a player who
+     * later builds the machine should recognise what it is doing from across the room.
      */
     @Override
-    public ItemStack getCraftingRemainingItem(ItemStack stack) {
-        ItemStack remainder = stack.copy();
-        remainder.setDamageValue(remainder.getDamageValue() + 1);
-        return remainder.getDamageValue() >= remainder.getMaxDamage() ? ItemStack.EMPTY : remainder;
-    }
-
-    @Override
-    public boolean hasCraftingRemainingItem(ItemStack stack) {
-        return true;
+    public SoundEvent getWorkSound() {
+        return SoundEvents.ANVIL_LAND;
     }
 }
