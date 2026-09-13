@@ -86,5 +86,15 @@
   "feedback.jei.hold": "Hold",
   "feedback.jei.max_heating": "Max heating",
   "feedback.jei.spoils": "Spoils",
-  "config.jade.plugin_feedback.thermal": "Thermal"
+  "config.jade.plugin_feedback.thermal": "Thermal",
+  "feedback.unit.tu": "%s Tu",
+  "feedback.unit.tu_rate": "%s Tu/t",
+  "feedback.unit.thermal_mass": "%s Work/Tu",
+  "feedback.unit.conductance": "%s Work/t/Tu",
+  "feedback.unit.su": "%s Su",
+  "feedback.unit.rpm": "%s RPM",
+  "feedback.unit.fu": "%s Fu",
+  "feedback.unit.st": "%s St",
+  "feedback.unit.drag": "%s Su/RPM",
+  "feedback.unit.inertia": "%s Su·t/RPM"
 }

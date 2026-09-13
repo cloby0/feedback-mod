@@ -18,6 +18,7 @@
  * See LICENSE-ASSETS.
  */
 package io.github.cloby0.feedback.item;
+import io.github.cloby0.feedback.core.unit.St;
 
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.item.Item;
@@ -71,7 +72,7 @@ public abstract class HandToolItem extends Item {
      *
      * @return {@code 0} for a tool that does not strike, which then lands nothing on any material
      */
-    public abstract float getStrength();
+    public abstract St getStrength();
 
     /** The noise one application makes. Played by {@link HandToolCrafting}, once per craft. */
     public abstract SoundEvent getWorkSound();

@@ -22,6 +22,8 @@ package io.github.cloby0.feedback.machine.cog;
 import io.github.cloby0.feedback.core.FTuning;
 import io.github.cloby0.feedback.core.rotation.RotationNode;
 import io.github.cloby0.feedback.registry.FBlockEntities;
+import io.github.cloby0.feedback.core.unit.Drag;
+import io.github.cloby0.feedback.core.unit.Inertia;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
@@ -42,14 +44,14 @@ public class CogBlockEntity extends RotationNode {
     }
 
     @Override
-    public float getDragSuPerRpm() {
+    public Drag getDragSuPerRpm() {
         return getBlockState().getBlock() instanceof CogBlock cog
                 ? cog.getDragSuPerRpm()
                 : FTuning.SMALL_COG_DRAG_SU_PER_RPM;
     }
 
     @Override
-    public float getInertia() {
+    public Inertia getInertia() {
         return getBlockState().getBlock() instanceof CogBlock cog
                 ? cog.getInertia()
                 : FTuning.SMALL_COG_INERTIA;

@@ -54,10 +54,37 @@ by size.
   Small: one `Quantity`, one `useOn`, a resolution figure, and a check that refuses to measure a
   machine that is running. The design argument is already written in §8, so this is typing.
 
-- [ ] **`core/unit/` for rotation.** The other half of the pass above: `Su`, `RPM`, `Fu`, `St`.
-  Bigger than thermal was and with a genuine wrinkle — §17 says `St` and `Fu` are *not*
-  independent (work per blow is `St ÷ hardness`), so the types have to not imply they are.
-  Same shape as thermal: records at boundaries, floats inside the arithmetic.
+- [x] **`core/unit/` for rotation, and the machinery for every unit after.** Done. `Su`, `Rpm`,
+  `Fu` (an int — work arrives in blows, and "one more blow" has to be arithmetic rather than a
+  question), `St`, plus the two compounds that were sitting two lines apart in `FTuning` and are
+  the most swappable pair in the mod: `Drag` (`Su/RPM`, a steady-state cost) and `Inertia`
+  (`Su·t/RPM`, a transient one). Verified the same way as thermal — substituting one for the
+  other in `RotationNetwork.recalculate` fails to compile.
+
+  **The infrastructure is the actual deliverable.** `Unit` (a common interface, `raw()` +
+  `unitKey()`) and `Units` (codec, intCodec, streamCodec, intStreamCodec, `figure`). A new unit
+  is now one small file and one lang key; the checklist lives in `Units`' javadoc. `Unit` is
+  deliberately **not sealed** — sealing buys exhaustive switches nothing wants and charges a
+  second file edit per unit, which is the cost the class exists to remove. So `Eu`, `Pu`, `Qu`,
+  `mB` and a radiation unit cost an afternoon each rather than a pass over the codebase.
+
+  Recorded honestly: `Unit.raw()` weakens the accessor-name guard, since every unit answers to
+  it. The parameter-type guard — the strong one — is untouched, and the convention is that
+  `raw()` belongs to codecs and display while hand-written physics uses the named accessor. The
+  blunt name is so that reviewing for it is cheap.
+
+- [ ] **[OPEN] Air has no unit.** Turned up by the retype and left standing at
+  `BellowsBlockEntity.getStrength`. `StrengthPair` is typed in `St` because that is what a
+  linkage delivers, and the bellows returns an air figure through it one-to-one — invisible
+  while both were `float`. §17 has no unit for air at all. Either it gains one (a volume, so
+  `mB`, with a stated conversion from the force compressing the bag) or the firebox is
+  re-expressed in a unit that exists. A rename would hide it; this is a design decision.
+
+- [ ] **`core/unit/` for the datapack records.** The deliberate remainder: `Deformation`,
+  `ThermalProcess`, `Quench` and `Fuel` still hold floats, because retyping them touches wire
+  formats and pack-facing JSON. `Units.codec` / `Units.streamCodec` were written for exactly
+  this, so the JSON does not change — a pack written today keeps working. Small, and worth doing
+  before a fifth table copies the untyped pattern.
 
 - [ ] **Allocation pass on `RotationPropagator`.** Not urgent and not a bug — every rebuild
   trigger is correctly edge-triggered, so nothing runs per tick. But one `rebuildFrom` on an

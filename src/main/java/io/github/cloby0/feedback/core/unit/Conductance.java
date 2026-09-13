@@ -43,5 +43,15 @@ package io.github.cloby0.feedback.core.unit;
  * there, and the only way past a flame is a hotter flame. See
  * {@link io.github.cloby0.feedback.core.thermal.Heat} for the full argument.
  */
-public record Conductance(float workPerTickPerTu) {
+public record Conductance(float workPerTickPerTu) implements Unit {
+
+    @Override
+    public float raw() {
+        return workPerTickPerTu;
+    }
+
+    @Override
+    public String unitKey() {
+        return "feedback.unit.conductance";
+    }
 }

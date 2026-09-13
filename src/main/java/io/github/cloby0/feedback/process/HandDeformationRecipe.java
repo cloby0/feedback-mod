@@ -21,6 +21,7 @@ package io.github.cloby0.feedback.process;
 
 import io.github.cloby0.feedback.item.HandToolItem;
 import io.github.cloby0.feedback.registry.FRecipes;
+import io.github.cloby0.feedback.core.unit.St;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.world.item.ItemStack;
@@ -162,7 +163,7 @@ public class HandDeformationRecipe extends CustomRecipe {
         // Any hand tool, not only the hammer. A tool that does not strike declares 0 St and is
         // refused below the material's hardness floor a line later, so there is no list anywhere of
         // which tools deform -- the strength is the whole answer.
-        float strength = ((HandToolItem) tool.getItem()).getStrength();
+        St strength = ((HandToolItem) tool.getItem()).getStrength();
         Deforming.Blow blow = Deforming.strike(workpiece, strength, level);
         return blow.landed() ? blow.result() : null;
     }

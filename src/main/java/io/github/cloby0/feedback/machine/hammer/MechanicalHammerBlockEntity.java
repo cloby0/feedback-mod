@@ -26,6 +26,8 @@ import io.github.cloby0.feedback.machine.linkage.StrengthPair;
 import io.github.cloby0.feedback.machine.linkage.Throw;
 import io.github.cloby0.feedback.process.Deforming;
 import io.github.cloby0.feedback.registry.FBlockEntities;
+import io.github.cloby0.feedback.core.unit.Su;
+import io.github.cloby0.feedback.core.unit.St;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -106,18 +108,18 @@ public class MechanicalHammerBlockEntity extends BlockEntity implements Reciproc
     }
 
     @Override
-    public float getStrength(Throw installed) {
-        float rated = installed == Throw.SHORT ? FTuning.HAMMER_ST_SHORT : FTuning.HAMMER_ST_LONG;
-        return rated * condition;
+    public St getStrength(Throw installed) {
+        St rated = installed == Throw.SHORT ? FTuning.HAMMER_ST_SHORT : FTuning.HAMMER_ST_LONG;
+        return new St(rated.value() * condition);
     }
 
     @Override
-    public float getMaxStrength() {
-        return FTuning.HAMMER_MAX_ST * condition;
+    public St getMaxStrength() {
+        return new St(FTuning.HAMMER_MAX_ST.value() * condition);
     }
 
     @Override
-    public float getLoadSu() {
+    public Su getLoadSu() {
         return FTuning.HAMMER_LOAD_SU;
     }
 
@@ -125,7 +127,7 @@ public class MechanicalHammerBlockEntity extends BlockEntity implements Reciproc
      * @param raw force the drive put behind the stroke, before this hammer's ceiling.
      */
     @Override
-    public void onStroke(float raw) {
+    public void onStroke(St raw) {
         if (level == null || level.isClientSide)
             return;
 
@@ -135,10 +137,10 @@ public class MechanicalHammerBlockEntity extends BlockEntity implements Reciproc
         // discarded -- it is absorbed. Gearing past what the head can take now makes the head
         // worse at taking it, so the limit is discoverable by watching the machine instead of by
         // reading the source.
-        float ceiling = getMaxStrength();
-        float strength = Math.min(raw, ceiling);
-        if (raw > ceiling)
-            wear(raw - ceiling);
+        float ceiling = getMaxStrength().value();
+        float strength = Math.min(raw.value(), ceiling);
+        if (raw.value() > ceiling)
+            wear(raw.value() - ceiling);
 
         // A hammer beating air takes nothing, deliberately. Nothing resists it, so there is no
         // shock to do the damage -- and making an idle hammer wear would turn wear into an uptime
@@ -158,7 +160,7 @@ public class MechanicalHammerBlockEntity extends BlockEntity implements Reciproc
         // brute-force answer is a faster hammer and the Su to sustain it; the other is two hammers
         // and a player willing to shuffle hot metal between them. Capital against attention, in a
         // third place nobody put it (§5).
-        Deforming.Blow blow = Deforming.strike(workpiece, strength, level);
+        Deforming.Blow blow = Deforming.strike(workpiece, new St(strength), level);
 
         // Every way a blow can accomplish nothing lands here, and they all cost the same thing.
         // The slice always said the hammer wears on metal too stiff to move and it never did until

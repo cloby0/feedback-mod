@@ -24,6 +24,7 @@ import io.github.cloby0.feedback.Feedback;
 import io.github.cloby0.feedback.client.Readout;
 import io.github.cloby0.feedback.core.rotation.RotationNode;
 import io.github.cloby0.feedback.machine.linkage.CrankLinkageBlockEntity;
+import io.github.cloby0.feedback.core.unit.Rpm;
 
 import snownee.jade.api.BlockAccessor;
 import snownee.jade.api.IBlockComponentProvider;
@@ -83,7 +84,7 @@ public class RotationComponent implements IBlockComponentProvider {
             return;
         }
 
-        tooltip.add(Readout.speed(rpm));
+        tooltip.add(Readout.speed(new Rpm(rpm)));
         Component strain = Readout.strain(loadSu, capacitySu,
                 data.getBoolean(RotationServerData.OVERSTRESSED));
         if (strain != null)

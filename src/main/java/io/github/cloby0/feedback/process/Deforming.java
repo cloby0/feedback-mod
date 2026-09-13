@@ -24,6 +24,7 @@ import java.util.Optional;
 import io.github.cloby0.feedback.core.thermal.ItemHeat;
 import io.github.cloby0.feedback.core.unit.Tu;
 import io.github.cloby0.feedback.registry.FDataComponents;
+import io.github.cloby0.feedback.core.unit.St;
 
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -95,7 +96,7 @@ public final class Deforming {
      * @param level needed only to resolve the workpiece's own temperature, which is computed on
      *              demand from a stamp and a tick rather than stored (philosophy 9)
      */
-    public static Blow strike(ItemStack workpiece, float strength, Level level) {
+    public static Blow strike(ItemStack workpiece, St strength, Level level) {
         if (workpiece.isEmpty())
             return new Blow(workpiece, Outcome.NO_PROCESS);
 
@@ -118,7 +119,7 @@ public final class Deforming {
         // impossibility rather than a slower version of the process. It is also what keeps a hand
         // hammer out of steel without anyone writing a rule about hand hammers: 3 St against
         // hardness 15 is not a long afternoon, it is nothing at all.
-        int delivered = deformation.workFrom(strength);
+        int delivered = deformation.workFrom(strength.value());
         if (delivered <= 0)
             return new Blow(workpiece, Outcome.TOO_SOFT);
 

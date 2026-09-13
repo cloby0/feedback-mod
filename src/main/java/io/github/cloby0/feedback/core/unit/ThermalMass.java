@@ -33,5 +33,15 @@ package io.github.cloby0.feedback.core.unit;
  * rather than a capacity, and the reason the two accessors here are named after their dimensions
  * rather than both being {@code value()}.
  */
-public record ThermalMass(float workPerTu) {
+public record ThermalMass(float workPerTu) implements Unit {
+
+    @Override
+    public float raw() {
+        return workPerTu;
+    }
+
+    @Override
+    public String unitKey() {
+        return "feedback.unit.thermal_mass";
+    }
 }

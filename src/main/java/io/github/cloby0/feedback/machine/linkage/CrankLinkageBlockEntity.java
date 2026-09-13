@@ -22,6 +22,10 @@ package io.github.cloby0.feedback.machine.linkage;
 import io.github.cloby0.feedback.core.FTuning;
 import io.github.cloby0.feedback.core.rotation.RotationNode;
 import io.github.cloby0.feedback.registry.FBlockEntities;
+import io.github.cloby0.feedback.core.unit.Drag;
+import io.github.cloby0.feedback.core.unit.Inertia;
+import io.github.cloby0.feedback.core.unit.Su;
+import io.github.cloby0.feedback.core.unit.St;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -67,7 +71,7 @@ public class CrankLinkageBlockEntity extends RotationNode {
     }
 
     public void tickServer() {
-        float rpm = Math.abs(getRpm());
+        float rpm = Math.abs(getRpm().value());
         if (rpm <= 0) {
             strokeProgress = 0;
             return;
@@ -96,20 +100,23 @@ public class CrankLinkageBlockEntity extends RotationNode {
      * is not capped, because the surplus is a real thing that happens to the machine rather than a
      * number to be rounded off before anybody sees it.
      */
-    public float getStrength() {
+    public St getStrength() {
         Reciprocating driven = getDriven();
         if (!(driven instanceof StrengthPair pair))
-            return 0;
-        return Math.min(getRawStrength(), pair.getMaxStrength());
+            return NO_ST;
+        return new St(Math.min(getRawStrength().value(), pair.getMaxStrength().value()));
     }
 
     /** Force the drive puts behind a stroke, before the driven machine's ceiling. */
-    public float getRawStrength() {
+    public St getRawStrength() {
         Reciprocating driven = getDriven();
         if (!(driven instanceof StrengthPair pair))
-            return 0;
-        return pair.getStrength(getThrow()) * getGearAdvantage();
+            return NO_ST;
+        return new St(pair.getStrength(getThrow()).value() * getGearAdvantage());
     }
+
+    /** Nothing driven, so nothing delivered. */
+    private static final St NO_ST = new St(0);
 
     /**
      * How much the gearing between the source and this linkage multiplies the force behind a blow.
@@ -134,18 +141,18 @@ public class CrankLinkageBlockEntity extends RotationNode {
     }
 
     @Override
-    public float getLoadSu() {
+    public Su getLoadSu() {
         Reciprocating driven = getDriven();
-        return driven == null ? 0 : driven.getLoadSu();
+        return driven == null ? NO_SU : driven.getLoadSu();
     }
 
     @Override
-    public float getDragSuPerRpm() {
+    public Drag getDragSuPerRpm() {
         return FTuning.SHAFT_DRAG_SU_PER_RPM;
     }
 
     @Override
-    public float getInertia() {
+    public Inertia getInertia() {
         return FTuning.SHAFT_INERTIA;
     }
 

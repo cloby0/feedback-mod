@@ -18,6 +18,7 @@
  * See LICENSE-ASSETS.
  */
 package io.github.cloby0.feedback.machine.linkage;
+import io.github.cloby0.feedback.core.unit.St;
 
 /**
  * A machine that delivers a different force depending on how it is geared.
@@ -29,7 +30,7 @@ package io.github.cloby0.feedback.machine.linkage;
  */
 public interface StrengthPair {
 
-    float getStrength(Throw installed);
+    St getStrength(Throw installed);
 
     /**
      * The most St this machine can deliver, however hard it is driven.
@@ -42,5 +43,5 @@ public interface StrengthPair {
      * It is also what keeps a better machine worth buying once gearing exists: a gear train
      * reaches the ceiling, and only a better machine raises it.
      */
-    float getMaxStrength();
+    St getMaxStrength();
 }

@@ -18,6 +18,7 @@
  * See LICENSE-ASSETS.
  */
 package io.github.cloby0.feedback.core.rotation;
+import io.github.cloby0.feedback.core.unit.Rpm;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -57,6 +58,9 @@ import net.minecraft.world.level.block.state.BlockState;
  */
 public class RotationPropagator {
 
+    /** A run with no source is not turning. */
+    private static final Rpm STOPPED = new Rpm(0);
+
     public static void onAdded(Level level, BlockPos pos, RotationNode node) {
         if (level.isClientSide)
             return;
@@ -95,7 +99,8 @@ public class RotationPropagator {
         RotationNode strongest = null;
         for (RotationNode node : component)
             if (node.isSource() && (strongest == null
-                    || Math.abs(node.getGeneratedRpm()) > Math.abs(strongest.getGeneratedRpm())))
+                    || Math.abs(node.getGeneratedRpm().value())
+                            > Math.abs(strongest.getGeneratedRpm().value())))
                 strongest = node;
 
         // Ratios are measured against a reference node. The driving source is the natural
@@ -114,7 +119,7 @@ public class RotationPropagator {
         // Carry the reference node's actual speed across the rebuild, so adding a shaft to a
         // turning line does not stop it dead. Its ratio is 1 by construction, so its speed is
         // the network's speed.
-        float inheritedRpm = reference.getRpm();
+        float inheritedRpm = reference.getRpm().value();
         // Read the phase off the old NETWORK, not off the node. A node's own visualAngle is only
         // written when it syncs, so between syncs it is stale, while the network's is live.
         float inheritedPhase = reference.getNetwork() == null ? 0f : reference.getNetwork().getPhase();
@@ -138,7 +143,7 @@ public class RotationPropagator {
         }
         network.inheritSpeed(inheritedRpm);
         network.inheritPhase(inheritedPhase);
-        network.setTargetRpm(strongest != null ? strongest.getGeneratedRpm() : 0);
+        network.setTargetRpm(strongest != null ? strongest.getGeneratedRpm() : STOPPED);
         network.recalculate();
 
         // Tell every client unconditionally. A rebuild often settles on exactly the speed the
@@ -156,7 +161,7 @@ public class RotationPropagator {
      */
     private static boolean assignRatios(Level level, RotationNode reference, Map<RotationNode, Float> ratios) {
         ratios.put(reference, 1f);
-        float referenceRpm = reference.getGeneratedRpm();
+        float referenceRpm = reference.getGeneratedRpm().value();
 
         Deque<RotationNode> queue = new ArrayDeque<>();
         queue.add(reference);
@@ -185,7 +190,7 @@ public class RotationPropagator {
                 // the speed this one is already giving it. Checked in RPM rather than ratio,
                 // because a ratio means nothing without a reference speed to apply it to.
                 if (neighbour.isSource() && referenceRpm != 0
-                        && Math.abs(neighbour.getGeneratedRpm() - conveyed * referenceRpm) > 1e-4f)
+                        && Math.abs(neighbour.getGeneratedRpm().value() - conveyed * referenceRpm) > 1e-4f)
                     return false;
 
                 ratios.put(neighbour, conveyed);

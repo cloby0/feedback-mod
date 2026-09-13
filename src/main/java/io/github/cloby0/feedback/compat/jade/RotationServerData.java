@@ -65,17 +65,17 @@ public class RotationServerData implements IServerDataProvider<BlockAccessor> {
 
         RotationNetwork network = node.getNetwork();
         data.putBoolean(NETWORKED, network != null);
-        data.putFloat(RPM, node.getRpm());
+        data.putFloat(RPM, node.getRpm().value());
         if (network == null)
             return;
 
-        data.putFloat(CAPACITY_SU, network.getCapacitySu());
-        data.putFloat(LOAD_SU, network.getLoadSu());
+        data.putFloat(CAPACITY_SU, network.getCapacitySu().value());
+        data.putFloat(LOAD_SU, network.getLoadSu().value());
         data.putBoolean(OVERSTRESSED, network.isOverstressed());
         // Scaled by the node's own ratio, because target speed is a network figure and what the
         // player is looking at is one block on it.
-        data.putFloat(TARGET_RPM, network.getTargetRpm() * node.getRatio());
-        data.putFloat(INERTIA, network.getInertia());
+        data.putFloat(TARGET_RPM, network.getTargetRpm().value() * node.getRatio());
+        data.putFloat(INERTIA, network.getInertia().suTicksPerRpm());
     }
 
     @Override

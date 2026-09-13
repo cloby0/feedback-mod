@@ -23,6 +23,9 @@ import io.github.cloby0.feedback.core.FTuning;
 import io.github.cloby0.feedback.core.rotation.RotationNode;
 import io.github.cloby0.feedback.core.rotation.RotationPropagator;
 import io.github.cloby0.feedback.registry.FBlockEntities;
+import io.github.cloby0.feedback.core.unit.Inertia;
+import io.github.cloby0.feedback.core.unit.Rpm;
+import io.github.cloby0.feedback.core.unit.Su;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -75,17 +78,17 @@ public class WaterWheelBlockEntity extends RotationNode {
     }
 
     @Override
-    public float getInertia() {
+    public Inertia getInertia() {
         return FTuning.WATER_WHEEL_INERTIA;
     }
 
     @Override
-    public float getGeneratedRpm() {
-        return flowingSides * FTuning.WATER_WHEEL_RPM_PER_FLOW;
+    public Rpm getGeneratedRpm() {
+        return new Rpm(flowingSides * FTuning.WATER_WHEEL_RPM_PER_FLOW.value());
     }
 
     @Override
-    public float getCapacitySu() {
+    public Su getCapacitySu() {
         return FTuning.WATER_WHEEL_CAPACITY_SU;
     }
 }

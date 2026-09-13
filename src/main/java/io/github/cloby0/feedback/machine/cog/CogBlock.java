@@ -20,6 +20,8 @@
 package io.github.cloby0.feedback.machine.cog;
 
 import io.github.cloby0.feedback.core.rotation.Rotatable;
+import io.github.cloby0.feedback.core.unit.Drag;
+import io.github.cloby0.feedback.core.unit.Inertia;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -78,15 +80,15 @@ public class CogBlock extends RotatedPillarBlock implements EntityBlock, Rotatab
      */
     private final int teeth;
 
-    private final float dragSuPerRpm;
-    private final float inertia;
+    private final Drag dragSuPerRpm;
+    private final Inertia inertia;
 
     private final VoxelShape shapeX;
     private final VoxelShape shapeY;
     private final VoxelShape shapeZ;
 
     public CogBlock(Properties properties, int teeth, int radius, int thickness,
-                    float dragSuPerRpm, float inertia) {
+                    Drag dragSuPerRpm, Inertia inertia) {
         super(properties);
         this.teeth = teeth;
         this.dragSuPerRpm = dragSuPerRpm;
@@ -106,11 +108,11 @@ public class CogBlock extends RotatedPillarBlock implements EntityBlock, Rotatab
         return teeth;
     }
 
-    public float getDragSuPerRpm() {
+    public Drag getDragSuPerRpm() {
         return dragSuPerRpm;
     }
 
-    public float getInertia() {
+    public Inertia getInertia() {
         return inertia;
     }
 

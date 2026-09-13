@@ -22,76 +22,111 @@
  * The units of philosophy 17, as types the compiler can tell apart.
  *
  * <h2>What this package is for</h2>
- * Every physical figure in the mod was a {@code float}, and by the time the thermal model landed
- * that had become a real hazard rather than a tidiness complaint. A fire's temperature, a vessel's
- * thermal mass and its leak are three different kinds of thing, {@link Heat#tick} handles all
- * three in five lines, and nothing stopped any of them being passed where another belonged. The
- * mistake would not have been caught by a test, because the wrong number still produces a
- * plausible-looking temperature curve -- it would have been caught by a playtest, weeks later,
- * as "the crucible feels wrong".
+ * Every physical figure in the mod was a {@code float}, and once both the rotation and thermal
+ * models existed that had become a hazard rather than a tidiness complaint. Ten distinct
+ * quantities shared one spelling; several of them sat two lines apart in {@code FTuning}; and the
+ * arithmetic that mixes them is four or five lines long in each system. The mistake would not
+ * have been caught by a test, because a swapped coefficient still produces a plausible curve --
+ * it would have been caught by a playtest, weeks later, as "the crucible feels wrong" or "the
+ * water wheel is twitchy".
  *
  * <h2>What a unit type does and deliberately does not do</h2>
- * Each type is a thin wrapper with a single accessor, <em>named for its dimension</em>. That
- * naming is the whole mechanism: {@link ThermalMass#workPerTu()} and
- * {@link Conductance#workPerTickPerTu()} are different methods on different types, so swapping a
- * mass for a leak is a compile error rather than a slow bug.
+ * Each is a thin record with one component, <em>named for its dimension</em>. Two layers of guard
+ * come out of that:
+ * <ul>
+ *   <li>The <b>parameter type</b>, which is the strong one. A {@link Conductance} cannot be passed
+ *       where a {@link ThermalMass} is wanted, an {@link Su} cannot be passed where an {@link Rpm}
+ *       is wanted, and no naming is involved.</li>
+ *   <li>The <b>accessor name</b>, which catches the case where a value has already been unwrapped
+ *       inside one method. {@code getLeak().workPerTu()} and
+ *       {@code getDragSuPerRpm().suTicksPerRpm()} both fail to compile, and both were verified by
+ *       being written on purpose.</li>
+ * </ul>
+ * Base units name their component {@code value}, because the type name is already the dimension.
+ * Compounds name theirs for the dimension, because {@link ThermalMass} and {@link Conductance} --
+ * or {@link Drag} and {@link Inertia} -- are indistinguishable floats until the accessor says
+ * otherwise, and those are exactly the pairs that get swapped.
  * <p>
  * There is deliberately <b>no arithmetic on these types</b>. The alternative was considered and
- * rejected: an algebra of {@code Tu.minus}, {@code Work.over(ThermalMass)} and so on would catch
- * dimensional errors in intermediate expressions too, but it would cost six invented operators
- * and a fourth type to express five lines of physics, and it would stop {@link Heat#tick} looking
- * like the equation it is. That file's javadoc is the standing record of a physics bug that was
- * shipped once; if the maths there stops being readable, the documentation stops being checkable.
- * So the types guard the <em>plumbing</em> -- interfaces, tuning constants, the seams between
- * systems, which is where a value gets handed to the wrong parameter -- and the arithmetic is
- * done in plain floats, unwrapped at the point of use.
+ * rejected: an algebra of {@code Tu.minus} and {@code Work.over(ThermalMass)} would catch
+ * dimensional errors in intermediate expressions too, but it costs a pile of invented operators
+ * and extra delta types to express a handful of lines of physics, and it would stop
+ * {@link Heat#tick} and {@code RotationNetwork.tick} looking like the equations they are. So the
+ * types guard the <em>plumbing</em> -- interfaces, tuning constants, the seams between systems,
+ * which is where a value gets handed to the wrong parameter -- and the arithmetic is done in
+ * plain floats, unwrapped at the point of use.
  * <p>
- * The convention that follows, and it is a convention rather than something the compiler enforces:
+ * The convention that follows, and it is a convention rather than something enforced:
  * <b>unwrap inline, never into a local.</b> {@code body.getLeak().workPerTickPerTu()} inside an
  * expression is safe; {@code float leak = ...; float mass = ...;} on two lines puts the two back
- * within swapping distance of each other.
+ * within swapping distance. Where a class must hold a figure across methods -- a block entity's
+ * stored temperature, a network's live load -- it holds a <b>primitive field and wraps at the
+ * accessor</b>. That is also the shape the JIT wants: a wrapper in a field outlives the method
+ * that made it and is the one case escape analysis cannot eliminate.
  *
- * <h2>How these are named</h2>
- * Philosophy 17 gives some quantities a unit and leaves others as compounds, and the names here
- * follow that split:
- * <ul>
- *   <li>A quantity with a named unit takes the unit's name -- {@link Tu}. Rates derived from one
- *       take the unit plus the rate, as the units table does when it writes {@code Tu/t} --
- *       {@link TuRate}.</li>
- *   <li>A compound with no unit of its own takes the name of its physical role, with the
- *       dimension stated in its javadoc -- {@link ThermalMass} is {@code Work/Tu},
- *       {@link Conductance} is {@code Work/t/Tu}.</li>
- * </ul>
+ * <h2>What is here</h2>
+ * <table border="1">
+ *   <caption>Live units</caption>
+ *   <tr><th>Type</th><th>Dimension</th><th>What it measures</th></tr>
+ *   <tr><td>{@link Tu}</td><td>Tu</td><td>temperature -- a state, never an amount</td></tr>
+ *   <tr><td>{@link TuRate}</td><td>Tu/t</td><td>how fast a temperature is moving</td></tr>
+ *   <tr><td>{@link ThermalMass}</td><td>Work/Tu</td><td>what it costs to heat a body by one Tu</td></tr>
+ *   <tr><td>{@link Conductance}</td><td>Work/t/Tu</td><td>how readily heat crosses a boundary</td></tr>
+ *   <tr><td>{@link Su}</td><td>Su</td><td>rotational load and supply</td></tr>
+ *   <tr><td>{@link Rpm}</td><td>RPM</td><td>rotational speed, signed for direction</td></tr>
+ *   <tr><td>{@link Fu}</td><td>Fu</td><td>cumulative work in a workpiece -- an integer</td></tr>
+ *   <tr><td>{@link St}</td><td>St</td><td>the force behind one blow</td></tr>
+ *   <tr><td>{@link Drag}</td><td>Su/RPM</td><td>bearing friction: a steady-state cost</td></tr>
+ *   <tr><td>{@link Inertia}</td><td>Su&#183;t/RPM</td><td>resistance to changing speed: a transient one</td></tr>
+ * </table>
+ * {@link Unit} is what they have in common and {@link Units} is the machinery -- codecs, wire
+ * formats, formatting -- that makes the next one cheap. <b>The checklist for adding a unit lives
+ * in {@link Units}.</b>
  *
- * <h2>Two things this exercise found, which is the argument for having done it</h2>
+ * <h2>Three things this exercise found, which is the argument for having done it</h2>
  * <ol>
  *   <li><b>A vessel's leak and a fire's conductance are the same dimension.</b> Both are
- *       {@code Work/t/Tu} -- Work crossing a boundary per tick, per Tu of difference across it --
- *       and {@link Heat#equilibrium} has been adding them together correctly all along without
- *       anything in the code saying they were addable. They are now one type, {@link Conductance},
- *       playing two roles. Naming a leak as a conductance to the room is also just true.</li>
- *   <li><b>{@link Tu} covers both a temperature and a difference between two temperatures.</b>
- *       Strictly those are different things -- 1450 Tu and "16 Tu hotter" are a state and an
- *       interval -- and a stricter scheme would separate them. It is not worth a fifth type here:
- *       the only interval in the thermal model is an instrument's resolution, the arithmetic that
- *       would confuse the two is float arithmetic anyway, and the mod's own units table treats Tu
- *       as one thing. Recorded because it is the first place this scheme is knowingly loose, and
- *       the next person will otherwise re-derive it.</li>
+ *       {@code Work/t/Tu}, and {@link Heat#equilibrium} has been adding them together correctly
+ *       all along without anything in the code saying they were addable. One type now, in two
+ *       roles. Naming a leak as a conductance to the room is also just true.</li>
+ *   <li><b>The bellows answers a question about force with a volume of air.</b>
+ *       {@code StrengthPair} is typed in {@link St}, and the bellows returns an air figure through
+ *       it one-to-one. That was invisible while both were floats. Left standing as an {@code
+ *       [OPEN]} at the site rather than papered over, because air has no unit in philosophy 17 at
+ *       all and giving it one is a decision, not a rename.</li>
+ *   <li><b>{@link Tu} covers both a temperature and a difference between two.</b> Strictly a state
+ *       and an interval. Not worth a separate type -- the only interval in the model is an
+ *       instrument's resolution -- but it is the first place the scheme is knowingly loose, and
+ *       the same looseness now applies to every base unit here.</li>
  * </ol>
  *
- * <h2>Why there is no {@code Work} type yet</h2>
- * Nothing stores a quantity of Work. It appears only inside the dimensions of the two compounds
- * above, and as intermediate float terms within {@link Heat#tick} that never leave the method.
- * A type with no variable to hold would be scaffolding, and the standing rule is to create a
- * thing when there is something to put in it.
+ * <h2>What has no type, and why</h2>
+ * <ul>
+ *   <li><b>{@code Work}</b> -- generic energy. Nothing stores a quantity of it; it appears only
+ *       inside the dimensions of {@link ThermalMass} and {@link Conductance}, and as intermediate
+ *       terms inside {@link Heat#tick} that never leave the method. A type with no variable to
+ *       hold would be scaffolding.</li>
+ *   <li><b>Condition</b> -- machine wear. Dimensionless on purpose: a fraction of as-built spec,
+ *       so it multiplies the spec sheet directly. {@code CLAUDE.md} is explicit that wear is a
+ *       percentage and not a unit, and minting one would be the mod arguing with itself.</li>
+ *   <li><b>Ticks</b> -- durations, intervals, hold times. Minecraft's own unit, used raw
+ *       everywhere in the ecosystem, and wrapping it would fight every vanilla signature we touch
+ *       for no case where a tick count is confusable with anything here.</li>
+ *   <li><b>Ratios, hardness and other bare multipliers</b> -- genuinely dimensionless.</li>
+ *   <li><b>{@code Pu}, {@code mB}, {@code Mu}, {@code Qu}, {@code Eu}</b> -- named in philosophy 17
+ *       and not yet in any code. They arrive with the systems that need them; the standing rule is
+ *       to create a thing when there is something to put in it, and {@link Units} exists so that
+ *       arriving is cheap.</li>
+ * </ul>
  *
- * <h2>Scope</h2>
- * Thermal only, on purpose. Rotation's {@code Su}, {@code RPM}, {@code Fu} and {@code St} are
- * still floats and are the next pass; the datapack records ({@code ThermalProcess},
- * {@code Quench}, {@code Deformation}) are still floats too, and their codecs are the reason --
- * retyping them means retyping wire formats, which is a separate change with a separate risk.
- * The dangerous triple the exercise was called for -- temperature, thermal mass, leak -- is
- * entirely inside the scope taken here.
+ * <h2>Scope of the retype</h2>
+ * The simulation is fully typed: {@code core/thermal}, {@code core/rotation}, the machines, the
+ * items and the display layer. Still floats on purpose: the <b>datapack records</b>
+ * ({@code Deformation}, {@code ThermalProcess}, {@code Quench}, {@code Fuel}) and their codecs.
+ * Retyping those touches wire formats and pack-facing JSON, which is a separate change with a
+ * separate risk, and {@link Units#codec} and {@link Units#streamCodec} exist so it is a small one
+ * when it happens. The seams where a table's float meets a typed simulation are unwrapped
+ * explicitly and commented at each site.
  */
 package io.github.cloby0.feedback.core.unit;
 

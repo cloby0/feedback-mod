@@ -24,6 +24,8 @@ import io.github.cloby0.feedback.machine.linkage.Reciprocating;
 import io.github.cloby0.feedback.machine.linkage.StrengthPair;
 import io.github.cloby0.feedback.machine.linkage.Throw;
 import io.github.cloby0.feedback.registry.FBlockEntities;
+import io.github.cloby0.feedback.core.unit.Su;
+import io.github.cloby0.feedback.core.unit.St;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -76,7 +78,7 @@ public class BellowsBlockEntity extends BlockEntity implements Reciprocating, St
      * means to it. A second name would imply a second kind of stroke.
      */
     @Override
-    public void onStroke(float strength) {
+    public void onStroke(St strength) {
         if (level == null || level.isClientSide)
             return;
 
@@ -85,7 +87,7 @@ public class BellowsBlockEntity extends BlockEntity implements Reciprocating, St
         // is already fully compressed at its long throw, and squeezing an empty bag harder finds
         // no more air and breaks nothing. That is the opposite of what the hammer does with its
         // surplus, out of the same stroke, which is why the ceiling belongs to the machine.
-        float air = Math.min(strength, getMaxStrength());
+        float air = Math.min(strength.value(), getMaxStrength().value());
 
         boolean blew = false;
         for (Direction face : Direction.values()) {
@@ -102,18 +104,30 @@ public class BellowsBlockEntity extends BlockEntity implements Reciprocating, St
                 blew ? 0.5f : 0.35f, 0.7f);
     }
 
+    /**
+     * <h3>[OPEN] The bellows answers a question about force with a volume of air</h3>
+     * {@link StrengthPair} is typed in {@link St} because that is what a linkage delivers, and
+     * this returns an air figure through it at one-to-one. Typing the units is what made that
+     * visible -- it was invisible while both were {@code float} -- and it is left standing rather
+     * than papered over, because the honest fix is a decision the units table has not taken: air
+     * has no unit in philosophy 17 at all. Either it gains one (a volume, so {@code mB}, with a
+     * stated conversion from the force compressing the bag) or the firebox is re-expressed in a
+     * unit that already exists. Until then the numbers are right and the naming is not.
+     */
     @Override
-    public float getStrength(Throw installed) {
-        return installed == Throw.LONG ? FTuning.BELLOWS_AIR_LONG : FTuning.BELLOWS_AIR_SHORT;
+    public St getStrength(Throw installed) {
+        return new St(installed == Throw.LONG
+                ? FTuning.BELLOWS_AIR_LONG
+                : FTuning.BELLOWS_AIR_SHORT);
     }
 
     @Override
-    public float getMaxStrength() {
-        return FTuning.BELLOWS_MAX_AIR;
+    public St getMaxStrength() {
+        return new St(FTuning.BELLOWS_MAX_AIR);
     }
 
     @Override
-    public float getLoadSu() {
+    public Su getLoadSu() {
         return FTuning.BELLOWS_LOAD_SU;
     }
 }

@@ -24,6 +24,11 @@ import java.util.Iterator;
 import java.util.Map;
 
 import io.github.cloby0.feedback.core.FTuning;
+import io.github.cloby0.feedback.core.unit.Drag;
+import io.github.cloby0.feedback.core.unit.Inertia;
+import io.github.cloby0.feedback.core.unit.Rpm;
+import io.github.cloby0.feedback.core.unit.Su;
+
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -82,7 +87,7 @@ public class RotationNetwork {
     private float staticLoadSu;
     /** Demand per RPM: friction. Costs nothing while stopped. */
     private float dragSuPerRpm;
-    private float inertia = FTuning.MINIMUM_INERTIA;
+    private float inertia = FTuning.MINIMUM_INERTIA.suTicksPerRpm();
 
     /** Speed the sources are asking for. Set by {@link RotationPropagator}. */
     private float targetRpm;
@@ -115,8 +120,8 @@ public class RotationNetwork {
         if (members.containsKey(node))
             return;
         if (node.isSource())
-            sources.put(node, node.getCapacitySu());
-        members.put(node, node.getLoadSu());
+            sources.put(node, node.getCapacitySu().value());
+        members.put(node, node.getLoadSu().value());
         recalculate();
     }
 
@@ -125,7 +130,7 @@ public class RotationNetwork {
             return;
         sources.remove(node);
         members.remove(node);
-        node.onNetworkChanged(0, 0);
+        node.onNetworkChanged(new Su(0), new Su(0));
         if (members.isEmpty()) {
             RotationNetworks.of(node.getLevel()).discard(id);
             return;
@@ -146,20 +151,31 @@ public class RotationNetwork {
      * Held as two figures rather than recomputed from the members each tick, so a long run costs
      * no more to simulate than a short one.
      */
-    public float getLoadSu() {
+    public Su getLoadSu() {
+        return new Su(liveLoadSu());
+    }
+
+    /**
+     * The same figure as {@link #getLoadSu()}, unwrapped, for this class's own arithmetic.
+     * <p>
+     * Internals hold plain floats -- see {@code core/unit}'s package javadoc -- and the tick loop
+     * reads this several times per pass. Going through the wrapper each time would be honest and
+     * pointless.
+     */
+    private float liveLoadSu() {
         return staticLoadSu + dragSuPerRpm * Math.abs(currentRpm);
     }
 
-    public void setTargetRpm(float targetRpm) {
-        this.targetRpm = targetRpm;
+    public void setTargetRpm(Rpm targetRpm) {
+        this.targetRpm = targetRpm.value();
     }
 
-    public float getTargetRpm() {
-        return targetRpm;
+    public Rpm getTargetRpm() {
+        return new Rpm(targetRpm);
     }
 
-    public float getCurrentRpm() {
-        return currentRpm;
+    public Rpm getCurrentRpm() {
+        return new Rpm(currentRpm);
     }
 
     /** Used when rebuilding a network, so a spinning run does not lose its momentum. */
@@ -199,7 +215,7 @@ public class RotationNetwork {
             complainIfLabouring(members.keySet().iterator().next().getLevel());
 
         float effectiveTarget = isOverstressed() ? 0 : targetRpm;
-        float liveLoad = getLoadSu();
+        float liveLoad = liveLoadSu();
 
         // Friction rises with speed, so a run can be unable to reach the speed its source is
         // asking for. It is not blocked from trying -- it simply runs out of surplus torque
@@ -227,16 +243,17 @@ public class RotationNetwork {
         // both more readable and far easier to reason about.
         float force = (speedingUp && !reversing)
                 ? Math.max(0, capacitySu - staticLoadSu)
-                : Math.max(liveLoad, FTuning.MINIMUM_BRAKING_SU);
+                : Math.max(liveLoad, FTuning.MINIMUM_BRAKING_SU.value());
 
-        float step = force / Math.max(inertia, FTuning.MINIMUM_INERTIA) * FTuning.INERTIA_RESPONSE;
+        float step = force / Math.max(inertia, FTuning.MINIMUM_INERTIA.suTicksPerRpm())
+                * FTuning.INERTIA_RESPONSE;
 
         if (Math.abs(effectiveTarget - currentRpm) <= step)
             currentRpm = effectiveTarget;
         else
             currentRpm += Math.signum(effectiveTarget - currentRpm) * step;
 
-        if (effectiveTarget == 0 && Math.abs(currentRpm) < FTuning.STOPPED_RPM_THRESHOLD)
+        if (effectiveTarget == 0 && Math.abs(currentRpm) < FTuning.STOPPED_RPM_THRESHOLD.value())
             currentRpm = 0;
 
         for (RotationNode member : members.keySet())
@@ -272,7 +289,7 @@ public class RotationNetwork {
 
         boolean overloaded = isOverstressed();
         boolean straining = !overloaded && capacitySu > 0
-                && getLoadSu() > capacitySu * FTuning.STRAINING_LOAD_FRACTION;
+                && liveLoadSu() > capacitySu * FTuning.STRAINING_LOAD_FRACTION;
         if (!overloaded && !straining) {
             ticksUntilComplaint = 0;
             return;
@@ -325,9 +342,9 @@ public class RotationNetwork {
             // a figure stamped on the block (§17), and a spec that changed with the gearing would
             // stop being one.
             float referred = member.getRatio() * member.getRatio();
-            newStaticLoad += member.getLoadSu();
-            newDrag += member.getDragSuPerRpm() * referred;
-            newInertia += member.getInertia() * referred;
+            newStaticLoad += member.getLoadSu().value();
+            newDrag += member.getDragSuPerRpm().suPerRpm() * referred;
+            newInertia += member.getInertia().suTicksPerRpm() * referred;
         }
 
         inertia = newInertia;
@@ -338,7 +355,7 @@ public class RotationNetwork {
         staticLoadSu = newStaticLoad;
         dragSuPerRpm = newDrag;
         for (RotationNode member : members.keySet())
-            member.onNetworkChanged(capacitySu, getLoadSu());
+            member.onNetworkChanged(new Su(capacitySu), getLoadSu());
     }
 
     /**
@@ -370,20 +387,20 @@ public class RotationNetwork {
         return capacitySu > 0 && staticLoadSu > capacitySu;
     }
 
-    public float getCapacitySu() {
-        return capacitySu;
+    public Su getCapacitySu() {
+        return new Su(capacitySu);
     }
 
-    public float getStaticLoadSu() {
-        return staticLoadSu;
+    public Su getStaticLoadSu() {
+        return new Su(staticLoadSu);
     }
 
-    public float getDragSuPerRpm() {
-        return dragSuPerRpm;
+    public Drag getDragSuPerRpm() {
+        return new Drag(dragSuPerRpm);
     }
 
-    public float getInertia() {
-        return inertia;
+    public Inertia getInertia() {
+        return new Inertia(inertia);
     }
 
     public boolean isEmpty() {

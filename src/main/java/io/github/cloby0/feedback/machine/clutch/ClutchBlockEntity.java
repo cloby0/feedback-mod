@@ -24,6 +24,8 @@ import io.github.cloby0.feedback.core.FTuning;
 import io.github.cloby0.feedback.core.rotation.RotationNode;
 import io.github.cloby0.feedback.core.rotation.RotationPropagator;
 import io.github.cloby0.feedback.registry.FBlockEntities;
+import io.github.cloby0.feedback.core.unit.Drag;
+import io.github.cloby0.feedback.core.unit.Inertia;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -60,12 +62,12 @@ public class ClutchBlockEntity extends RotationNode implements Switchable {
     }
 
     @Override
-    public float getDragSuPerRpm() {
+    public Drag getDragSuPerRpm() {
         return FTuning.SHAFT_DRAG_SU_PER_RPM;
     }
 
     @Override
-    public float getInertia() {
+    public Inertia getInertia() {
         return FTuning.SHAFT_INERTIA;
     }
 }

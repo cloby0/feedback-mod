@@ -20,6 +20,11 @@
 package io.github.cloby0.feedback.core;
 
 import io.github.cloby0.feedback.core.unit.Conductance;
+import io.github.cloby0.feedback.core.unit.Drag;
+import io.github.cloby0.feedback.core.unit.Inertia;
+import io.github.cloby0.feedback.core.unit.Rpm;
+import io.github.cloby0.feedback.core.unit.St;
+import io.github.cloby0.feedback.core.unit.Su;
 import io.github.cloby0.feedback.core.unit.ThermalMass;
 import io.github.cloby0.feedback.core.unit.Tu;
 import io.github.cloby0.feedback.core.unit.TuRate;
@@ -47,16 +52,16 @@ public final class FTuning {
     // --- sources --------------------------------------------------------------------------
 
     /** SLICE: the Hand Crank supplies 12 Su while somebody is turning it. */
-    public static final float HAND_CRANK_CAPACITY_SU = 12f;
+    public static final Su HAND_CRANK_CAPACITY_SU = new Su(12f);
     /** Invented. */
-    public static final float HAND_CRANK_RPM = 32f;
+    public static final Rpm HAND_CRANK_RPM = new Rpm(32f);
     /** Invented. How long one click keeps the crank turning; holding the button refreshes it. */
     public static final int HAND_CRANK_TICKS_PER_TURN = 12;
 
     /** SLICE: the Water Wheel supplies 256 Su, continuously, given flowing water. */
-    public static final float WATER_WHEEL_CAPACITY_SU = 256f;
+    public static final Su WATER_WHEEL_CAPACITY_SU = new Su(256f);
     /** Invented. Speed scales with how many faces have moving water against them. */
-    public static final float WATER_WHEEL_RPM_PER_FLOW = 4f;
+    public static final Rpm WATER_WHEEL_RPM_PER_FLOW = new Rpm(4f);
     /** Invented. Water does not change often enough to justify checking every tick. */
     public static final int WATER_WHEEL_FLOW_CHECK_INTERVAL = 20;
 
@@ -86,7 +91,7 @@ public final class FTuning {
      *       now something you pay for by the block.</li>
      * </ul>
      */
-    public static final float SHAFT_DRAG_SU_PER_RPM = 0.1f;
+    public static final Drag SHAFT_DRAG_SU_PER_RPM = new Drag(0.1f);
 
     /**
      * Invented. How much a shaft resists a change in speed.
@@ -101,7 +106,7 @@ public final class FTuning {
      * hand crank a little under one. The spread between them is large, and correctly so: a water
      * wheel is an enormous slab of timber and a crank handle is not.
      */
-    public static final float SHAFT_INERTIA = 2f;
+    public static final Inertia SHAFT_INERTIA = new Inertia(2f);
 
     /**
      * Invented. A cog drags like a shaft; a large one drags half again as much.
@@ -114,27 +119,27 @@ public final class FTuning {
      * payment for the force it gives either; what it takes is capital. Adding a surcharge on top
      * would be a rule saying what the physics already says.
      */
-    public static final float SMALL_COG_DRAG_SU_PER_RPM = 0.1f;
-    public static final float LARGE_COG_DRAG_SU_PER_RPM = 0.15f;
+    public static final Drag SMALL_COG_DRAG_SU_PER_RPM = new Drag(0.1f);
+    public static final Drag LARGE_COG_DRAG_SU_PER_RPM = new Drag(0.15f);
 
     /** Invented. A large cog is a heavier wheel, and the only flywheel beat 1 has. */
-    public static final float SMALL_COG_INERTIA = 3f;
-    public static final float LARGE_COG_INERTIA = 12f;
+    public static final Inertia SMALL_COG_INERTIA = new Inertia(3f);
+    public static final Inertia LARGE_COG_INERTIA = new Inertia(12f);
 
     /** Invented. A gearbox is a crowded little box of bevels: more friction than a bare shaft. */
-    public static final float GEARBOX_DRAG_SU_PER_RPM = 0.2f;
-    public static final float GEARBOX_INERTIA = 4f;
+    public static final Drag GEARBOX_DRAG_SU_PER_RPM = new Drag(0.2f);
+    public static final Inertia GEARBOX_INERTIA = new Inertia(4f);
 
     /** Invented. A generator is a lump of mass too; without this a bare source has no momentum. */
-    public static final float HAND_CRANK_INERTIA = 4f;
+    public static final Inertia HAND_CRANK_INERTIA = new Inertia(4f);
     /** Invented, and deliberately large -- this is why a water wheel coasts so visibly. */
-    public static final float WATER_WHEEL_INERTIA = 400f;
+    public static final Inertia WATER_WHEEL_INERTIA = new Inertia(400f);
 
     /**
      * Floor on total network inertia, so a network of one weightless block still takes a moment
      * to change speed instead of snapping. Prevents a divide-by-zero as well.
      */
-    public static final float MINIMUM_INERTIA = 1f;
+    public static final Inertia MINIMUM_INERTIA = new Inertia(1f);
 
     /**
      * Global multiplier on how quickly anything changes speed. 1 means the physics above is used
@@ -150,7 +155,7 @@ public final class FTuning {
      * Floor on braking force, so an utterly frictionless network still eventually stops rather
      * than coasting for the rest of the save.
      */
-    public static final float MINIMUM_BRAKING_SU = 0.5f;
+    public static final Su MINIMUM_BRAKING_SU = new Su(0.5f);
 
     // --- reciprocation --------------------------------------------------------------------
 
@@ -180,7 +185,7 @@ public final class FTuning {
      * hardness is 15, and 3 St below a hardness of 15 lands nothing at all -- philosophy 7's hard
      * gate, a genuine impossibility rather than a slow route.
      */
-    public static final float HAND_HAMMER_ST = 3f;
+    public static final St HAND_HAMMER_ST = new St(3f);
 
     /**
      * Invented. Blows a hand hammer lands before it is finished.
@@ -192,11 +197,11 @@ public final class FTuning {
      */
     public static final int HAND_HAMMER_DURABILITY = 250;
 
-    public static final float HAMMER_ST_SHORT = 12f;
-    public static final float HAMMER_ST_LONG = 3f;
+    public static final St HAMMER_ST_SHORT = new St(12f);
+    public static final St HAMMER_ST_LONG = new St(3f);
 
     /** SLICE: 80 Su, against the water wheel's 256. Three hammers fit; four do not. */
-    public static final float HAMMER_LOAD_SU = 80f;
+    public static final Su HAMMER_LOAD_SU = new Su(80f);
 
     /**
      * Invented. The most St this hammer can land, however it is geared.
@@ -211,7 +216,7 @@ public final class FTuning {
      * setting the block has -- enough for the trade to be worth making, not enough to replace
      * buying a better machine. Raising the ceiling is what a better machine is <em>for</em>.
      */
-    public static final float HAMMER_MAX_ST = 24f;
+    public static final St HAMMER_MAX_ST = new St(24f);
 
     /**
      * How much condition one St of wasted force costs the machine that absorbed it.
@@ -293,7 +298,7 @@ public final class FTuning {
      * Below this, a coasting network is called stopped. Without a floor, speed approaches zero
      * asymptotically and machines tick forever at 0.0001 RPM.
      */
-    public static final float STOPPED_RPM_THRESHOLD = 0.05f;
+    public static final Rpm STOPPED_RPM_THRESHOLD = new Rpm(0.05f);
 
     // --- thermal ---------------------------------------------------------------------------
 
@@ -489,7 +494,7 @@ public final class FTuning {
      * fast enough to forge steel, a bellows keeping the fire in, and the shafting to reach both
      * is the first time the slice asks for most of that budget at once.
      */
-    public static final float BELLOWS_LOAD_SU = 40f;
+    public static final Su BELLOWS_LOAD_SU = new Su(40f);
 
     /**
      * The most air one stroke can move, which is the long throw's figure and deliberately so.
@@ -613,9 +618,9 @@ public final class FTuning {
     // adjective would tell the player nothing.
 
     /** Below this a turning run reads as "turning slowly". */
-    public static final float TURNING_RPM = 8f;
+    public static final Rpm TURNING_RPM = new Rpm(8f);
     /** At or above this a run reads as "spinning fast". */
-    public static final float SPINNING_FAST_RPM = 24f;
+    public static final Rpm SPINNING_FAST_RPM = new Rpm(24f);
 
     /**
      * Fraction of capacity above which a network reads as "straining".

@@ -63,11 +63,11 @@ public class HammerComponent implements IBlockComponentProvider {
             return;
 
         tooltip.add(Component.translatable("feedback.spec.strength",
-                Readout.number(hammer.getStrength(Throw.SHORT)),
-                Readout.number(hammer.getStrength(Throw.LONG))));
+                Readout.number(hammer.getStrength(Throw.SHORT).value()),
+                Readout.number(hammer.getStrength(Throw.LONG).value())));
         tooltip.add(Component.translatable("feedback.spec.ceiling",
-                Readout.number(hammer.getMaxStrength())));
-        tooltip.add(Component.translatable("feedback.spec.load", Readout.number(hammer.getLoadSu())));
+                Readout.number(hammer.getMaxStrength().value())));
+        tooltip.add(Component.translatable("feedback.spec.load", Readout.number(hammer.getLoadSu().value())));
 
         // The spec figures above are already scaled by condition, so a worn hammer quotes what it
         // can actually do rather than what it left the workshop able to do. This line says why

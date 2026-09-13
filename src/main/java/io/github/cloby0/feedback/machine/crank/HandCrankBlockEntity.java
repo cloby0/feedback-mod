@@ -23,6 +23,9 @@ import io.github.cloby0.feedback.core.FTuning;
 import io.github.cloby0.feedback.core.rotation.RotationNode;
 import io.github.cloby0.feedback.core.rotation.RotationPropagator;
 import io.github.cloby0.feedback.registry.FBlockEntities;
+import io.github.cloby0.feedback.core.unit.Inertia;
+import io.github.cloby0.feedback.core.unit.Rpm;
+import io.github.cloby0.feedback.core.unit.Su;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -65,17 +68,17 @@ public class HandCrankBlockEntity extends RotationNode {
     }
 
     @Override
-    public float getGeneratedRpm() {
-        return turningTicks > 0 ? FTuning.HAND_CRANK_RPM : 0;
+    public Rpm getGeneratedRpm() {
+        return turningTicks > 0 ? FTuning.HAND_CRANK_RPM : ZERO_RPM;
     }
 
     @Override
-    public float getCapacitySu() {
+    public Su getCapacitySu() {
         return FTuning.HAND_CRANK_CAPACITY_SU;
     }
 
     @Override
-    public float getInertia() {
+    public Inertia getInertia() {
         return FTuning.HAND_CRANK_INERTIA;
     }
 

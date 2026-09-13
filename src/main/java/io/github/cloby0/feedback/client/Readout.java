@@ -26,6 +26,7 @@ import io.github.cloby0.feedback.core.unit.Tu;
 import io.github.cloby0.feedback.instrument.Instrument;
 import io.github.cloby0.feedback.instrument.Instruments;
 import io.github.cloby0.feedback.instrument.Quantity;
+import io.github.cloby0.feedback.core.unit.Rpm;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -109,13 +110,13 @@ public final class Readout {
      * How fast a run is turning, in words. The bands are in {@link FTuning} because they are a
      * balance decision about what is distinguishable, not a display detail.
      */
-    public static Component speed(float rpm) {
-        float magnitude = Math.abs(rpm);
-        if (magnitude < FTuning.STOPPED_RPM_THRESHOLD)
+    public static Component speed(Rpm rpm) {
+        float magnitude = Math.abs(rpm.value());
+        if (magnitude < FTuning.STOPPED_RPM_THRESHOLD.value())
             return adjective("feedback.readout.stopped");
-        if (magnitude < FTuning.TURNING_RPM)
+        if (magnitude < FTuning.TURNING_RPM.value())
             return adjective("feedback.readout.turning_slowly");
-        if (magnitude < FTuning.SPINNING_FAST_RPM)
+        if (magnitude < FTuning.SPINNING_FAST_RPM.value())
             return adjective("feedback.readout.turning");
         return adjective("feedback.readout.spinning_fast");
     }

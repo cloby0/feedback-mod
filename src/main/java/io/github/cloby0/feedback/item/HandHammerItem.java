@@ -20,6 +20,7 @@
 package io.github.cloby0.feedback.item;
 
 import io.github.cloby0.feedback.core.FTuning;
+import io.github.cloby0.feedback.core.unit.St;
 
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
@@ -61,7 +62,7 @@ public class HandHammerItem extends HandToolItem {
     }
 
     @Override
-    public float getStrength() {
+    public St getStrength() {
         return FTuning.HAND_HAMMER_ST;
     }
 

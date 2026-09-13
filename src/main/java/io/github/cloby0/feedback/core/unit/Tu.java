@@ -33,5 +33,15 @@ package io.github.cloby0.feedback.core.unit;
  * band's width. See the package javadoc for why that looseness was accepted rather than given a
  * fifth type.
  */
-public record Tu(float value) {
+public record Tu(float value) implements Unit {
+
+    @Override
+    public float raw() {
+        return value;
+    }
+
+    @Override
+    public String unitKey() {
+        return "feedback.unit.tu";
+    }
 }

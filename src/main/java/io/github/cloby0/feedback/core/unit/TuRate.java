@@ -39,5 +39,15 @@ package io.github.cloby0.feedback.core.unit;
  *       the previous item measured.</li>
  * </ul>
  */
-public record TuRate(float tuPerTick) {
+public record TuRate(float tuPerTick) implements Unit {
+
+    @Override
+    public float raw() {
+        return tuPerTick;
+    }
+
+    @Override
+    public String unitKey() {
+        return "feedback.unit.tu_rate";
+    }
 }

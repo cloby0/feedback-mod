@@ -20,6 +20,11 @@
 package io.github.cloby0.feedback.core.rotation;
 
 import io.github.cloby0.feedback.core.FTuning;
+import io.github.cloby0.feedback.core.unit.Drag;
+import io.github.cloby0.feedback.core.unit.Inertia;
+import io.github.cloby0.feedback.core.unit.Rpm;
+import io.github.cloby0.feedback.core.unit.Su;
+
 
 import org.jetbrains.annotations.Nullable;
 
@@ -75,16 +80,28 @@ public abstract class RotationNode extends BlockEntity {
         super(type, pos, state);
     }
 
+    /**
+     * The "this node contributes nothing" answers, named once.
+     * <p>
+     * Records are immutable, so sharing one instance per zero is free and it keeps the common
+     * override -- a shaft, which generates nothing and demands nothing -- from reading as
+     * arithmetic. It also means the JIT sees a constant rather than an allocation at the sites
+     * that dominate: most nodes in a run are passive.
+     */
+    protected static final Rpm ZERO_RPM = new Rpm(0);
+    protected static final Su NO_SU = new Su(0);
+    protected static final Drag NO_DRAG = new Drag(0);
+
     // --- what subclasses define -------------------------------------------------------------
 
     /** RPM this node produces on its own. Zero for anything that merely passes rotation along. */
-    public float getGeneratedRpm() {
-        return 0;
+    public Rpm getGeneratedRpm() {
+        return ZERO_RPM;
     }
 
     /** Su this node can supply to its network. Meaningless unless {@link #isSource()}. */
-    public float getCapacitySu() {
-        return 0;
+    public Su getCapacitySu() {
+        return NO_SU;
     }
 
     /**
@@ -93,22 +110,22 @@ public abstract class RotationNode extends BlockEntity {
      * Split from {@link #getDragSuPerRpm()} so the network can hold one figure for each and
      * recompute live load from speed without walking every member each tick.
      */
-    public float getLoadSu() {
-        return 0;
+    public Su getLoadSu() {
+        return NO_SU;
     }
 
     /** Su this node demands per RPM: friction, which costs nothing while stopped. */
-    public float getDragSuPerRpm() {
-        return 0;
+    public Drag getDragSuPerRpm() {
+        return NO_DRAG;
     }
 
     /** How much this node resists a change in the network's speed. */
-    public float getInertia() {
+    public Inertia getInertia() {
         return FTuning.SHAFT_INERTIA;
     }
 
     public boolean isSource() {
-        return getGeneratedRpm() != 0;
+        return getGeneratedRpm().value() != 0;
     }
 
     // --- speed ------------------------------------------------------------------------------
@@ -119,10 +136,8 @@ public abstract class RotationNode extends BlockEntity {
      * On the server this is the network's live speed scaled by this node's ratio. On the client
      * there is no network, so it is whatever the server last told us.
      */
-    public float getRpm() {
-        if (level != null && level.isClientSide)
-            return syncedRpm;
-        return network == null ? 0 : network.getCurrentRpm() * ratio;
+    public Rpm getRpm() {
+        return new Rpm(liveRpm());
     }
 
     public float getRatio() {
@@ -146,20 +161,20 @@ public abstract class RotationNode extends BlockEntity {
         return network != null && network.isOverstressed();
     }
 
-    public float getNetworkCapacitySu() {
-        return networkCapacitySu;
+    public Su getNetworkCapacitySu() {
+        return new Su(networkCapacitySu);
     }
 
-    public float getNetworkLoadSu() {
-        return networkLoadSu;
+    public Su getNetworkLoadSu() {
+        return new Su(networkLoadSu);
     }
 
     // --- callbacks from the network -----------------------------------------------------------
 
     /** The Su ledger moved. */
-    public void onNetworkChanged(float capacitySu, float loadSu) {
-        this.networkCapacitySu = capacitySu;
-        this.networkLoadSu = loadSu;
+    public void onNetworkChanged(Su capacitySu, Su loadSu) {
+        this.networkCapacitySu = capacitySu.value();
+        this.networkLoadSu = loadSu.value();
         setChanged();
     }
 
@@ -168,7 +183,7 @@ public abstract class RotationNode extends BlockEntity {
      * cheap and must not sync unconditionally.
      */
     public void onNetworkSpeedChanged() {
-        float rpm = getRpm();
+        float rpm = liveRpm();
         if (Math.abs(rpm - syncedRpm) >= 1f || (rpm == 0 && syncedRpm != 0)) {
             syncedRpm = rpm;
             sync();
@@ -209,7 +224,7 @@ public abstract class RotationNode extends BlockEntity {
     private float liveRpm() {
         if (level == null || level.isClientSide || network == null)
             return syncedRpm;
-        return network.getCurrentRpm() * ratio;
+        return network.getCurrentRpm().value() * ratio;
     }
 
     /**
@@ -226,7 +241,7 @@ public abstract class RotationNode extends BlockEntity {
     }
 
     public void tickClient() {
-        visualAngle = (visualAngle + getRpm() * DEGREES_PER_TICK_PER_RPM) % 360f;
+        visualAngle = (visualAngle + liveRpm() * DEGREES_PER_TICK_PER_RPM) % 360f;
     }
 
     /** Accumulated rotation in degrees. Client-side; the server never renders anything. */
@@ -243,7 +258,7 @@ public abstract class RotationNode extends BlockEntity {
      * exact here, because speed is constant within a tick by construction.
      */
     public float getVisualAngle(float partialTick) {
-        return visualAngle + getRpm() * DEGREES_PER_TICK_PER_RPM * partialTick;
+        return visualAngle + liveRpm() * DEGREES_PER_TICK_PER_RPM * partialTick;
     }
 
     // --- lifecycle --------------------------------------------------------------------------

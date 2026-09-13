@@ -18,6 +18,8 @@
  * See LICENSE-ASSETS.
  */
 package io.github.cloby0.feedback.machine.linkage;
+import io.github.cloby0.feedback.core.unit.St;
+import io.github.cloby0.feedback.core.unit.Su;
 
 /**
  * Implemented by a machine that is driven by strokes rather than by rotation.
@@ -43,10 +45,10 @@ public interface Reciprocating {
      * bellows takes it as nothing at all, because there is no more air inside it to find. Same
      * stroke, two honest answers.
      *
-     * @param strength the force behind it, in St, before this machine's ceiling is applied.
+     * @param strength the force behind it, before this machine's ceiling is applied.
      */
-    void onStroke(float strength);
+    void onStroke(St strength);
 
     /** Su this machine draws while being driven. */
-    float getLoadSu();
+    Su getLoadSu();
 }

@@ -22,6 +22,8 @@ package io.github.cloby0.feedback.machine.gearbox;
 import io.github.cloby0.feedback.core.FTuning;
 import io.github.cloby0.feedback.core.rotation.RotationNode;
 import io.github.cloby0.feedback.registry.FBlockEntities;
+import io.github.cloby0.feedback.core.unit.Drag;
+import io.github.cloby0.feedback.core.unit.Inertia;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
@@ -38,12 +40,12 @@ public class GearboxBlockEntity extends RotationNode {
     }
 
     @Override
-    public float getDragSuPerRpm() {
+    public Drag getDragSuPerRpm() {
         return FTuning.GEARBOX_DRAG_SU_PER_RPM;
     }
 
     @Override
-    public float getInertia() {
+    public Inertia getInertia() {
         return FTuning.GEARBOX_INERTIA;
     }
 }
