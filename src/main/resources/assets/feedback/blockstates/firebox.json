@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "lit=false": { "model": "feedback:block/firebox" },
+    "lit=true":  { "model": "feedback:block/firebox_lit" }
+  }
+}

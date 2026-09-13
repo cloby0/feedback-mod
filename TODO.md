@@ -4,6 +4,51 @@ Working checklist. Source of truth for *what's next*; `feedback_philosophy.md` s
 
 ---
 
+## Pick-up list — costed, start cold
+
+Candidates weighed on 2026-09-12 and deliberately not taken that night. Each one is scoped
+here so a fresh session can start on it without re-deriving the scope. Ordered by value, not
+by size.
+
+- [ ] **`core/unit/` — the units of §17 as types.** `CLAUDE.md` calls this overdue and the
+  near-miss is real: a fire's `Tu`, a vessel's thermal mass in `Work/Tu` and its leak in
+  `Work/t/Tu` are three different things all spelled `float`, and `Heat.tick` handles all
+  three in five lines. **Scope it to `core/thermal/` first** — four files, 383 lines — rather
+  than the sixty-file sweep; rotation can follow separately. The open question to answer
+  before writing any of it is whether a wrapper type is a record (allocation per operation,
+  usually scalar-replaced, and Minecraft allocates far worse elsewhere) or a static holder of
+  typed constants and named helpers with no wrapper at all. Compile is the whole test; no game
+  session needed, which is why it suits a session that cannot verify by eye anyway.
+
+- [ ] **Crafting recipes, one pass over the roster.** Every block and item in both beats is
+  creative-only, which means beat 2 *cannot* be verified in survival — and beat 2 has never
+  been seen running. Mechanical, no design decisions, trivially resumable if a session runs
+  out partway. The reason it was deferred rather than done is §4b's note that the roster
+  should stop moving first; the roster has now been still for two beats.
+
+- [ ] **The Crude Blast Furnace and the vanilla thermal bands (§15).** Biggest missing
+  *lesson* in the slice, and the sharpest claim §7 makes — that the demanding material was
+  available the whole time, by hand, before any instrument — currently has nothing to land on.
+  Deferred purely on size: thermal bands on the furnace, smoker and blast furnace via mixin,
+  plus the fallback smelting constant, is a subsystem rather than a feature. Needs a session
+  with room, not the tail of one. Detail in §4c "Still open after beat 2".
+
+- [ ] **The cover system (§4d).** Blocked on reading GregTech CEu Modern's first, which is a
+  session's work by itself. Do not start the code before the read.
+
+- [ ] **Reading wear with calipers.** Decided, scoped and not built — see §4b "Reading wear".
+  Small: one `Quantity`, one `useOn`, a resolution figure, and a check that refuses to measure a
+  machine that is running. The design argument is already written in §8, so this is typing.
+
+- [ ] **Real models and textures**, for every block in both beats. Art, and the user's call —
+  not something to start unprompted.
+
+**Also still true:** the working tree carried the whole of beat 2 uncommitted at the time this
+list was written. Commit before starting any wide refactor, or the two changes become
+unpickable from each other.
+
+---
+
 ## 0. Housekeeping
 
 - [x] Commit `feedback_philosophy.md` + `feedback_slice_01.md` (`7cafb5e`)
@@ -31,7 +76,7 @@ Platform decided: **NeoForge, Minecraft 1.21.1.**
 - [x] **ModDevGradle**, not NeoGradle — new mod, one MC version, Gradle config cache. NeoGradle only buys multi-version support
 - [x] Package structure — root `io.github.cloby0.feedback`, tree follows the mod's separation of systems (see `CLAUDE.md` "Source layout")
 - [x] Gradle scaffold, run configs, Parchment `2024.11.17`, `build-and-deploy.sh` to the PrismLauncher instance. NeoForge `21.1.250`, MDG `2.0.147`, Gradle `9.2.1`
-- [ ] Decide data-driven recipe format — philosophy §15 wants compat authored as a table, not code
+- [x] **Data-driven recipe format — settled by precedent rather than decree.** Four datapack tables now exist (`deformation`, `thermal_process`, `quench`, `fuel`), each a `SimpleJsonResourceReloadListener` over a record with a `Codec` and a `StreamCodec`, none of them a vanilla `RecipeType`. §15's "compat authored as a table" is satisfied. The pattern is deliberately copy-pasteable: a fifth table should cost an afternoon
 
 ### Library decisions
 
@@ -60,9 +105,10 @@ Not started. Philosophy defers to it **by name** in these places; each is a debt
 - [ ] `Eu` — how voltage and current behave across a wire (§17)
 - [ ] `Su` load figures; linkage `St` pairs per machine (§17)
 
-**Thermal**
-- [ ] Thermal model: `Tu` as state, `Work` delivery, thermal mass, ambient, insulation (§8, §9)
-- [ ] Hot workpiece cooling rate; when a `Hot Steel Ingot` reverts (§9)
+**Thermal** — the first two are now *implemented*, so doc 2 has something to describe rather than invent
+- [x] Thermal model: `Tu` as state, `Work` delivery, thermal mass, ambient, insulation (§8, §9). Built — `core/thermal/`. Flow on a difference, not a flat rate; see `Heat` for the trap
+- [x] Hot workpiece cooling rate (§9). Built — 1.5 Tu/t, linear, stamp-and-timestamp. There is no `Hot Steel Ingot` item to revert: heat is two components on the ordinary ingot
+- [ ] Write both of the above up in doc 2, from the code rather than from scratch
 - [ ] Vanilla vessel bands — smoker ceiling, Crude Blast Furnace floor, plain furnace span (§15)
 - [ ] Fallback smelting: 1/8-coal reference constant, cook-time scaling (§15)
 
@@ -189,9 +235,11 @@ Downstream of doc 2. The roster: every item, material, machine, cover, process.
 
 Verified working in game: rotation network with inertia and coasting, shafts that visibly turn (Flywheel, jar-in-jar), Clutch + Timer, Mechanical Hammer with the overrun chain, Calipers, JEI process cards, Jade in adjectives, Debug Helmet.
 
-Built since and **not yet seen running**: Small Cog, Large Cog, Gearbox, gearing that multiplies `St`, and the hammer's force ceiling. Loading a world and meshing two cogs is the first thing to do next session.
+Cogs, the gearbox, `St` gearing and the hammer's force ceiling are now verified in game too.
 
-### Cogs and a gearbox — built
+Built since and **not yet seen running**: the whole of beat 2 — see §4c.
+
+### Cogs and a gearbox — built and verified in game
 
 Small Cog, Large Cog and Gearbox exist, along with the two rules that make gearing mean something. `./gradlew build` passes and the mod loads on a dedicated server; **nothing is verified by eye yet** — see the unchecked items below.
 
@@ -200,8 +248,8 @@ Small Cog, Large Cog and Gearbox exist, along with the two rules that make geari
 - [x] **Decided: gearing costs nothing beyond the cogs and their drag.** Friction and mass are now referred through the square of the gear ratio in `RotationNetwork.recalculate`, which is the standard result rather than a balance rule — so a geared-up branch pays continuously for turning faster, on its own. A surcharge on top would be a rule restating what the physics already says
 - [x] **Gear ratios change `St`** — decided, written into §17, and implemented: `CrankLinkageBlockEntity` multiplies the machine's stated force by the reciprocal of its own speed ratio. Blows land harder and fall less often, work per second is unchanged, and what changes is whether a blow clears a material's hardness floor at all
 - [x] **Every machine states a maximum `St`** — `StrengthPair.getMaxStrength()`, `24 St` on the Mechanical Hammer, and on its Jade card beside `12 / 3 St`. Twice the short throw, so gearing buys exactly one genuine doubling past the strongest setting the block has
-  - **[OPEN]** still open, and deliberately: exceeding the ceiling is a **silent clamp** today. The two better answers are unchanged — charge the surplus as `Su` so over-gearing costs power for nothing and the limit is discoverable through the ledger, or let the machine wear and break, which matches "each cutoff has its own failure character" and is the larger commitment
-- [ ] **Nothing is verified by eye.** Unconfirmed: that meshed cogs visibly turn opposite ways, that a large cog beside a small one runs at half its speed on screen, that a gearbox actually drives the shaft round the corner, and that a geared-down hammer lands blows a plain one cannot
+  - **Closed.** The ceiling is no longer a silent clamp: the linkage now delivers the *raw* geared force and the machine clamps itself, so the surplus is a real quantity something can be done with. The hammer takes it as wear — see "Wear, and the one rule behind it" below. The other candidate, charging the surplus as `Su`, was declined: it makes over-gearing cost power for nothing, which is true but invisible, and it would have needed a second mechanism for the two mistakes that produce no surplus at all
+- [x] **Verified by eye.** Meshed cogs turn opposite ways, a large cog beside a small one runs at half speed on screen, the gearbox drives the shaft round the corner, and a geared-down hammer lands blows a plain one cannot
 - [ ] Real models. Both cogs are a placeholder disc on a shaft and the gearbox is a copper box with three shafts through it
 - [ ] **[OPEN] Does gearing need an ongoing cost?** Narrowed by building, not closed — see §17. The referral above makes *speed* cost; a machine's working draw is still a flat figure, so gearing *down* to reach a hardness floor remains free apart from the cogs
 - Taking Create's two cog sizes wholesale is fine and deliberate — the rotation layer is openly Create-inspired, their code is MIT, and the mod's originality is in overrun and instrumentation rather than in inventing a third cog. **Their assets are All Rights Reserved: models and textures must be ours.**
@@ -215,6 +263,209 @@ Small Cog, Large Cog and Gearbox exist, along with the two rules that make geari
 - **The gearbox does not visibly turn.** It is a housing; its gears are inside it. No visualizer, no fallback renderer, and it stays in the chunk mesh — which also means it is the one rotating block that cannot vanish when Flywheel's backend is off.
 - **One block entity type serves both cog sizes.** Size is a property of the block, not of its state, so drag and inertia are read off the block rather than stored and kept in step.
 - **A large cog is the closest thing beat 1 has to a flywheel** — four times a small cog's inertia — which was not the point of building it and is worth watching. §4b's hand-crank-drives-nothing `[OPEN]` wanted a flywheel as its interesting resolution, and one may have arrived early by accident.
+
+### Wear, and the one rule behind it — built, unverified
+
+Closed two `[OPEN]`s that turned out to be one question. **Force that cannot go into the work
+goes into the machine.** `./gradlew build` passes; nothing has been seen in game.
+
+- [x] **The linkage delivers raw force; the machine clamps itself.** `CrankLinkageBlockEntity`
+  had been applying the driven machine's `getMaxStrength()` before handing the stroke over, which
+  threw the surplus away where nothing could notice it. It now passes the geared figure through
+  and keeps the clamped one only for display. The ceiling stays a *declaration* on `StrengthPair`
+  and enforcing it moved to the only place that knows what the excess does
+- [x] **One `wear()` method, four routes into it** — workpiece too cold to move, blow under the
+  material's hardness floor, drive geared past the ceiling, workpiece with nothing further to
+  become. Writing a consequence per case was the obvious shape and would have been four balance
+  decisions dressed as physics; there is one conserved quantity instead and nothing needs to know
+  which mistake it was
+- [x] **A hammer beating air takes nothing.** Nothing resists it. Also the line that keeps wear
+  from becoming an uptime tax — and running empty already has its answer in overrun
+- [x] **Condition scales the whole spec sheet**, both throws and the ceiling, floored at half.
+  Scaling only the ceiling was tried first and punished exactly one of the four mistakes; a
+  worn hammer went on hitting at a full 12 St, so two thirds of the wear was invisible. Gearing
+  can now partly recover a worn hammer, up to a ceiling that has fallen too — a real trade, not
+  a loophole
+- [x] **Nothing breaks and nothing stops** (§7). A spent hammer still hits and copper still
+  yields to it; steel stops clearing its hardness floor. Which material notices first is the
+  material's business, which is the answer this mod gives everywhere
+- [x] **Free adjective on the Jade card**, silent while the machine is sound. Damage is visible
+  from across the room, so charging an instrument for it would be hiding a free sense (§8)
+- [x] **Rejected prior art recorded** — GregTech's maintenance is a flat chance per runtime hour
+  and carries no information about whether the factory was built well. Written up in
+  `THIRD-PARTY-LICENSES.md`. Wear-caused-only-by-misuse appears to be genuinely unprecedented
+- [ ] **Unverified by eye.** Unconfirmed: that a hammer left beating a cold ingot visibly reports
+  a marked then battered then spent head, that a spent hammer stops making steel plate while
+  still making copper plate, and that an over-geared hammer wears without ever exceeding its
+  stated ceiling
+- [ ] **[OPEN] There is no repair, and no way back.** Condition only ever falls, and the only
+  recovery is breaking the block and placing a new one — which works, and is unsatisfying for
+  something the mod otherwise treats as a physical object. The right answer is almost certainly a
+  **Hammer Head** item: an upgrade you could point at (§4), replaced rather than repaired, and
+  the same slot a *better* head would eventually go in to raise the ceiling. Deliberately not
+  built tonight — it is new content, not a fix, and it wants the roster to stop moving first
+#### Reading wear — decided, not built
+
+**Calipers, by right-clicking the machine.** Decided in conversation; the reasoning is now in
+§8 as *Some readings are free; some cost an action*.
+
+- [x] **Calipers, not a new instrument.** A worn head has mushroomed — it is wider and shorter
+  than it was — and reading how far a piece of metal has deformed is exactly what calipers
+  already do to a workpiece. This is one measurement pointed at a second object, not a tool being
+  given a second job. The adjective on the Jade card stays free; the *figure* costs the
+  instrument, which is §8's standing split
+- [x] **Right-click, and only for machines.** `CalipersItem`'s javadoc argued the opposite and it
+  was right — about items. An item you are already holding should not demand a keystroke to
+  produce a tooltip; that is §3's "real, well-precedented and not fun". A machine is different,
+  and the difference is priced rather than thematic: **you cannot measure a machine that is
+  running.** The reading costs a stopped line, so there is a real decision in whether to take it
+  (§5), and a player who would rather keep producing can decline to know. Rule, stated generally:
+  *a reading is passive when taking it is free, and an action when taking it costs something*
+- [x] **The precedent is the Thaumometer**, which had this split right years ago: point it at
+  things in the world, and with addons stop scanning items by hand. Nobody read the automation of
+  the item case as lost content, because pointing a scanner at something in the world is fun and
+  remembering to swap a hotbar slot before opening an inventory is not. Design precedent only,
+  cited from memory — no code read and none available to read
+- [x] **Wear is a percentage and not a unit.** Dimensionless, and §8 now says so explicitly so
+  that nobody later mints `Wu`: the apparatus properties are expressed in units that already
+  exist (§17), and a ratio of a machine to its own former self is not a quantity in that sense
+- [x] **It reads as condition, not wear** — 100% as built, falling — because that figure
+  multiplies the spec sheet directly: a hammer at 72% delivers 72% of the force stamped on it.
+  Rescaling so that spent reads 0% would look tidier and would destroy the one property that
+  makes the number worth having
+- [ ] **Build it.** Small and scoped: add `Quantity.CONDITION`; `CalipersItem.canRead` returns
+  true for `WORK` and `CONDITION`, with a coarse `resolution(CONDITION)` — 5% for the crude pair,
+  finer later; a `useOn` on the item that refuses while the machine is running and otherwise
+  reports the figure. `Instrument` already takes resolution per quantity, so nothing in the
+  interface has to move
+- [x] **"Running" is drawing Su.** Decided — intuitive, and consistent without being a
+  simulation. **But the code does not support it yet, and this is the thing to know before
+  starting:** `getLoadSu()` is a flat figure, so `CrankLinkageBlockEntity` reports the hammer's
+  80 Su whether the run is turning or not. A stopped-but-connected hammer books 80 Su on the
+  ledger today, so "drawing Su" is currently always true and cannot refuse anything
+- [ ] **[OPEN] So which fix?** Two, and they are not the same size. Test the *linkage's stroke
+  rate* instead, which is equivalent in practice and works today — or make machine load actually
+  fall to zero on a stopped run, which is arguably more correct in general (drag is already
+  `Su/RPM` and goes to zero at rest; only machine load is flat) and is a rotation-network change
+  with knock-on effects on the Su ledger, overstress at rest, and whether a loaded network can
+  start at all. Take the cheap one for the calipers; the second is its own task and wants deciding
+  on its own merits rather than as a side effect of an instrument
+- [x] **The reading does not go stale. Decided: (a).** Two builds. **(a)** the click reports the live figure
+  and forgets it. **(b)** the click stamps the figure *and the tick* onto the machine — the same
+  two-component trick `ItemHeat` already uses — so the HUD thereafter shows what it read the last
+  time the player stopped it, drifting out of date as the machine wears on. (b) is where §8's
+  drift and recalibration land, and it has a property worth the wait: wear accrues only on misuse,
+  so a correctly built line's reading **never goes stale**, and a bad one's rots fast. How quickly
+  the player's knowledge decays is proportional to how wrong the factory is.
+  **Taken: (a).** (b) is not shelved so much as reassigned — if a remembered reading is worth
+  having it should be a *thing*, a logging instrument of its own, rather than a hidden field that
+  makes the ordinary calipers behave strangely. Until then the player writes it in a book and
+  quill, which is the same mechanic with better handwriting and none of our code
+
+- [ ] **[OPEN] Wear has no visual.** It is a Jade line and nothing else. A block state at the
+  battered and spent bands would make it readable without the HUD, which is where a free sense
+  belongs; queued behind real models, since there is nothing to batter yet
+- [ ] **[OPEN] Only the hammer wears.** The rule is general and `wear()` is not — it is private to
+  `MechanicalHammerBlockEntity`, and the constants are `HAMMER_`-prefixed. Correct for one
+  machine; the moment a second one absorbs force it wants to be a small interface next to
+  `StrengthPair`, the same way `Instrument` was built before there were two instruments
+
+---
+
+## 4c. Beat 2 — heat — built, unverified
+
+All of beat 2 compiles, boots on a dedicated server, and loads its four datapack tables. **Nothing has been seen running.** Loading a world and making one steel ingot is the first thing to do next session.
+
+- [x] **Thermal core** — `core/thermal/`. `ThermalBody` (temperature + mass), `HeatSource` (flame temperature, no mass), `Heat` (the maths), `ItemHeat` (a workpiece's own heat). Flow is driven by a *difference*, not a flat rate — see `Heat` for why the flat version made insulation a trap
+- [x] **Workpiece heat, everywhere** — a stamp plus a timestamp on the stack, computed on demand. Cools in a chest, a hopper, an unloaded chunk, or a mod we have never heard of, because nothing has to remember to cool it. Cooling is linear, not exponential; the reasoning is in `Heat.cooled`
+- [x] **Firebox** — burns fuel from a datapack table, publishes a flame temperature, takes air. It heats nothing and has no idea what is above it
+- [x] **Crucible, small and large** — one class, one block entity type, and the *only* difference is thermal mass. Everything the slice claims about the pair falls out of that number
+- [x] **Insulation** — a block you stack against a vessel. No block entity, no behaviour; the vessel counts its neighbours
+- [x] **Powered Bellows** — `Reciprocating`, so it reuses beat 1's crank linkage, and the long throw is the useful one. Its `getMaxStrength()` is its long throw, so gearing buys stroke rate and never more air per stroke — which is the physics, not a restriction
+- [x] **Thermometer** — a carried instrument, not a cover. One class, zero display code touched, exactly as the `Instrument` interface promised
+- [x] **Bimetallic Strip** — reads an adjacent vessel, switches any adjacent `Switchable`. No setting on it (§3), and it closes the loop with no logic block anywhere
+- [x] **Carburizing, and burning the batch** — band, hold, max heating rate, spoil temperature. Four fields, four genuinely different failure modes
+- [x] **Quench** — no machine. Throw the hot ingot in any water. A quench tank was drafted and cut for having no decision inside it
+- [x] **Hot working** — the hammer gates on the workpiece's own temperature, which is where the two beats meet
+- [x] **Four datapack tables** — `deformation`, `thermal_process`, `quench`, `fuel`. This settles §2's data-driven recipe format by precedent
+- [x] **Jade and JEI** — thermal cards, adjectives on the HUD, exact requirements in the browser. A sealed vessel says *sealed*, not nothing
+- [ ] **Nothing is verified by eye.** Unconfirmed: that a crucible over a lit firebox climbs, that the bellows raises it past 1420, that the strip cuts a clutch, that a small crucible visibly burns the batch where a large one does not, that an ingot cools on the walk to the hammer, and that quenching in water produces hardened steel
+- [ ] Real models. Every beat 2 block is a vanilla texture on a box
+
+### Numbers, simulated but not played
+
+Worked out arithmetically and recorded here because they are the whole balance argument:
+
+| | small crucible | large crucible |
+| :--- | ---: | ---: |
+| time constant | 40 t | 400 t |
+| equilibrium, no air | 1172 Tu | 1172 Tu |
+| equilibrium, full air | 1758 Tu | 1758 Tu |
+| climb rate in band, full air | 7.9 Tu/t | 0.79 Tu/t |
+| swing per 20 t read interval | **159 Tu, peaks 1599** | 16 Tu, peaks 1456 |
+
+Steel's window is 1420–1480 Tu and iron burns above 1540. So a bare charcoal fire **cannot** make steel at any patience (1172 Tu, a real hard gate), air is the only way across, and the same thermostat that holds a large crucible in the window drives a small one straight past the spoil point. Carburizing's 5 Tu/t heating limit then makes the small crucible reset its hold on every stroke — it is not *locked out*, it needs a gentler, carefully geared draught, which is §7's rule that precision never gates hard.
+
+### Decisions taken while building beat 2
+
+- **Heat flows on a difference, and the flat-rate version is the trap worth recording.** A fire delivering a flat `Work/t` is the obvious first implementation and it looks fine until insulation exists: the vessel settles at `supply ÷ leak`, so halving the leak *doubles* the final temperature and insulating a crucible makes it run away. The slice's "large insulated crucible wins" became "large insulated crucible burns the batch". Driving on `(fire − vessel)` fixes it by construction and pays for lava for free.
+- **Lava needed no code.** It is a fire fixed at 1200 Tu, so a crucible over lava sits just under 1200 Tu forever — the most stable heat source in the game, and permanently too cool for steel. The slice asked for exactly that and no rule was written.
+- **Item cooling is linear, reversing an exponential.** See `Heat.cooled`. The argument is game design, not physics: an exponential never arrives, needs an arbitrary floor, and hides the working window in a flat tail.
+- **The bellows' force ceiling is its own long throw**, so the linkage's gear-advantage clamp bites immediately. A bellows holds what it holds; squeezing harder finds no more air inside it. One mechanism, two honest answers — gearing buys force on the hammer and stroke rate here.
+- **The strip reads every 20 ticks**, and that lag is load-bearing rather than an optimisation. A sensor with no response time would make the loop tighter than any physical part could be, which would quietly delete the problem the block exists to hand the player. Response time is one of §8's six apparatus properties and this is the first place it has cost anything.
+- **A free sense has a range.** The adjective scale ends at 1600 Tu, and iron's spoil point is 1540 — no, *above* what the eye resolves cleanly. A player watching the glow cannot see themselves crossing the line that ruins the batch. That is not a trick; it is why the thermometer exists.
+- **Fuel is a table, not a constant**, and vanilla burn times are deliberately not a fallback — a burn time counts items smelted and carries no temperature.
+
+### Read TerraFirmaCraft, and the licence is not Create's
+
+Reference checkout at `../TFC-reference`. **TFC is EUPL-1.2 — strong copyleft, unlike Create's MIT.** Its code cannot be copied or adapted without obliging Feedback to become EUPL, and that decision has not been made. It is read for *design* only; every place it informed one is named in `THIRD-PARTY-LICENSES.md`.
+
+What came of reading it:
+
+- **Confirmed, not derived:** TFC stores item heat as `(capacity, lastTemperature, lastTick)` and computes it lazily. That is what was already built here, arrived at independently. Worth knowing the shape is load-tested rather than clever.
+- **Changed:** item cooling went exponential → linear, after seeing TFC's `adjustTemp`.
+- **Changed:** the adjective scale went from 6 wide bands to 10 plus a range limit, after seeing TFC's `Heat` enum. Six bands put steel's entire window inside one adjective, which makes the free sense useless rather than coarse — and a gap that is merely "hot or not" is a wall, not a gap.
+- **Changed:** fuel became a datapack table, shaped like TFC's `Fuel`. Which is also the shape §15 already wanted.
+- **[OPEN] Not taken: per-material heat capacity.** TFC gives every item its own. Deferred because slice 1 has one hot material, so it creates no choice — it becomes worth having the moment a player must decide *which* of two hot things to carry first.
+- **[OPEN] Not taken: catch-up for unloaded devices.** TFC has a calendar and burns fuel across time skips. Our *items* get this free from the stamp; our *blocks* do not, so a crucible in an unloaded chunk freezes. Known gap.
+
+### Still open after beat 2
+
+- [ ] **[OPEN] The Crude Blast Furnace is not built.** §15's vanilla rework — thermal bands on the furnace, smoker and blast furnace via mixin, and the fallback smelting constant — is a whole separate subsystem and was left out of this pass rather than done badly. Beat 2 works without it: the crucible route stands alone. What is missing is the *lesson* — that the demanding material was available the whole time, by hand, before any instrument. That is §7's sharpest claim in the slice and it currently has nothing to land on
+- [ ] **[OPEN] Nothing removes heat, deliberately** — and the player has no way to ask for cooling. That is slice 2's damper, earned by withholding it
+- [ ] **[OPEN] Steel has no further thermal overrun.** Once it is steel it sits in the fire indefinitely. Iron burning is the only thermal overrun in the slice, where the mechanical chain has plate → foil → scrap. Probably fine — one beat has to teach that overrun is sometimes simply a loss — but worth a second look
+- [x] **The hammer wears on a cold workpiece** — and it was indeed the same answer as the `St` ceiling's silent clamp, so both closed together. See "Wear, and the one rule behind it" in §4b
+
+---
+
+## 4d. The cover system — queued, and deliberately early
+
+The thermometer **should** become a cover eventually. Right now it is a carried instrument,
+which is the right call for one instrument and the wrong shape for five.
+
+Build the infrastructure **before** it is necessary, for the same reason `Instrument` was
+written before any instrument existed: a high fixed cost paid once beats no fixed cost and a
+medium variable cost paid per feature, and the crossover is earlier than it feels. The
+thermometer then becomes one class that touches no display code, exactly as it did the first
+time.
+
+- [ ] **Read GregTech CEu Modern's cover system first.** Checkout at
+  `../GregTech-Modern-7.5.3`. **LGPL-3.0 — design only, no code.** See
+  `THIRD-PARTY-LICENSES.md` for why "weak copyleft" does not mean what it sounds like.
+- [ ] The split worth studying is three-way, and the split is the lesson, not any class:
+  `CoverDefinition` (what kinds exist) · `CoverBehavior` (one attached instance, knowing only
+  its holder and its side) · `ICoverable` (what it means for a block to accept covers) ·
+  `IIOCover` / `IUICover` (optional capability interfaces a cover opts into, rather than a
+  base class every cover pays for)
+- [ ] The last of those maps straight onto `Instrument` and is the bit to get right
+- [ ] **What already wants to be a cover:** the thermometer, the bimetallic strip (currently a
+  block, and it was a cover in the slice draft), and whatever slice 2's damper turns out to
+  need. Three is enough to justify the fixed cost; one was not
+- [ ] `ThermalBody.hasThermowell()` is already the right seam — a vessel declaring whether it
+  can be got at is exactly "does this block accept covers", narrowed to one quantity. Widen it
+  rather than replacing it
+
+---
 
 ## 5. Slice 2
 

@@ -193,7 +193,7 @@ Input          1 × Iron Ingot, 1 × Charcoal
 Process        Carburizing
 Temperature    1420–1480 Tu
 Hold           600 t (30 s)
-Max heating    25 Tu/t
+Max heating    5 Tu/t
 Output         1 × Steel Ingot
 
 Overshoot past ~1540 Tu → Burnt Iron (spoil)
@@ -236,11 +236,13 @@ And it is immediately, obviously insufficient — ±25 Tu against a 60 Tu window
 
 That is the progression moment, and no recipe unlocked. The player gained *information*, and information became capability.
 
-### And then they discover they cannot attach it
+### And then they discover they cannot point it at anything useful
 
-The thermometer is a cover. The Crude Blast Furnace takes no covers — it is sealed, and everything good about it follows from being closed (§15).
+The Crude Blast Furnace is sealed, and everything good about it follows from being closed (§15).
 
-**This is the wall the slice is actually built around.** The player's best thermal vessel and their first instrument are mutually exclusive, and no amount of iron fixes it. They cannot measure the thing that works. They cannot automate the thing they can measure.
+**Built differently from this draft, and the change is worth keeping.** The thermometer is *not* a cover — it is a carried instrument, exactly like the calipers, because reading is passive and costs no hands (§3). The wall is enforced from the other side instead: a vessel declares whether it can be got at, through `ThermalBody.hasThermowell()`, and a sealed one refuses to be read by **any** instrument. That is a fact about the furnace rather than a rule about this item, so it stays true for every instrument we ever add, and the player learns *this cannot be measured* rather than *I have failed to look properly*.
+
+**This is the wall the slice is actually built around**, and it survives the change intact. The player's best thermal vessel and their first instrument are mutually exclusive, and no amount of iron fixes it. They cannot measure the thing that works. They cannot automate the thing they can measure.
 
 The way out is not a better furnace. It is a vessel that was *designed to be measured* — which is the crucible, and which is why it exists.
 
@@ -348,6 +350,8 @@ The *same ingot* at the *same final temperature* is a different item depending o
 
 This is §7's history-sensitivity, and it is the first requirement in the slice that cannot be satisfied by getting a number right. It is also real metallurgy, which is the point of §2 — the mod did not invent this rule, it noticed it.
 
+**Built with no machine at all.** A quench tank was drafted and cut: it added a place to stand and nothing else, because the whole decision is *whether the ingot is still hot enough when it lands*, and that decision is the walk from the crucible, which already exists. So the player throws the ingot into any water, anywhere. The `cooling rate ≥ 200 Tu/t` in the spec above is not stored as a figure either — nothing in the game cools an ingot at any rate between "water" and "air", so a stored threshold would be a knob over a choice with no middle. What is stored is the temperature floor the ingot must still be above when it hits the water, which is the part the player can get wrong.
+
 **Deliberately left dangling:** hardened steel is brittle, and brittleness is a problem.
 
 ---
@@ -358,7 +362,9 @@ Per §2, this cannot be a footnote. In this slice it lives in the most mundane p
 
 Every heat source the player meets is also a small anomaly, and none of them are explained.
 
-**Charcoal** — mundane, and the slice's honest noise source (§8). Its quality genuinely varies, so the firebox wanders, so timers drift. The irreducible noise floor enters the game as *the fuel is not always the same*, which is both true to life and free to implement.
+**Charcoal** — mundane, and the slice's honest noise source (§8). Its quality genuinely varies, so the firebox wanders, so timers drift. The irreducible noise floor enters the game as *the fuel is not always the same*, which is both true to life and free to implement. The variance is rolled **once per piece of fuel and held for its whole burn**, which is what makes it learnable in aggregate rather than merely jittery: a batch runs hot or cool and the player can feel that and respond.
+
+Fuel is a **datapack table**, not a constant — `(ingredient, duration, temperature, spread)`. Temperature and duration are independent on purpose, so charcoal burns hot and briefly, wood cool and briefly, coal hot and long, and *what do I feed it* is a real question with no dominant answer. A single "fuel quality" scalar would have collapsed the pair into a ladder with a correct top (§3). Vanilla burn times are deliberately **not** a fallback: a vanilla burn time counts items smelted, which is a fact about a furnace and carries no temperature, and a fire whose temperature was guessed would make every hard gate in beat 2 quietly negotiable.
 
 **Lava** — the player has seen it since day one and never asked. It is 1200 Tu and **it does not cool.** Not slowly. At all. A bucket of it under a crucible is an infinite, perfectly stable heat source that is too cool for steel and too hot to turn off. No explanation is offered. The player just notices that the most stable thermal environment available to them is a rock that should have frozen centuries ago.
 
@@ -407,15 +413,39 @@ Output         1 × Steel Plate
 Below 900 Tu → too cold, work does nothing, hammer wears
 ```
 
+**Both halves of that last line are now built**, and the second half turned out to be one
+rule rather than a hammer-specific one. Force that cannot go into the work goes into the
+machine: the workpiece is too cold, or the blow is under the hardness floor, or the drive is
+geared past the hammer's `24 St` ceiling. All three used to be silent — the first two did
+nothing at all and the third was a silent clamp — which meant the three most instructive
+mistakes in the slice were the three the game said nothing about.
+
+Wear scales the hammer's whole spec sheet, both throws and the ceiling, down to half. Nothing
+breaks and nothing stops: a battered head still hits, it just puts less of the blow into the
+work, so copper carries on yielding to a spent hammer and steel quietly stops clearing its
+hardness floor. Which material notices first is the material's business (§7 — the failure is
+soft, and it is the material that decides).
+
+**A hammer beating air takes nothing.** Nothing resists it, so there is no shock to do the
+damage — and wear that accrued on idling would be an uptime tax rather than a diagnosis.
+Running empty is already answered by overrun: leave the plate there and it becomes foil, then
+scrap. The punishment for walking away belongs to the workpiece, not the machine.
+
 Nothing heats the anvil. The **workpiece carries its own heat** (§9).
 
 ```
-HOT STEEL INGOT
+STEEL INGOT, hot
 Temperature   set when it leaves the crucible, decays toward ambient
-Below 900 Tu  reverts to a plain Steel Ingot — heat wasted, material intact
+Below 900 Tu  simply too cold to work — heat wasted, material intact
 ```
 
+**There is no separate Hot Steel Ingot item, and there should not be.** Heat is two data components on the ordinary ingot — the temperature it was stamped at, and the tick that happened on — so nothing "reverts"; the figure computed from those two falls below 900 Tu and the hammer stops being able to do anything with it. That is also what makes §9's *hot wherever it is* literally true: the ingot cools in a chest, in a hopper, on the floor and in an unloaded chunk, because no code has to remember to cool it. The item budget was always right to list twelve items and not thirteen.
+
 So the player heats the ingot in the crucible, pulls it out glowing, and carries it to the hammer with a clock running. That is what forging is, and it is the most physical thing in the slice: **you are not only the controller now, you are the conveyor.**
+
+The clock is **linear** — a flat 1.5 Tu/t, not Newton's exponential. That was a deliberate reversal after reading TerraFirmaCraft, and the argument is game design rather than physics: an exponential never arrives, needs an arbitrary floor to stop it, and puts almost all of the interesting time in the first few seconds followed by a long flat tail in which nothing happens. A constant rate makes *"about eighteen seconds before it is unworkable, and the window opens after eleven"* a true sentence the player can plan against, which is the entire point of making the workpiece carry its heat. The rate not depending on temperature is physically wrong and creates no decision, which is the standing test.
+
+**And forging takes several heats, which nobody designed.** The window is about 130 ticks wide and sixty Fu is thirty blows, so one heat is rarely enough — but `Fu` lives on the stack and temperature does not, so a part-worked ingot goes back in the fire and comes out to be finished. That is exactly how forging works, and it fell out of two components having different lifetimes.
 
 Three things fall out of it immediately, none of which needed designing.
 
@@ -467,7 +497,13 @@ That is §14's difficulty curve in one component. The new material did not deman
 **Added since, over budget and deliberately (3):** Small Cog · Large Cog · Gearbox
 *(§17 gave the force problem a second answer — re-gear the drive rather than fit a shorter throw — and an answer the player cannot buy a part for is not an answer. Cogs are also what make the Mechanical Hammer's `St` ceiling mean anything: without gearing, no drive ever reaches it. The gearbox is the smallest thing that lets a gear train turn a corner, which a shaft-only factory otherwise forbids.)*
 
-Within §20's budget as drafted, and three blocks over it as built. Nothing in it exists to pad the tech tree.
+**Beat 2, as built, differs from the roster above (4 blocks over):** Firebox · Small Crucible · Large Crucible · Insulation · Powered Bellows · Bimetallic Strip.
+
+The draft counted "Crucible (small/large/insulated)" as one machine. It is three blocks — two crucibles and an insulation block — and that is the right shape rather than padding: §4 wants an upgrade to be a physical component you could point at, and insulation is the most literal possible case. You build it *around* the vessel, the vessel counts its neighbours, and how well it works depends on how much of it you covered. There is no upgrade slot, no tier and no percentage.
+
+The Bimetallic Strip was a cover in the draft and is a block here, for the same reason the thermometer stopped being one: covers are a system the slice does not otherwise have, and inventing one to hold two items would be a system built for its own sake.
+
+Within §20's budget as drafted, and seven blocks over it as built. Nothing in it exists to pad the tech tree.
 
 ---
 
@@ -504,10 +540,15 @@ Mapped to the philosophy, because if a beat teaches nothing it should be cut:
 | Attention and capital are interchangeable | Two hammers vs. a bigger wheel | §5, §15 |
 | Specialization is emergent, not declared | Smoker ceiling, blast furnace floor | §15 |
 | Automation buys attention, not capability | Crucible vs. blast furnace | §7, §15 |
+| A free sense has a range, like any bought one | Iron's spoil point is above the hottest colour the eye resolves | §8 |
+| Forging takes several heats | `Fu` persists on the stack; temperature does not | §9 |
+| A loop's period is a physical property | The strip reads every 20 t, so vessel mass decides whether that is fast enough | §8, §13 |
 
-Twenty-six lessons, twelve items, seven new machines, one actuator, and no controller. Every one of the philosophy's load-bearing ideas appears at least once, in play, without a single tooltip explaining it.
+Twenty-nine lessons, twelve items, eleven new blocks, one actuator, and no controller. Every one of the philosophy's load-bearing ideas appears at least once, in play, without a single tooltip explaining it.
 
-The last four were not in the original draft. They arrived while the slice was being built, out of rules that were already there — which is §5's composition test passing on the mod's own design process, and the reason the slice is written to be implemented early rather than finished on paper.
+The last seven were not in the original draft. They arrived while the slice was being built, out of rules that were already there — which is §5's composition test passing on the mod's own design process, and the reason the slice is written to be implemented early rather than finished on paper.
+
+The last three are worth singling out, because all three came from *simulating the numbers rather than reasoning about them*. The eye's range mattering was not visible until the adjective bands had boundaries; "forging takes several heats" fell out of `Fu` and temperature having different lifetimes, which nobody arranged; and the thermostat's period turned out to be the thing that decides whether a small crucible can make steel at all. The last is the sharpest: a large crucible swings 16 Tu between readings and a small one swings 159 Tu and peaks past the temperature that burns the batch. The *same loop*, on the *same fire*, works or destroys depending only on how heavy the pot is.
 
 ---
 

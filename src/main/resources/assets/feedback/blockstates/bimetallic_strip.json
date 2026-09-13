@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "tripped=false": { "model": "feedback:block/bimetallic_strip" },
+    "tripped=true":  { "model": "feedback:block/bimetallic_strip_tripped" }
+  }
+}

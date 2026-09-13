@@ -1,8 +1,31 @@
+/*
+ * Feedback -- a Minecraft technology mod.
+ * Copyright (C) 2026 soundgoodizerfan
+ *
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <https://www.gnu.org/licenses/>.
+ *
+ * Assets under src/main/resources/assets are NOT covered by this licence.
+ * See LICENSE-ASSETS.
+ */
 package io.github.cloby0.feedback.registry;
 
 import io.github.cloby0.feedback.Feedback;
+import io.github.cloby0.feedback.control.bimetallic.BimetallicStripBlockEntity;
 import io.github.cloby0.feedback.control.timer.TimerBlockEntity;
+import io.github.cloby0.feedback.machine.bellows.BellowsBlockEntity;
 import io.github.cloby0.feedback.machine.clutch.ClutchBlockEntity;
+import io.github.cloby0.feedback.machine.crucible.CrucibleBlockEntity;
+import io.github.cloby0.feedback.machine.firebox.FireboxBlockEntity;
 import io.github.cloby0.feedback.machine.cog.CogBlockEntity;
 import io.github.cloby0.feedback.machine.crank.HandCrankBlockEntity;
 import io.github.cloby0.feedback.machine.gearbox.GearboxBlockEntity;
@@ -66,6 +89,27 @@ public class FBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TimerBlockEntity>> TIMER =
             BLOCK_ENTITIES.register("timer", () -> BlockEntityType.Builder
                     .of(TimerBlockEntity::new, FBlocks.TIMER.get())
+                    .build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FireboxBlockEntity>> FIREBOX =
+            BLOCK_ENTITIES.register("firebox", () -> BlockEntityType.Builder
+                    .of(FireboxBlockEntity::new, FBlocks.FIREBOX.get())
+                    .build(null));
+
+    /** One type for both crucible sizes, for the same reason the cogs share one: size is the block. */
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CrucibleBlockEntity>> CRUCIBLE =
+            BLOCK_ENTITIES.register("crucible", () -> BlockEntityType.Builder
+                    .of(CrucibleBlockEntity::new, FBlocks.SMALL_CRUCIBLE.get(), FBlocks.LARGE_CRUCIBLE.get())
+                    .build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<BellowsBlockEntity>> BELLOWS =
+            BLOCK_ENTITIES.register("bellows", () -> BlockEntityType.Builder
+                    .of(BellowsBlockEntity::new, FBlocks.BELLOWS.get())
+                    .build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<BimetallicStripBlockEntity>> BIMETALLIC_STRIP =
+            BLOCK_ENTITIES.register("bimetallic_strip", () -> BlockEntityType.Builder
+                    .of(BimetallicStripBlockEntity::new, FBlocks.BIMETALLIC_STRIP.get())
                     .build(null));
 
     private FBlockEntities() {

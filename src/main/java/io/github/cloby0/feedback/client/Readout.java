@@ -1,3 +1,22 @@
+/*
+ * Feedback -- a Minecraft technology mod.
+ * Copyright (C) 2026 soundgoodizerfan
+ *
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <https://www.gnu.org/licenses/>.
+ *
+ * Assets under src/main/resources/assets are NOT covered by this licence.
+ * See LICENSE-ASSETS.
+ */
 package io.github.cloby0.feedback.client;
 
 import java.util.Locale;
@@ -116,6 +135,70 @@ public final class Readout {
         if (capacitySu > 0 && loadSu > capacitySu * FTuning.STRAINING_LOAD_FRACTION)
             return Component.translatable("feedback.readout.straining").withStyle(ChatFormatting.GOLD);
         return null;
+    }
+
+    /**
+     * How hot something is, in words.
+     *
+     * <h3>Why these read as colours, and why the scale runs out</h3>
+     * They are the bands a blacksmith works to, which is the honest answer to what a player's own
+     * senses give them. You cannot feel 1450 Tu; you can see that iron has gone from bright red to
+     * orange, and you can be badly wrong about which.
+     * <p>
+     * The scale <em>ends</em>, and that is the important part. Past brilliant white the eye stops
+     * distinguishing anything, and iron's spoil point sits above that line -- so a player watching
+     * the glow cannot see themselves crossing the temperature that ruins the batch. A free sense
+     * has a range, exactly as a bought one does (§8), and this is the range of the one apparatus
+     * every player already owns.
+     */
+    public static Component temperature(float tu) {
+        if (tu >= FTuning.MAX_VISIBLE_TU)
+            return adjective("feedback.readout.heat.beyond");
+        for (int band = 0; band < FTuning.HEAT_BAND_TOPS.length; band++)
+            if (tu < FTuning.HEAT_BAND_TOPS[band])
+                return adjective("feedback.readout.heat." + band);
+        return adjective("feedback.readout.heat.beyond");
+    }
+
+    /**
+     * A temperature as either a word or a figure, whichever the player has paid for.
+     * <p>
+     * The quantising is the whole of what an instrument tier buys (§8). The world is never
+     * consulted differently and the reading is never <em>wrong</em> -- it is coarser, which is why
+     * a poor instrument costs reproducibility rather than success.
+     */
+    public static Component temperatureReading(float tu) {
+        Instrument instrument = Instruments.best(Minecraft.getInstance().player, Quantity.TEMPERATURE);
+        if (instrument == null)
+            return temperature(tu);
+        float shown = Instruments.quantise(tu, instrument.resolution(Quantity.TEMPERATURE));
+        return reading(Quantity.TEMPERATURE, "feedback.readout.tu", number(shown));
+    }
+
+    /**
+     * How battered a machine is, in words, or null when it is sound.
+     *
+     * <h3>Free, and silent until there is something to say</h3>
+     * Damage is visible in a way a temperature is not -- a mushroomed head can be seen from across
+     * the room -- so charging an instrument for it would be hiding a sense the player already has
+     * (§8). What it withholds is the figure. And a sound machine says nothing at all, because a
+     * line reading "fine" on every hammer in the factory is a line nobody reads by the third one.
+     *
+     * <h3>Why this is a diagnosis and not a chore</h3>
+     * Wear here is caused only by misuse, so this line appearing is information: it means force is
+     * being spent on something that cannot take it, and which mistake it was is a question the
+     * player can now go and answer. A correctly built line never shows it.
+     */
+    @Nullable
+    public static Component condition(float condition) {
+        return switch (FTuning.conditionBand(condition)) {
+            case 0 -> null;
+            case 1 -> adjective("feedback.readout.condition.marked");
+            case 2 -> Component.translatable("feedback.readout.condition.battered")
+                    .withStyle(ChatFormatting.GOLD);
+            default -> Component.translatable("feedback.readout.condition.spent")
+                    .withStyle(ChatFormatting.RED);
+        };
     }
 
     /**

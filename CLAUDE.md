@@ -33,8 +33,9 @@ Root package `io.github.cloby0.feedback`. The package tree follows the mod's **s
 | Package | Holds |
 | --- | --- |
 | `registry/` | every `DeferredRegister` — one place to look |
-| `core/unit/` | the units of §17 as types. **Not built** — rotation uses named floats (`rpm`, `loadSu`). Worth doing once thermal lands and two units can be confused |
+| `core/unit/` | the units of §17 as types. **Still not built**, and now overdue — thermal has landed, so `Tu`, `Fu`, `Su` and `Work` are all live named floats and two of them *can* now be confused. The near-miss is real: a fire's `Tu`, a vessel's thermal mass in `Work/Tu`, and its leak in `Work/t/Tu` are three different things spelled `float` |
 | `core/rotation/` | the mechanical network — `RotationNode`, `RotationNetwork`, `RotationPropagator` |
+| `core/thermal/` | the thermal model — `ThermalBody` (has a temperature and a mass), `HeatSource` (has a flame temperature and no mass), `Heat` (the maths), `ItemHeat` (a workpiece's own heat) |
 | `machine/` | physical operations. A machine class never names a recipe |
 | `process/` | operation definitions, completion, and overrun behaviour |
 | `instrument/` | sensors. Read-only by construction — an instrument has no way to act |
@@ -48,6 +49,12 @@ Create a package when there is something to put in it; don't scaffold empty ones
 **Datagen is not written yet.** `src/generated/resources` is a resource root and is committed, but blockstates, models, loot tables and lang are hand-authored under `src/main/resources` for now. Convert when the roster is big enough that hand-editing starts going wrong — not before.
 
 **All art is placeholder.** Every texture currently referenced is a vanilla one. No Create asset may ever be used here: Create's *code* is MIT, its *assets* are All Rights Reserved. `THIRD-PARTY-LICENSES.md` records what we owe and to whom.
+
+### The thermal model, in one paragraph
+
+Heat flows on a **difference**, never at a flat rate: `conductance × (fire − vessel)` in, `leak × (vessel − ambient)` out, divided by thermal mass. This matters because the flat-rate version — which is what gets written first — makes a vessel settle at `supply ÷ leak`, so insulating a crucible raises its final temperature without limit and insulation becomes a trap rather than an upgrade. Driving on the difference means a vessel approaches its fire's temperature and can never pass it, so the only way past a flame is a hotter flame, which is exactly what the bellows sells. It also pays for the slice's lava for free: lava is a fire fixed at 1200 Tu, so a crucible over lava sits just under 1200 Tu forever — the most stable heat source in the game and permanently too cool for steel. Nobody wrote that rule.
+
+A **workpiece** is different again. It stores the temperature it was last stamped at plus the tick that happened on, and its current figure is computed on demand — so it cools in a chest, in a hopper, in an unloaded chunk and in a mod we have never heard of, because nothing has to remember to cool it. Item cooling is deliberately **linear** rather than exponential: an exponential never arrives, needs an arbitrary floor to stop it, and buries the whole working window in a flat tail. A constant rate makes *"you have fourteen seconds to reach the anvil"* literally true, which is what the player is actually budgeting against.
 
 ### The rotation network, in one paragraph
 
@@ -63,6 +70,8 @@ The design is intended to live in **three documents on a spectrum from idea to i
 | *(document 2 — mechanics)* | **Does not exist yet.** How each principle is implemented: unit arithmetic, the sensor/actuator matrix, the thermal model, energy networks, overrun band tuning, the control node set. |
 | *(document 3 — content)* | **Does not exist yet.** The roster: every item, material, machine, cover and process, and what each does. |
 | `feedback_slice_01.md` | **Working document, not one of the three.** The first playable vertical slice, built by `feedback_philosophy.md` §20's method — two beats (mechanical repetition, then thermal control), copper then steel. Concrete but explicitly placeholder-numbered. Its rules feed document 2; its objects feed document 3. Where it and the philosophy disagree, the philosophy wins. |
+| `LICENSING.md` | **Feedback is GPL-3.0-or-later (code) + All Rights Reserved (assets).** Full copyleft on purpose, not LGPL: anything built on this code is free too, because a mod arguing that systems should be legible and open to being taken apart would be incoherent if its licence let people build closed things on it. Accepted cost: no closed-source addons. Also records who owns it and the AI-authorship caveat. |
+| `THIRD-PARTY-LICENSES.md` | **What we owe and to whom.** All three reference mods are now legally adaptable; the working rule stays stricter than the law — read the design, write the code — and every debt is recorded per site. Their *assets* are off limits universally and permanently. |
 | `speculative_physics_inspo_doc.md` | *A Speculative Physics and Biochemistry Compendium of Minecraft (Vanilla and Modded)* — the user's own worldbuilding document, ~2800 lines. Explicitly **not canon**. A **mindset reference** (how to reason about Minecraft phenomena scientifically) and a parts bin — the Liquid Teleportant chain and the "flagged exception" treatment of Redstone were already lifted from it. |
 | *(`feedback_notes_i.md`, `feedback_notes_ii.md`)* | **Deleted in `4020934`**, recoverable from `404a0c3`. Write-ups of earlier design conversations with a different AI, fully merged into `feedback_philosophy.md` with their conflicts resolved. Don't restore them; don't cite them as current design. |
 
@@ -71,6 +80,45 @@ The design is intended to live in **three documents on a spectrum from idea to i
 Machines do not recognize when a recipe is complete. They keep performing their physical action for as long as they have input and power. Continued operation past completion **acts on the already-finished output**, changing, degrading, spoiling, or endangering it.
 
 The last clause is the whole differentiator. GregTech 6 already has machines that idle and burn fuel forever; "always-on machines" is not the novel part. *The output is perishable to continued processing* is. Preserve this framing when describing the mod.
+
+## Before building a feature, ask about prior art
+
+**Ask the user whether there is a relevant open-source mod to study before implementing
+anything non-trivial.** This is now an established pattern rather than a suggestion — the
+rotation network came out of reading Create, the thermal model was materially improved by
+reading TerraFirmaCraft *after* it was written, and the cover system is queued behind reading
+GregTech CEu Modern. Each time, the reading changed the design, and each time it would have
+been cheaper before the code than after.
+
+The user knows this ecosystem far better than any model does, and knows which mod solved a
+given problem well. Asking costs one question. Not asking costs a rewrite — TFC's reading
+reversed a cooling model that was already built and already worked.
+
+What "study" means here is strict, and it is the second half of the rule:
+
+1. **Ask first.** Name the feature; ask if anything out there already solves it.
+2. **Check the licence before reading, not after.** See `LICENSING.md` and
+   `THIRD-PARTY-LICENSES.md`. Feedback is **GPL-3.0 (code) / All Rights Reserved (assets)**,
+   chosen so that Create (MIT), GregTech CEu Modern (LGPL-3.0, conveyable under GPL) and
+   TerraFirmaCraft (EUPL-1.2, via its Article 5 compatibility appendix) are all adaptable. Copyleft licences
+   are *not* mutually compatible in general, so a new source needs checking rather than
+   assuming. **Assets are always no, from everyone.**
+3. **Clone outside the repo**, next to `../Create-reference`, `../TFC-reference`,
+   `../GregTech-Modern-7.5.3`. Reference material, never a dependency.
+4. **Prefer taking the design and writing the code**, even now that adapting is legal. A
+   borrowed implementation is a borrowed set of assumptions, and this mod departs from all
+   three of these on purpose. Where a decision came from somebody else's mod, say so *at the
+   site*, in the comment, along with what was taken and what was deliberately not. Where code
+   is genuinely adapted, also record it in `THIRD-PARTY-LICENSES.md` with its licence.
+5. **Record what was rejected too.** TFC's per-material heat capacity and calendar catch-up
+   were both looked at and declined for stated reasons. That is worth as much as what was
+   adopted, because the next person will otherwise re-open it.
+
+The corollary, and the reason this is worth the fixed cost: **infrastructure should be built
+slightly before it is necessary.** `Instrument` was written before any instrument existed and
+the thermometer then cost one class and touched no display code. A cover system should be
+built the same way — a high fixed cost paid once beats no fixed cost and a medium variable
+cost paid per feature, and the crossover arrives earlier than it feels like it will.
 
 ## Hard design rules
 
@@ -86,12 +134,14 @@ These are settled and constrain any proposal:
 - **Measurement, control, and actuation are separate systems** the player wires together. A sensor controls nothing; an actuator knows nothing; the controller has no built-in target. Precision is emergent from the whole loop, never a machine stat.
 - **Precision is never a hard gate.** Hard gates are genuine physical impossibilities (insufficient temperature, strength, work, pressure, material limits). Anything precision-limited stays *possible* — just unreliable and uneconomical. The shorthand: *the recipe is not locked, the process is difficult.*
 - **Manual production stays theoretically possible** for a surprising share of the game, at tiny rates. Automation makes processes practical; it does not unlock them.
+- **Force that cannot go into the work goes into the machine.** A blow on metal too cold to move, one under the material's hardness floor, or one geared past what the machine's construction can take, is not discarded — the machine absorbs it and wears. Wear is caused *only* by misuse, never by uptime, so a correctly built line never accrues any: a worn machine is evidence of a specific mistake, not a maintenance bill. (GregTech's flat chance per runtime hour was looked at and rejected for carrying no such information — see `THIRD-PARTY-LICENSES.md`.) It degrades and never breaks, because a machine refusing to run is a hard gate where no physical impossibility exists.
 - **Sensing and stopping are separate problems, with distinct hardware per energy type** — and each cutoff has its own failure character (breakers arc and wear, clutches coast, thermal mass dissipates slowly, closing a reagent valve doesn't stop the reaction already underway).
 - **Don't build a physics simulator.** The test for any variable: *does modeling this create a meaningful engineering choice?* If not, abstract it away. Real engineering having the variable is not a reason.
 
 ## Conventions
 
 - **Units:** `Tu` temperature — a *state*, not an amount of heat — `Pu` pressure, `Fu` cumulative mechanical work, `St` per-application strength (the two are **not independent** — work delivered per blow is `St ÷ material hardness`, so what a blow accomplishes is a property of the material, never a machine stat), `Su` stress/load (Create's meaning — never speed), `RPM` rotational speed, `mB`/`mB/t` fluids, `Mu` mass (density is `Mu/mB`), `Qu` amount of substance (concentration is `Qu/mB`; a mole stand-in with no atomic implications), `Eu` electrical — voltage *and* current, the one non-scalar unit. Generic untyped energy is `Work`, spelled out and deliberately unabbreviated so it doesn't read as another currency; `Eu` is electricity's unit, not the mod's. Resistance is deliberately not modelled. Derive rates rather than invent them — `Tu/t`, `Eu/t`, `mB/t`. Show time as both: `600 t (30 s)`. Handy: 1 mB is exactly 1 litre (1000 mB fills a 1 m³ block), so `Mu` anchors to the kilogram and water is exactly `1 Mu/mB`.
+- **Wear is a percentage, not a unit.** Machine condition is dimensionless — 100% as built, falling to a floor — and it is reported as *condition* rather than wear so the figure multiplies the spec sheet directly. Don't mint a unit for it; §8's apparatus properties are expressed in units that already exist.
 - **`[OPEN]`** marks an unresolved question inside the notes. Adding one is a legitimate outcome; silently resolving one is not.
 - **Hard gate vs. soft gate** (§7) is the load-bearing distinction: a hard gate is physical impossibility, a soft gate is a *reproducibility* gate — you can still succeed by luck. Precision only ever gates softly. If a proposal needs "requires tier N," it's wrong.
 - **Instrumentation is a yield technology, not a key** (§7). It unlocks nothing; it's bought because it improves the conversion ratio. Corollary that makes this work: failed batches must consume their inputs — the waste *is* the gate.
@@ -111,6 +161,6 @@ These are settled and constrain any proposal:
 
 1. **Write document 2 (mechanics).** Not started. `feedback_philosophy.md` defers to it by name throughout — unit arithmetic, per-energy sensor/actuator pairings, the thermal model, overrun band tuning, the vanilla vessel thermal bands.
 2. **Write document 3 (content).** Not started, and downstream of 2.
-3. **Project scaffold is done** — Gradle, run configs, Parchment, deploy script, mod entrypoint. The remaining §2 item is the data-driven recipe format (§15 wants compat authored as a table, not code).
-4. **Slice 1 is fully drafted** in `feedback_slice_01.md` and every open decision at its end is now closed. The next choice is build-vs-spec — implement the slice, or write document 2 first. Slice 2 opens on tempering, damper and controller, which `feedback_slice_01.md` deliberately leaves dangling.
+3. **Project scaffold is done** — Gradle, run configs, Parchment, deploy script, mod entrypoint. **The data-driven recipe format is now settled by precedent rather than by decree:** four datapack tables (`deformation`, `thermal_process`, `quench`, `fuel`), each a plain `SimpleJsonResourceReloadListener` over a record with a `Codec` and a `StreamCodec`, none of them a vanilla `RecipeType`. §15's "compat authored as a table" is satisfied — a pack that wants coke to burn hotter writes a line of JSON.
+4. **Slice 1 is built, both beats.** Beat 1 (mechanical repetition) is verified in game. Beat 2 (heat) compiles, boots on a dedicated server and its numbers have been simulated, but **nothing in it has been seen running**. Slice 2 opens on tempering, damper and controller, which `feedback_slice_01.md` deliberately leaves dangling.
 5. **`TODO.md` is the working checklist** — source of truth for *what's next*, where `feedback_philosophy.md` stays source of truth for *why*. Keep it current as items close.

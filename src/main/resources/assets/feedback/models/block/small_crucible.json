@@ -1,0 +1,19 @@
+{
+  "parent": "block/block",
+  "textures": {
+    "side": "minecraft:block/terracotta",
+    "top": "minecraft:block/cauldron_inner",
+    "particle": "minecraft:block/terracotta"
+  },
+  "elements": [
+    {
+      "from": [4, 0, 4],
+      "to": [12, 9, 12],
+      "faces": {
+        "north": { "texture": "#side" }, "south": { "texture": "#side" },
+        "west":  { "texture": "#side" }, "east":  { "texture": "#side" },
+        "up":    { "texture": "#top" },  "down":  { "texture": "#side" }
+      }
+    }
+  ]
+}

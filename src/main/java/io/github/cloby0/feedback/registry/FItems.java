@@ -1,8 +1,28 @@
+/*
+ * Feedback -- a Minecraft technology mod.
+ * Copyright (C) 2026 soundgoodizerfan
+ *
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <https://www.gnu.org/licenses/>.
+ *
+ * Assets under src/main/resources/assets are NOT covered by this licence.
+ * See LICENSE-ASSETS.
+ */
 package io.github.cloby0.feedback.registry;
 
 import io.github.cloby0.feedback.Feedback;
 import io.github.cloby0.feedback.item.CalipersItem;
 import io.github.cloby0.feedback.item.DebugHelmetItem;
+import io.github.cloby0.feedback.item.ThermometerItem;
 
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -40,6 +60,32 @@ public class FItems {
     public static final DeferredItem<Item> COPPER_PLATE = ITEMS.registerSimpleItem("copper_plate");
     public static final DeferredItem<Item> COPPER_FOIL = ITEMS.registerSimpleItem("copper_foil");
     public static final DeferredItem<Item> COPPER_SCRAP = ITEMS.registerSimpleItem("copper_scrap");
+
+    // --- beat 2: heat -----------------------------------------------------------------------
+
+    public static final DeferredItem<BlockItem> FIREBOX = ITEMS.registerSimpleBlockItem(FBlocks.FIREBOX);
+    public static final DeferredItem<BlockItem> SMALL_CRUCIBLE = ITEMS.registerSimpleBlockItem(FBlocks.SMALL_CRUCIBLE);
+    public static final DeferredItem<BlockItem> LARGE_CRUCIBLE = ITEMS.registerSimpleBlockItem(FBlocks.LARGE_CRUCIBLE);
+    public static final DeferredItem<BlockItem> INSULATION = ITEMS.registerSimpleBlockItem(FBlocks.INSULATION);
+    public static final DeferredItem<BlockItem> BELLOWS = ITEMS.registerSimpleBlockItem(FBlocks.BELLOWS);
+    public static final DeferredItem<BlockItem> BIMETALLIC_STRIP = ITEMS.registerSimpleBlockItem(FBlocks.BIMETALLIC_STRIP);
+
+    /**
+     * The slice's second instrument, and the one that reveals rather than refines.
+     * <p>
+     * Copper foil is in it, which is why beat 1's first overrun had to be a sidegrade: the mistake
+     * the hammer makes on the way past a plate is the material this is built out of.
+     */
+    public static final DeferredItem<Item> THERMOMETER =
+            ITEMS.registerItem("thermometer", ThermometerItem::new, new Item.Properties().stacksTo(1));
+
+    // Beat 2's materials. Burnt Iron is the overrun and it is a dead end on purpose -- the
+    // thermal chain's first mistake is a loss, where the mechanical chain's first mistake was
+    // foil. One of the two beats has to teach that overrun is sometimes simply bad.
+    public static final DeferredItem<Item> STEEL_INGOT = ITEMS.registerSimpleItem("steel_ingot");
+    public static final DeferredItem<Item> BURNT_IRON = ITEMS.registerSimpleItem("burnt_iron");
+    public static final DeferredItem<Item> HARDENED_STEEL = ITEMS.registerSimpleItem("hardened_steel");
+    public static final DeferredItem<Item> STEEL_PLATE = ITEMS.registerSimpleItem("steel_plate");
 
     /**
      * Perfect instrumentation, and deliberately absent from {@link FCreativeTabs#MAIN}.

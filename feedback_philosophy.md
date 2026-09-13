@@ -538,6 +538,32 @@ So the two instruments are different in kind:
 
 This should drive how urgently each instrument is needed, and in what order the player wants them. **An instrument that reveals is a bigger event than one that refines**, and the design should not treat them as the same beat.
 
+### Some readings are free; some cost an action
+
+A second split, cutting across the first, and it is about the *object being measured* rather than the quantity.
+
+An **item** should never require an action to read. It is in the player's hand or in a chest, holding the instrument is enough, and demanding a right-click on top of that is a keystroke with nothing inside it — §3's test, applied to a mechanic that is real and well-precedented and simply not fun. Calipers work by being owned.
+
+A **machine** is different, and the difference is not flavour. Measuring a machine means getting down and putting the instrument on it, and — this is the part that makes it a mechanic rather than a mood — **you cannot measure a machine that is running.** So taking the reading costs throughput. The player stops the line, learns something, and starts it again, which is §5's trade in a place nobody installed it: attention and downtime bought information, and a player who would rather keep producing may simply decline to know.
+
+That gives the rule, and it is about price and not about what kind of object it is:
+
+> **A reading is passive when taking it is free, and an action when taking it costs something.**
+
+Item readings are free, so they are passive. Machine readings cost a stopped machine, so they are an act. Nothing has to be decided per instrument, and the same calipers do both — which is the point, because it is *one measurement* pointed at two things. A worn hammer head has mushroomed: it is wider and shorter than it was, and reading how far a piece of metal has deformed is exactly what calipers already do to a workpiece. The tool is not being given a second use. It is being pointed somewhere else.
+
+**The precedent is the Thaumometer**, and it is worth naming because it got this exact split right years ago. You point it at things in the world to scan them, and with the right addons you stop having to scan items — anything you pick up is scanned automatically. Nobody experienced that as losing content, because pointing a scanner at something in the world is *fun* and remembering to swap your hotbar before opening your inventory is not. The rule above is that observation with a price on it, and the price is what tells the two cases apart.
+
+**Wear has no unit, deliberately.** It is a plain percentage — 100% is a machine as built, and it falls. §17's units exist so that quantities cannot be silently converted into one another; a ratio of a machine to its own former self is not that kind of quantity, and minting `Wu` for it would be inventing a unit to describe *a lack of* one. It is also the one figure in the mod that is dimensionless, which is a fact worth stating once so nobody fixes it later.
+
+It reads as **condition rather than wear** — how much machine is left, not how much is gone — because that figure multiplies the spec sheet directly. A hammer at 72% delivers 72% of the force stamped on it, and no mental inversion stands between the reading and the decision. Note that the number bottoms out above zero, since a spent machine is still a machine: rescaling the display so that spent read 0% would look tidier and would destroy the only property that makes the figure useful.
+
+Snapshots are not remembered for the player, and that is a decision rather than an omission — the calipers report what is true when you click and nothing keeps it. A remembered reading is a *device*, and should be sold as one if it is ever worth having; short of that the player writes the figure in a book and quill, which is the same mechanic with better handwriting.
+
+The corollary matters as much: a reading taken by an act is a **snapshot**, and a snapshot goes stale. That is where drift and recalibration live, and it is the honest reason a machine's condition should not simply appear on a HUD forever — the player knows what the hammer measured at the last time they stopped it, which is not the same as knowing what it is now.
+
+And in this mod that gap says something, rather than merely being realistic. Wear accrues only on misuse, so a **correctly built line's reading never goes stale at all** — measure it once and the figure stays true indefinitely. A badly built one goes out of date quickly. How fast the player's knowledge rots is therefore proportional to how wrong the factory is, which is the same argument the wear mechanic already makes, made a second time by the measuring of it.
+
 ### Precision is not a unit — it is a set of apparatus properties
 
 This is what keeps the previous point from being merely a slogan. Precision is not one number, and it must not collapse into one. For any variable, six properties describe what a piece of equipment can do with it:
@@ -551,7 +577,9 @@ This is what keeps the previous point from being merely a slogan. Precision is n
 
 A crude thermometer reads 0–1000 Tu, ±25 Tu accurate, 25 Tu resolution, updating every 20 t. A late one reads 0–3000 Tu, ±0.5 Tu, 0.1 Tu resolution, every tick. Neither is "tier 1" or "tier 5." They are instruments with different capabilities, and **these six properties probably describe most of the progression of the entire mod.**
 
-Critically, **none of them are new units.** They are attributes expressed in the units that already exist (§17), which is what stops the measurement vocabulary from breeding. The same is true of the other properties that decide whether a factory is any good — wear, reliability, redundancy, automation level, labor requirement. They are not quantities the player reads off a gauge. They are the things that turn a process from *possible with somebody standing there* into *cheap industrial production*, which makes them §7's three questions wearing different clothes.
+Critically, **none of them are new units.** They are attributes expressed in the units that already exist (§17), which is what stops the measurement vocabulary from breeding. The same is true of the other properties that decide whether a factory is any good — reliability, redundancy, automation level, labor requirement. They are not quantities the player reads off a gauge.
+
+**Wear is the exception, and it was originally listed here in error.** Reliability is a statistical description of a fleet over time and there is nothing to point an instrument at; wear is one machine's own present state, and it is a *dimension* — a mushroomed hammer head is measurably wider than a new one. So it belongs with the quantities, it is measured with the calipers that were already measuring deformation, and it is measured by the act above rather than passively. They are the things that turn a process from *possible with somebody standing there* into *cheap industrial production*, which makes them §7's three questions wearing different clothes.
 
 ### Timing is a crude form of control
 

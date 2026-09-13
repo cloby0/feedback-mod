@@ -1,3 +1,22 @@
+/*
+ * Feedback -- a Minecraft technology mod.
+ * Copyright (C) 2026 soundgoodizerfan
+ *
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <https://www.gnu.org/licenses/>.
+ *
+ * Assets under src/main/resources/assets are NOT covered by this licence.
+ * See LICENSE-ASSETS.
+ */
 package io.github.cloby0.feedback.machine.linkage;
 
 import io.github.cloby0.feedback.core.FTuning;
@@ -64,20 +83,32 @@ public class CrankLinkageBlockEntity extends RotationNode {
         while (strokeProgress >= 1) {
             strokeProgress -= 1;
             if (driven != null)
-                driven.onStroke(getStrength());
+                driven.onStroke(getRawStrength());
         }
     }
 
     /**
-     * Force behind each stroke. The linkage does not decide this on its own -- the machine states
-     * what it can deliver at each throw, the drive's gearing multiplies it, and the machine's own
-     * construction caps the result.
+     * Force behind each stroke as the machine will experience it -- what a spec sheet would quote.
+     * The linkage does not decide this on its own: the machine states what it can deliver at each
+     * throw, the drive's gearing multiplies it, and the machine's own construction caps the result.
+     * <p>
+     * This is the display figure. What is actually delivered is {@link #getRawStrength()}, which
+     * is not capped, because the surplus is a real thing that happens to the machine rather than a
+     * number to be rounded off before anybody sees it.
      */
     public float getStrength() {
         Reciprocating driven = getDriven();
         if (!(driven instanceof StrengthPair pair))
             return 0;
-        return Math.min(pair.getStrength(getThrow()) * getGearAdvantage(), pair.getMaxStrength());
+        return Math.min(getRawStrength(), pair.getMaxStrength());
+    }
+
+    /** Force the drive puts behind a stroke, before the driven machine's ceiling. */
+    public float getRawStrength() {
+        Reciprocating driven = getDriven();
+        if (!(driven instanceof StrengthPair pair))
+            return 0;
+        return pair.getStrength(getThrow()) * getGearAdvantage();
     }
 
     /**

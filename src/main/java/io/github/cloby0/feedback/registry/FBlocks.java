@@ -1,9 +1,33 @@
+/*
+ * Feedback -- a Minecraft technology mod.
+ * Copyright (C) 2026 soundgoodizerfan
+ *
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <https://www.gnu.org/licenses/>.
+ *
+ * Assets under src/main/resources/assets are NOT covered by this licence.
+ * See LICENSE-ASSETS.
+ */
 package io.github.cloby0.feedback.registry;
 
 import io.github.cloby0.feedback.Feedback;
+import io.github.cloby0.feedback.control.bimetallic.BimetallicStripBlock;
 import io.github.cloby0.feedback.control.timer.TimerBlock;
 import io.github.cloby0.feedback.core.FTuning;
+import io.github.cloby0.feedback.machine.bellows.BellowsBlock;
 import io.github.cloby0.feedback.machine.clutch.ClutchBlock;
+import io.github.cloby0.feedback.machine.crucible.CrucibleBlock;
+import io.github.cloby0.feedback.machine.crucible.InsulationBlock;
+import io.github.cloby0.feedback.machine.firebox.FireboxBlock;
 import io.github.cloby0.feedback.machine.cog.CogBlock;
 import io.github.cloby0.feedback.machine.gearbox.GearboxBlock;
 import io.github.cloby0.feedback.machine.crank.HandCrankBlock;
@@ -99,6 +123,59 @@ public class FBlocks {
                     .mapColor(MapColor.WOOD)
                     .strength(2.0f)
                     .sound(SoundType.WOOD)
+                    .noOcclusion()));
+
+    // --- beat 2: heat -----------------------------------------------------------------------
+
+    public static final DeferredBlock<FireboxBlock> FIREBOX = BLOCKS.register("firebox",
+            () -> new FireboxBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.STONE)
+                    .strength(3.5f)
+                    .sound(SoundType.STONE)
+                    .lightLevel(state -> state.getValue(FireboxBlock.LIT) ? 13 : 0)
+                    .noOcclusion()));
+
+    /**
+     * Two sizes, one block class, and the only difference between them is thermal mass.
+     * <p>
+     * Everything the slice claims about the pair -- that the small one is twitchy and the large
+     * one stubborn, that only the large one can satisfy carburizing's heating-rate limit, that a
+     * twenty-tick-old reading is actionable on one and useless on the other -- falls out of that
+     * single number. See {@link io.github.cloby0.feedback.core.FTuning#CRUCIBLE_SMALL_MASS}.
+     */
+    public static final DeferredBlock<CrucibleBlock> SMALL_CRUCIBLE = BLOCKS.register("small_crucible",
+            () -> new CrucibleBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.STONE)
+                    .strength(3.5f)
+                    .sound(SoundType.STONE)
+                    .noOcclusion()));
+
+    public static final DeferredBlock<CrucibleBlock> LARGE_CRUCIBLE = BLOCKS.register("large_crucible",
+            () -> new CrucibleBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.STONE)
+                    .strength(3.5f)
+                    .sound(SoundType.STONE)
+                    .noOcclusion()));
+
+    /** No block entity and no behaviour. A vessel counts these; insulation itself does nothing. */
+    public static final DeferredBlock<InsulationBlock> INSULATION = BLOCKS.register("insulation",
+            () -> new InsulationBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.TERRACOTTA_WHITE)
+                    .strength(1.5f)
+                    .sound(SoundType.WOOL)));
+
+    public static final DeferredBlock<BellowsBlock> BELLOWS = BLOCKS.register("bellows",
+            () -> new BellowsBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.WOOD)
+                    .strength(2.0f)
+                    .sound(SoundType.WOOD)
+                    .noOcclusion()));
+
+    public static final DeferredBlock<BimetallicStripBlock> BIMETALLIC_STRIP = BLOCKS.register("bimetallic_strip",
+            () -> new BimetallicStripBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.METAL)
+                    .strength(1.5f)
+                    .sound(SoundType.COPPER)
                     .noOcclusion()));
 
     private FBlocks() {
