@@ -20,6 +20,7 @@
 package io.github.cloby0.feedback.core.thermal;
 
 import io.github.cloby0.feedback.core.FTuning;
+import io.github.cloby0.feedback.core.unit.Tu;
 import io.github.cloby0.feedback.registry.FDataComponents;
 
 import net.minecraft.world.item.ItemStack;
@@ -62,12 +63,12 @@ public final class ItemHeat {
     }
 
     /** Stamp a stack as being at this temperature, now. */
-    public static void set(ItemStack stack, float tu, Level level) {
-        if (tu <= FTuning.WARM_TU) {
+    public static void set(ItemStack stack, Tu tu, Level level) {
+        if (tu.value() <= FTuning.WARM_TU.value()) {
             clear(stack);
             return;
         }
-        stack.set(FDataComponents.TEMPERATURE.get(), tu);
+        stack.set(FDataComponents.TEMPERATURE.get(), tu.value());
         stack.set(FDataComponents.HEATED_AT.get(), level.getGameTime());
     }
 
@@ -77,17 +78,20 @@ public final class ItemHeat {
     }
 
     /** What this stack is at right now, having cooled since it was stamped. */
-    public static float get(ItemStack stack, Level level) {
+    public static Tu get(ItemStack stack, Level level) {
+        // The component is a Float, and reading it boxes. That is the wire format's doing rather
+        // than this package's, and it is a far bigger allocation than any unit wrapper.
         Float stamped = stack.get(FDataComponents.TEMPERATURE.get());
         if (stamped == null)
             return FTuning.AMBIENT_TU;
         long at = stack.getOrDefault(FDataComponents.HEATED_AT.get(), level.getGameTime());
         float elapsed = Math.max(0, level.getGameTime() - at);
-        return Heat.cooled(stamped, elapsed, FTuning.ITEM_COOLING_TU_PER_TICK);
+        return Heat.cooled(new Tu(stamped), elapsed, FTuning.ITEM_COOLING_TU_PER_TICK);
     }
 
     public static boolean isHot(ItemStack stack, Level level) {
-        return stack.has(FDataComponents.TEMPERATURE.get()) && get(stack, level) > FTuning.WARM_TU;
+        return stack.has(FDataComponents.TEMPERATURE.get())
+                && get(stack, level).value() > FTuning.WARM_TU.value();
     }
 
     /**
@@ -99,7 +103,8 @@ public final class ItemHeat {
      * touched by anything of ours.
      */
     public static void settle(ItemStack stack, Level level) {
-        if (stack.has(FDataComponents.TEMPERATURE.get()) && get(stack, level) <= FTuning.WARM_TU)
+        if (stack.has(FDataComponents.TEMPERATURE.get())
+                && get(stack, level).value() <= FTuning.WARM_TU.value())
             clear(stack);
     }
 

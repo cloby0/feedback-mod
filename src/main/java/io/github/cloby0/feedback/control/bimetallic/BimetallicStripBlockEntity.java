@@ -22,6 +22,7 @@ package io.github.cloby0.feedback.control.bimetallic;
 import io.github.cloby0.feedback.control.Switchable;
 import io.github.cloby0.feedback.core.FTuning;
 import io.github.cloby0.feedback.core.thermal.ThermalBody;
+import io.github.cloby0.feedback.core.unit.Tu;
 import io.github.cloby0.feedback.registry.FBlockEntities;
 
 import org.jetbrains.annotations.Nullable;
@@ -87,7 +88,7 @@ public class BimetallicStripBlockEntity extends BlockEntity {
         return tripped;
     }
 
-    public float getTripPoint() {
+    public Tu getTripPoint() {
         return FTuning.BIMETALLIC_TRIP_TU;
     }
 
@@ -114,7 +115,8 @@ public class BimetallicStripBlockEntity extends BlockEntity {
         if (watched == null)
             return;
 
-        boolean nowTripped = watched.getTemperature() >= FTuning.BIMETALLIC_TRIP_TU;
+        boolean nowTripped =
+                watched.getTemperature().value() >= FTuning.BIMETALLIC_TRIP_TU.value();
         if (nowTripped == tripped)
             return;
 

@@ -22,6 +22,7 @@ package io.github.cloby0.feedback.process;
 import java.util.Optional;
 
 import io.github.cloby0.feedback.core.thermal.ItemHeat;
+import io.github.cloby0.feedback.core.unit.Tu;
 import io.github.cloby0.feedback.registry.FDataComponents;
 
 import net.minecraft.world.item.ItemStack;
@@ -108,7 +109,8 @@ public final class Deforming {
         // out of its working range the blow lands to no effect whatsoever -- which is the honest
         // answer, because a hammer has no way to tell. The heat is wasted and the material is
         // intact, matching beat 2's asymmetry: the player loses a trip to the fire, not the steel.
-        if (deformation.isHotWorking() && !deformation.worksAt(ItemHeat.get(workpiece, level)))
+        if (deformation.isHotWorking()
+                && !deformation.worksAt(ItemHeat.get(workpiece, level).value()))
             return new Blow(workpiece, Outcome.WRONG_TEMPERATURE);
 
         // How much a blow accomplishes is the material's business, not the machine's. Below the
@@ -134,7 +136,7 @@ public final class Deforming {
             // The new stage inherits the old one's heat. Beating a hot ingot into a plate does not
             // cool it, and losing the stamp here would have made every hot-working chain a single
             // step by accident.
-            float carried = ItemHeat.get(result, level);
+            Tu carried = ItemHeat.get(result, level);
             result = stage.result().copy();
             ItemHeat.set(result, carried, level);
 

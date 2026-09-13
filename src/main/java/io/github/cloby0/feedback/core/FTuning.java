@@ -19,6 +19,11 @@
  */
 package io.github.cloby0.feedback.core;
 
+import io.github.cloby0.feedback.core.unit.Conductance;
+import io.github.cloby0.feedback.core.unit.ThermalMass;
+import io.github.cloby0.feedback.core.unit.Tu;
+import io.github.cloby0.feedback.core.unit.TuRate;
+
 /**
  * Every tunable number in the mod, in one place.
  *
@@ -300,7 +305,7 @@ public final class FTuning {
      * cannot act on -- they are not going to move the factory -- and philosophy 8 is explicit
      * that a variable nobody can act on is not worth modelling. One number, everywhere.
      */
-    public static final float AMBIENT_TU = 20f;
+    public static final Tu AMBIENT_TU = new Tu(20f);
 
     /**
      * How fast a loose workpiece sheds heat, in Tu per tick, cooling in a straight line.
@@ -322,7 +327,7 @@ public final class FTuning {
      * with one hot material in the slice it does not. It becomes worth having the moment a player
      * must decide <em>which</em> of two hot things to carry first.
      */
-    public static final float ITEM_COOLING_TU_PER_TICK = 1.5f;
+    public static final TuRate ITEM_COOLING_TU_PER_TICK = new TuRate(1.5f);
 
     /**
      * Invented. Below this, a workpiece is close enough to ambient to stop being described as hot,
@@ -335,7 +340,7 @@ public final class FTuning {
      * chest fills with piles of one. Clearing slightly early makes a cooled ingot byte-identical
      * to one that was never heated.
      */
-    public static final float WARM_TU = 60f;
+    public static final Tu WARM_TU = new Tu(60f);
 
     /**
      * Invented. How readily heat crosses from a fire into the vessel above it, in Work per tick
@@ -356,14 +361,14 @@ public final class FTuning {
      * over lava sits just under 1200 Tu forever: perfectly stable, and permanently too cool for
      * steel. No rule had to be written for that.
      */
-    public static final float FIRE_CONDUCTANCE = 0.6f;
+    public static final Conductance FIRE_CONDUCTANCE = new Conductance(0.6f);
 
     /**
      * Invented. How fast a vessel bleeds heat to the room, in Work per tick per Tu above ambient.
      * One figure for every vessel: what differs between a small crucible and a large one is mass,
      * not surface.
      */
-    public static final float VESSEL_LEAK = 0.025f;
+    public static final Conductance VESSEL_LEAK = new Conductance(0.025f);
 
     /**
      * Invented. Work required to raise a vessel by one Tu -- its thermal mass.
@@ -389,8 +394,8 @@ public final class FTuning {
      * Neither is better. A process that needs to <em>move</em> would much rather have the small
      * one.
      */
-    public static final float CRUCIBLE_SMALL_MASS = 25f;
-    public static final float CRUCIBLE_LARGE_MASS = 250f;
+    public static final ThermalMass CRUCIBLE_SMALL_MASS = new ThermalMass(25f);
+    public static final ThermalMass CRUCIBLE_LARGE_MASS = new ThermalMass(250f);
 
     /** Invented. How many items a crucible holds. Two, because carburizing needs iron and carbon. */
     public static final int CRUCIBLE_SLOTS = 2;
@@ -445,7 +450,7 @@ public final class FTuning {
      * Sat deliberately between a bare charcoal fire and the steel window, so it is genuinely
      * useful and genuinely not enough.
      */
-    public static final float FIRE_TU_LAVA = 1200f;
+    public static final Tu FIRE_TU_LAVA = new Tu(1200f);
 
     /**
      * Invented. How much air the firebox can hold, and how fast it consumes it.
@@ -518,7 +523,7 @@ public final class FTuning {
      * 1470 the top of it does, and on a small crucible the top of the swing is 1599 and burns the
      * batch outright.
      */
-    public static final float BIMETALLIC_TRIP_TU = 1440f;
+    public static final Tu BIMETALLIC_TRIP_TU = new Tu(1440f);
 
     /**
      * SLICE: the crude thermometer resolves to 25 Tu.
@@ -531,6 +536,9 @@ public final class FTuning {
      * significant figures here and nothing else; it is one number.
      */
     public static final float THERMOMETER_RESOLUTION_TU = 25f;
+    // Left a bare float on purpose. Instrument#resolution answers for every Quantity -- Fu as
+    // well as Tu -- so its return type cannot be a temperature. The unit lives in the name here,
+    // which is the honest place for it when the seam it crosses is quantity-agnostic.
 
     // --- readouts, thermal ------------------------------------------------------------------
 
@@ -545,7 +553,7 @@ public final class FTuning {
      * batch. That is not a trick; it is why the thermometer exists, and it is the difference
      * between a mod that hides a number and one that models why you cannot have it.
      */
-    public static final float MAX_VISIBLE_TU = 1600f;
+    public static final Tu MAX_VISIBLE_TU = new Tu(1600f);
 
     /**
      * Where the free, qualitative temperature bands fall, in Tu -- each entry is the <em>top</em>
@@ -563,16 +571,16 @@ public final class FTuning {
      * thermometer is sold into, and a gap that is merely "hot or not" is not a gap, it is a wall.
      * So the bands crowd where the work happens and are wide where nothing does.
      */
-    public static final float[] HEAT_BAND_TOPS = {
-            200f,    // warm
-            480f,    // hot
-            580f,    // faint red
-            730f,    // dark red
-            930f,    // bright red
-            1100f,   // orange
-            1300f,   // yellow
-            1400f,   // pale yellow
-            1500f,   // white
+    public static final Tu[] HEAT_BAND_TOPS = {
+            new Tu(200f),    // warm
+            new Tu(480f),    // hot
+            new Tu(580f),    // faint red
+            new Tu(730f),    // dark red
+            new Tu(930f),    // bright red
+            new Tu(1100f),   // orange
+            new Tu(1300f),   // yellow
+            new Tu(1400f),   // pale yellow
+            new Tu(1500f),   // white
             MAX_VISIBLE_TU
     };
 

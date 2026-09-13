@@ -20,6 +20,7 @@
 package io.github.cloby0.feedback.core.thermal;
 
 import io.github.cloby0.feedback.core.FTuning;
+import io.github.cloby0.feedback.core.unit.Tu;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
@@ -39,8 +40,8 @@ import net.minecraft.world.level.material.Fluids;
  */
 public interface HeatSource {
 
-    /** How hot this burns right now, in Tu. Ambient when it is not lit. */
-    float getFireTu();
+    /** How hot this burns right now. Ambient when it is not lit. */
+    Tu getFireTu();
 
     /**
      * How hot the block below this position burns.
@@ -52,7 +53,7 @@ public interface HeatSource {
      * the most stable thermal environment in the game is a puddle the player has been ignoring
      * since their first night.
      */
-    static float below(Level level, BlockPos pos) {
+    static Tu below(Level level, BlockPos pos) {
         BlockPos under = pos.below();
 
         BlockEntity be = level.getBlockEntity(under);

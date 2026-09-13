@@ -22,6 +22,7 @@ package io.github.cloby0.feedback.client;
 import io.github.cloby0.feedback.Feedback;
 import io.github.cloby0.feedback.core.FTuning;
 import io.github.cloby0.feedback.core.thermal.ItemHeat;
+import io.github.cloby0.feedback.core.unit.Tu;
 import io.github.cloby0.feedback.registry.FDataComponents;
 
 import net.minecraft.client.Minecraft;
@@ -60,8 +61,8 @@ public class HeatTooltip {
         if (level == null)
             return;
 
-        float tu = ItemHeat.get(stack, level);
-        if (tu <= FTuning.WARM_TU)
+        Tu tu = ItemHeat.get(stack, level);
+        if (tu.value() <= FTuning.WARM_TU.value())
             return;
 
         event.getToolTip().add(Readout.temperatureReading(tu));

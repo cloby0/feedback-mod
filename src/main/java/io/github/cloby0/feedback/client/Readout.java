@@ -22,6 +22,7 @@ package io.github.cloby0.feedback.client;
 import java.util.Locale;
 
 import io.github.cloby0.feedback.core.FTuning;
+import io.github.cloby0.feedback.core.unit.Tu;
 import io.github.cloby0.feedback.instrument.Instrument;
 import io.github.cloby0.feedback.instrument.Instruments;
 import io.github.cloby0.feedback.instrument.Quantity;
@@ -151,11 +152,11 @@ public final class Readout {
      * has a range, exactly as a bought one does (§8), and this is the range of the one apparatus
      * every player already owns.
      */
-    public static Component temperature(float tu) {
-        if (tu >= FTuning.MAX_VISIBLE_TU)
+    public static Component temperature(Tu tu) {
+        if (tu.value() >= FTuning.MAX_VISIBLE_TU.value())
             return adjective("feedback.readout.heat.beyond");
         for (int band = 0; band < FTuning.HEAT_BAND_TOPS.length; band++)
-            if (tu < FTuning.HEAT_BAND_TOPS[band])
+            if (tu.value() < FTuning.HEAT_BAND_TOPS[band].value())
                 return adjective("feedback.readout.heat." + band);
         return adjective("feedback.readout.heat.beyond");
     }
@@ -167,11 +168,13 @@ public final class Readout {
      * consulted differently and the reading is never <em>wrong</em> -- it is coarser, which is why
      * a poor instrument costs reproducibility rather than success.
      */
-    public static Component temperatureReading(float tu) {
+    public static Component temperatureReading(Tu tu) {
         Instrument instrument = Instruments.best(Minecraft.getInstance().player, Quantity.TEMPERATURE);
         if (instrument == null)
             return temperature(tu);
-        float shown = Instruments.quantise(tu, instrument.resolution(Quantity.TEMPERATURE));
+        // Unwrapped at the instrument seam, which is quantity-agnostic by design: quantise
+        // answers for Fu as readily as Tu, so it cannot take a temperature.
+        float shown = Instruments.quantise(tu.value(), instrument.resolution(Quantity.TEMPERATURE));
         return reading(Quantity.TEMPERATURE, "feedback.readout.tu", number(shown));
     }
 

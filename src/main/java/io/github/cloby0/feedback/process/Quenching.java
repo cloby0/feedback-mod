@@ -78,7 +78,7 @@ public class Quenching {
         if (!stack.has(FDataComponents.TEMPERATURE.get()))
             return;
 
-        float tu = ItemHeat.get(stack, level);
+        float tu = ItemHeat.get(stack, level).value();
 
         Optional<Quench> maybe = QuenchTable.get().find(stack);
         if (maybe.isPresent() && tu >= maybe.get().minTemperature()) {

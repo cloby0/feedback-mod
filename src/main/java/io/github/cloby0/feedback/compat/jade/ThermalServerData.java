@@ -63,16 +63,16 @@ public class ThermalServerData implements IServerDataProvider<BlockAccessor> {
         if (be instanceof ThermalBody body) {
             data.putBoolean(THERMAL, true);
             data.putBoolean(READABLE, body.hasThermowell());
-            data.putFloat(TEMPERATURE, body.getTemperature());
+            data.putFloat(TEMPERATURE, body.getTemperature().value());
         }
 
         if (be instanceof CrucibleBlockEntity crucible) {
-            data.putFloat(HEATING_RATE, crucible.getHeatingRate());
+            data.putFloat(HEATING_RATE, crucible.getHeatingRate().tuPerTick());
             data.putInt(INSULATION, crucible.getInsulation());
         }
 
         if (be instanceof HeatSource source)
-            data.putFloat(FIRE_TU, source.getFireTu());
+            data.putFloat(FIRE_TU, source.getFireTu().value());
     }
 
     @Override

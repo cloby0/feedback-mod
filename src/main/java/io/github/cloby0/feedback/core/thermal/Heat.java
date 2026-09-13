@@ -20,6 +20,9 @@
 package io.github.cloby0.feedback.core.thermal;
 
 import io.github.cloby0.feedback.core.FTuning;
+import io.github.cloby0.feedback.core.unit.Conductance;
+import io.github.cloby0.feedback.core.unit.Tu;
+import io.github.cloby0.feedback.core.unit.TuRate;
 
 /**
  * How heat moves. Every thermal figure in the mod comes out of these four lines.
@@ -53,18 +56,24 @@ public final class Heat {
      * @param fireTu    the flame's temperature, or ambient when nothing is lit.
      * @param conducted whether the fire is actually in contact. A cold firebox is not a fire; it
      *                  is just more room to lose heat to.
-     * @return the Tu this body moved, signed. Callers watch this because a process can care how
-     *         fast it was heated as well as how hot it got.
+     * @return how fast this body moved, signed. Callers watch this because a process can care
+     *         how fast it was heated as well as how hot it got.
      */
-    public static float tick(ThermalBody body, float fireTu, boolean conducted) {
-        float temperature = body.getTemperature();
+    public static TuRate tick(ThermalBody body, Tu fireTu, boolean conducted) {
+        // Unwrapped inline rather than into locals, deliberately. See core/unit's package javadoc:
+        // the types guard the plumbing, and holding a bare `leak` and a bare `mass` side by side
+        // in this method is exactly the swap they exist to prevent.
+        float temperature = body.getTemperature().value();
 
-        float fromFire = conducted ? FTuning.FIRE_CONDUCTANCE * (fireTu - temperature) : 0;
-        float toRoom = body.getLeak() * (temperature - FTuning.AMBIENT_TU);
+        float fromFire = conducted
+                ? FTuning.FIRE_CONDUCTANCE.workPerTickPerTu() * (fireTu.value() - temperature)
+                : 0;
+        float toRoom = body.getLeak().workPerTickPerTu()
+                * (temperature - FTuning.AMBIENT_TU.value());
 
-        float delta = (fromFire - toRoom) / Math.max(1f, body.getThermalMass());
-        body.setTemperature(temperature + delta);
-        return delta;
+        float delta = (fromFire - toRoom) / Math.max(1f, body.getThermalMass().workPerTu());
+        body.setTemperature(new Tu(temperature + delta));
+        return new TuRate(delta);
     }
 
     /**
@@ -72,10 +81,13 @@ public final class Heat {
      * -- it is here because it is the figure every tuning argument is actually about, and working
      * it out by hand from {@link #tick} each time is how the numbers drifted the first time.
      */
-    public static float equilibrium(ThermalBody body, float fireTu) {
-        float conductance = FTuning.FIRE_CONDUCTANCE;
-        float leak = body.getLeak();
-        return (conductance * fireTu + leak * FTuning.AMBIENT_TU) / (conductance + leak);
+    public static Tu equilibrium(ThermalBody body, Tu fireTu) {
+        // The two conductances are added, which is only a legal thing to write because they share
+        // a dimension. Nothing said so until Conductance existed; now the types do.
+        float conductance = FTuning.FIRE_CONDUCTANCE.workPerTickPerTu();
+        float leak = body.getLeak().workPerTickPerTu();
+        return new Tu((conductance * fireTu.value() + leak * FTuning.AMBIENT_TU.value())
+                / (conductance + leak));
     }
 
     /**
@@ -102,10 +114,11 @@ public final class Heat {
      *
      * @param rate Tu shed per tick.
      */
-    public static float cooled(float fromTu, float ticks, float rate) {
+    public static Tu cooled(Tu fromTu, float ticks, TuRate rate) {
         if (ticks <= 0)
             return fromTu;
-        return Math.max(FTuning.AMBIENT_TU, fromTu - ticks * rate);
+        return new Tu(Math.max(FTuning.AMBIENT_TU.value(),
+                fromTu.value() - ticks * rate.tuPerTick()));
     }
 
     /**
@@ -115,9 +128,9 @@ public final class Heat {
      * implicitly budgeting against can be stated exactly somewhere -- by a good enough instrument,
      * eventually, and by the tuning argument today.
      */
-    public static float ticksAbove(float fromTu, float floorTu, float rate) {
-        if (fromTu <= floorTu || rate <= 0)
+    public static float ticksAbove(Tu fromTu, Tu floorTu, TuRate rate) {
+        if (fromTu.value() <= floorTu.value() || rate.tuPerTick() <= 0)
             return 0;
-        return (fromTu - floorTu) / rate;
+        return (fromTu.value() - floorTu.value()) / rate.tuPerTick();
     }
 }

@@ -20,6 +20,9 @@
 package io.github.cloby0.feedback.core.thermal;
 
 import io.github.cloby0.feedback.core.FTuning;
+import io.github.cloby0.feedback.core.unit.Conductance;
+import io.github.cloby0.feedback.core.unit.ThermalMass;
+import io.github.cloby0.feedback.core.unit.Tu;
 
 /**
  * Something that holds a temperature.
@@ -40,10 +43,10 @@ import io.github.cloby0.feedback.core.FTuning;
  */
 public interface ThermalBody {
 
-    /** Current temperature, in Tu. */
-    float getTemperature();
+    /** Current temperature. */
+    Tu getTemperature();
 
-    void setTemperature(float tu);
+    void setTemperature(Tu tu);
 
     /**
      * Work required to raise this body by one Tu.
@@ -51,10 +54,18 @@ public interface ThermalBody {
      * This is the number an upgrade changes. A larger vessel is not faster or more efficient --
      * it is heavier, and everything the player notices about it follows from that.
      */
-    float getThermalMass();
+    ThermalMass getThermalMass();
 
-    /** Work per tick this body loses per Tu it sits above ambient. */
-    default float getLeak() {
+    /**
+     * How fast this body bleeds Work to the room, per Tu it sits above ambient.
+     *
+     * <h3>A leak is a conductance, and the type now says so</h3>
+     * This returns the same type as a fire's grip on the vessel above it, because they are the
+     * same quantity -- {@code Work/t} per Tu of difference across a boundary. Calling one a leak
+     * and the other a conductance is a statement about whether you wanted it, not about what it
+     * is, and {@link Heat#equilibrium} has been adding the two together all along.
+     */
+    default Conductance getLeak() {
         return FTuning.VESSEL_LEAK;
     }
 

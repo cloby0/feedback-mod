@@ -10,15 +10,29 @@ Candidates weighed on 2026-09-12 and deliberately not taken that night. Each one
 here so a fresh session can start on it without re-deriving the scope. Ordered by value, not
 by size.
 
-- [ ] **`core/unit/` — the units of §17 as types.** `CLAUDE.md` calls this overdue and the
-  near-miss is real: a fire's `Tu`, a vessel's thermal mass in `Work/Tu` and its leak in
-  `Work/t/Tu` are three different things all spelled `float`, and `Heat.tick` handles all
-  three in five lines. **Scope it to `core/thermal/` first** — four files, 383 lines — rather
-  than the sixty-file sweep; rotation can follow separately. The open question to answer
-  before writing any of it is whether a wrapper type is a record (allocation per operation,
-  usually scalar-replaced, and Minecraft allocates far worse elsewhere) or a static holder of
-  typed constants and named helpers with no wrapper at all. Compile is the whole test; no game
-  session needed, which is why it suits a session that cannot verify by eye anyway.
+- [x] **`core/unit/` — the units of §17 as types.** Done for thermal. **The open question was
+  answered: records, but only at the boundaries.** Four thin records — `Tu`, `TuRate`,
+  `ThermalMass`, `Conductance` — each with one accessor *named for its dimension*
+  (`workPerTu()` vs `workPerTickPerTu()`), which is the entire mechanism: swapping a mass for a
+  leak is now a compile error. There is deliberately **no arithmetic on the types**; `Heat`
+  unwraps inline to floats, so the five lines of physics still read like the equation the
+  javadoc argues about. The third option — a static holder with no wrapper — was rejected as
+  catching nothing while looking like the item had been closed.
+
+  Verified by breaking it on purpose: substituting `getLeak()` for `getThermalMass()` in
+  `Heat.tick` fails to compile, which is the bug the package was written to stop.
+
+  Two findings worth keeping:
+  - **A leak and a conductance are the same dimension** (`Work/t/Tu`), and `Heat.equilibrium`
+    was already adding them. One type, two roles. This is the thing the exercise paid for.
+  - **`Tu` covers both a temperature and a difference between two**, knowingly. The only
+    interval in the model is an instrument's resolution; a fifth type is not worth it. First
+    place the scheme is deliberately loose, recorded so it is not re-derived.
+
+  Still floats, on purpose: rotation's `Su`/`RPM`/`Fu`/`St` (next pass), and the datapack
+  records `ThermalProcess`/`Quench`/`Deformation` — retyping those means touching wire formats,
+  which is a separate change with a separate risk. The dangerous triple the item was raised for
+  is entirely inside what was done.
 
 - [x] **Crafting recipes, one pass over the roster.** Done — 19 shaped recipes and 3 unlock
   advancements, hand-authored under `src/main/resources/data/feedback/`. Both beats are
@@ -39,6 +53,20 @@ by size.
 - [ ] **Reading wear with calipers.** Decided, scoped and not built — see §4b "Reading wear".
   Small: one `Quantity`, one `useOn`, a resolution figure, and a check that refuses to measure a
   machine that is running. The design argument is already written in §8, so this is typing.
+
+- [ ] **`core/unit/` for rotation.** The other half of the pass above: `Su`, `RPM`, `Fu`, `St`.
+  Bigger than thermal was and with a genuine wrinkle — §17 says `St` and `Fu` are *not*
+  independent (work per blow is `St ÷ hardness`), so the types have to not imply they are.
+  Same shape as thermal: records at boundaries, floats inside the arithmetic.
+
+- [ ] **Allocation pass on `RotationPropagator`.** Not urgent and not a bug — every rebuild
+  trigger is correctly edge-triggered, so nothing runs per tick. But one `rebuildFrom` on an
+  *n*-node network allocates **~3n objects**: `connectedNeighbours` builds a fresh
+  `ArrayList<>(6)` per node and is called once from `floodFill` and again from `assignRatios`,
+  and `Map<RotationNode, Float>` boxes every ratio. A 500-shaft rebuild is ~1500 objects.
+  The fixes are mechanical — reuse a buffer in `connectedNeighbours`, swap the map for
+  fastutil's `Object2FloatMap` (already on the classpath via Minecraft). Worth doing before
+  networks get large, and worth measuring first rather than assuming.
 
 - [ ] **Real models and textures**, for every block in both beats. Art, and the user's call —
   not something to start unprompted.

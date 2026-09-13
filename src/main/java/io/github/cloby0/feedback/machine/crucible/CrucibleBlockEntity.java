@@ -27,6 +27,10 @@ import io.github.cloby0.feedback.core.thermal.Heat;
 import io.github.cloby0.feedback.core.thermal.HeatSource;
 import io.github.cloby0.feedback.core.thermal.ItemHeat;
 import io.github.cloby0.feedback.core.thermal.ThermalBody;
+import io.github.cloby0.feedback.core.unit.Conductance;
+import io.github.cloby0.feedback.core.unit.ThermalMass;
+import io.github.cloby0.feedback.core.unit.Tu;
+import io.github.cloby0.feedback.core.unit.TuRate;
 import io.github.cloby0.feedback.process.ThermalProcess;
 import io.github.cloby0.feedback.process.ThermalProcessTable;
 import io.github.cloby0.feedback.registry.FBlockEntities;
@@ -81,8 +85,14 @@ public class CrucibleBlockEntity extends BlockEntity implements ThermalBody {
     private final NonNullList<ItemStack> contents =
             NonNullList.withSize(FTuning.CRUCIBLE_SLOTS, ItemStack.EMPTY);
 
-    private float temperature = FTuning.AMBIENT_TU;
-    /** Tu moved last tick. A process may care how fast it was heated as well as how hot it got. */
+    /**
+     * Stored as a primitive, and wrapped only at the accessor. A {@link Tu} in a field would
+     * outlive the method that made it, which is exactly the case the JIT's escape analysis cannot
+     * eliminate -- so it would be a real allocation, held for the lifetime of the block entity,
+     * buying nothing the accessor's return type does not already buy.
+     */
+    private float temperature = FTuning.AMBIENT_TU.value();
+    /** How fast it moved last tick. A process may care about that as well as how hot it got. */
     private float lastDelta;
     private int holdTicks;
 
@@ -96,25 +106,26 @@ public class CrucibleBlockEntity extends BlockEntity implements ThermalBody {
     // --- thermal ----------------------------------------------------------------------------
 
     @Override
-    public float getTemperature() {
-        return temperature;
+    public Tu getTemperature() {
+        return new Tu(temperature);
     }
 
     @Override
-    public void setTemperature(float tu) {
-        temperature = tu;
+    public void setTemperature(Tu tu) {
+        temperature = tu.value();
     }
 
     @Override
-    public float getThermalMass() {
+    public ThermalMass getThermalMass() {
         return getBlockState().getBlock() == FBlocks.LARGE_CRUCIBLE.get()
                 ? FTuning.CRUCIBLE_LARGE_MASS
                 : FTuning.CRUCIBLE_SMALL_MASS;
     }
 
     @Override
-    public float getLeak() {
-        return FTuning.VESSEL_LEAK * (float) Math.pow(FTuning.INSULATION_LEAK_FACTOR, insulation);
+    public Conductance getLeak() {
+        return new Conductance(FTuning.VESSEL_LEAK.workPerTickPerTu()
+                * (float) Math.pow(FTuning.INSULATION_LEAK_FACTOR, insulation));
     }
 
     /** How many insulating blocks are packed against it. Shown as a spec, not as a reading. */
@@ -122,8 +133,8 @@ public class CrucibleBlockEntity extends BlockEntity implements ThermalBody {
         return insulation;
     }
 
-    public float getHeatingRate() {
-        return lastDelta;
+    public TuRate getHeatingRate() {
+        return new TuRate(lastDelta);
     }
 
     public int getHoldTicks() {
@@ -174,7 +185,7 @@ public class CrucibleBlockEntity extends BlockEntity implements ThermalBody {
             return ItemStack.EMPTY;
         contents.set(slot, ItemStack.EMPTY);
         if (level != null)
-            ItemHeat.set(taken, temperature, level);
+            ItemHeat.set(taken, new Tu(temperature), level);
         holdTicks = 0;
         sync();
         return taken;
@@ -198,8 +209,8 @@ public class CrucibleBlockEntity extends BlockEntity implements ThermalBody {
             insulation = countInsulation();
         }
 
-        float fireTu = HeatSource.below(level, worldPosition);
-        lastDelta = Heat.tick(this, fireTu, fireTu > FTuning.AMBIENT_TU);
+        Tu fireTu = HeatSource.below(level, worldPosition);
+        lastDelta = Heat.tick(this, fireTu, fireTu.value() > FTuning.AMBIENT_TU.value()).tuPerTick();
 
         advanceProcess();
     }
@@ -250,7 +261,7 @@ public class CrucibleBlockEntity extends BlockEntity implements ThermalBody {
 
         ItemStack result = process.result().copy();
         if (level != null)
-            ItemHeat.set(result, temperature, level);
+            ItemHeat.set(result, new Tu(temperature), level);
         place(result);
 
         holdTicks = 0;
@@ -268,7 +279,7 @@ public class CrucibleBlockEntity extends BlockEntity implements ThermalBody {
         ItemStack ruined = process.spoiled().copy();
         if (!ruined.isEmpty()) {
             if (level != null)
-                ItemHeat.set(ruined, temperature, level);
+                ItemHeat.set(ruined, new Tu(temperature), level);
             place(ruined);
         }
 
@@ -325,7 +336,9 @@ public class CrucibleBlockEntity extends BlockEntity implements ThermalBody {
         super.loadAdditional(tag, registries);
         contents.clear();
         ContainerHelper.loadAllItems(tag, contents, registries);
-        temperature = tag.contains("Temperature") ? tag.getFloat("Temperature") : FTuning.AMBIENT_TU;
+        temperature = tag.contains("Temperature")
+                ? tag.getFloat("Temperature")
+                : FTuning.AMBIENT_TU.value();
         holdTicks = tag.getInt("HoldTicks");
         insulation = tag.getInt("Insulation");
     }

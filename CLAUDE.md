@@ -33,9 +33,9 @@ Root package `io.github.cloby0.feedback`. The package tree follows the mod's **s
 | Package | Holds |
 | --- | --- |
 | `registry/` | every `DeferredRegister` — one place to look |
-| `core/unit/` | the units of §17 as types. **Still not built**, and now overdue — thermal has landed, so `Tu`, `Fu`, `Su` and `Work` are all live named floats and two of them *can* now be confused. The near-miss is real: a fire's `Tu`, a vessel's thermal mass in `Work/Tu`, and its leak in `Work/t/Tu` are three different things spelled `float` |
+| `core/unit/` | the units of §17 as types. **Built for thermal only** — `Tu`, `TuRate` (`Tu/t`), `ThermalMass` (`Work/Tu`) and `Conductance` (`Work/t/Tu`). Thin records, one accessor each, *named for the dimension*; that naming is the whole guard. **No arithmetic on them** — they type the plumbing (interfaces, `FTuning`, seams) and `Heat` unwraps inline to plain floats, so the physics still reads like the equation. Rotation's `Su`/`RPM`/`Fu`/`St` and the datapack records are still floats and are the next pass. See the package javadoc |
 | `core/rotation/` | the mechanical network — `RotationNode`, `RotationNetwork`, `RotationPropagator` |
-| `core/thermal/` | the thermal model — `ThermalBody` (has a temperature and a mass), `HeatSource` (has a flame temperature and no mass), `Heat` (the maths), `ItemHeat` (a workpiece's own heat) |
+| `core/thermal/` | the thermal model — `ThermalBody` (has a temperature and a mass), `HeatSource` (has a flame temperature and no mass), `Heat` (the maths), `ItemHeat` (a workpiece's own heat). Typed in `core/unit/` terms throughout |
 | `machine/` | physical operations. A machine class never names a recipe |
 | `process/` | operation definitions, completion, and overrun behaviour |
 | `instrument/` | sensors. Read-only by construction — an instrument has no way to act |
@@ -53,6 +53,8 @@ Create a package when there is something to put in it; don't scaffold empty ones
 ### The thermal model, in one paragraph
 
 Heat flows on a **difference**, never at a flat rate: `conductance × (fire − vessel)` in, `leak × (vessel − ambient)` out, divided by thermal mass. This matters because the flat-rate version — which is what gets written first — makes a vessel settle at `supply ÷ leak`, so insulating a crucible raises its final temperature without limit and insulation becomes a trap rather than an upgrade. Driving on the difference means a vessel approaches its fire's temperature and can never pass it, so the only way past a flame is a hotter flame, which is exactly what the bellows sells. It also pays for the slice's lava for free: lava is a fire fixed at 1200 Tu, so a crucible over lava sits just under 1200 Tu forever — the most stable heat source in the game and permanently too cool for steel. Nobody wrote that rule.
+
+Typing the model turned up something the code had not been saying: **a vessel's leak and a fire's conductance are the same dimension** (`Work/t/Tu`), and `Heat.equilibrium` had been adding them together correctly all along. They are one type now, `Conductance`, in two roles — a leak *is* a conductance, and calling it a leak is a statement about whether you wanted it.
 
 A **workpiece** is different again. It stores the temperature it was last stamped at plus the tick that happened on, and its current figure is computed on demand — so it cools in a chest, in a hopper, in an unloaded chunk and in a mod we have never heard of, because nothing has to remember to cool it. Item cooling is deliberately **linear** rather than exponential: an exponential never arrives, needs an arbitrary floor to stop it, and buries the whole working window in a flat tail. A constant rate makes *"you have fourteen seconds to reach the anvil"* literally true, which is what the player is actually budgeting against.
 

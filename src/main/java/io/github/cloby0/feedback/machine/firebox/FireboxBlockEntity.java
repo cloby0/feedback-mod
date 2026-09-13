@@ -21,6 +21,7 @@ package io.github.cloby0.feedback.machine.firebox;
 
 import io.github.cloby0.feedback.core.FTuning;
 import io.github.cloby0.feedback.core.thermal.HeatSource;
+import io.github.cloby0.feedback.core.unit.Tu;
 import io.github.cloby0.feedback.machine.bellows.Blown;
 import io.github.cloby0.feedback.process.Fuel;
 import io.github.cloby0.feedback.process.FuelTable;
@@ -71,7 +72,7 @@ public class FireboxBlockEntity extends BlockEntity implements HeatSource, Blown
 
     private int burnTicks;
     /** The flame temperature of the piece currently burning, quality roll already applied. */
-    private float burnTu = FTuning.AMBIENT_TU;
+    private float burnTu = FTuning.AMBIENT_TU.value();
 
     private float air;
     /** Air actually consumed last tick, which is what sets the flame temperature. */
@@ -125,14 +126,14 @@ public class FireboxBlockEntity extends BlockEntity implements HeatSource, Blown
     }
 
     @Override
-    public float getFireTu() {
+    public Tu getFireTu() {
         if (!isLit())
             return FTuning.AMBIENT_TU;
         float blown = Mth.clamp(draught / FTuning.FIREBOX_AIR_PER_TICK, 0f, 1f);
         // Air multiplies a fuel's own flame temperature rather than replacing it, so a cool fuel
         // blown hard is still a cool fire. Otherwise the bellows would silently make every fuel
         // equivalent and the fuel table would stop meaning anything.
-        return burnTu * Mth.lerp(blown, 1f, FTuning.FULL_AIR_TEMPERATURE_FACTOR);
+        return new Tu(burnTu * Mth.lerp(blown, 1f, FTuning.FULL_AIR_TEMPERATURE_FACTOR));
     }
 
     public void tickServer() {
@@ -189,7 +190,7 @@ public class FireboxBlockEntity extends BlockEntity implements HeatSource, Blown
         super.loadAdditional(tag, registries);
         fuel = ItemStack.parseOptional(registries, tag.getCompound("Fuel"));
         burnTicks = tag.getInt("BurnTicks");
-        burnTu = tag.contains("BurnTu") ? tag.getFloat("BurnTu") : FTuning.AMBIENT_TU;
+        burnTu = tag.contains("BurnTu") ? tag.getFloat("BurnTu") : FTuning.AMBIENT_TU.value();
         air = tag.getFloat("Air");
     }
 

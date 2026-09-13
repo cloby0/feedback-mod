@@ -23,6 +23,7 @@ import io.github.cloby0.feedback.Feedback;
 import io.github.cloby0.feedback.client.Readout;
 import io.github.cloby0.feedback.control.bimetallic.BimetallicStripBlockEntity;
 import io.github.cloby0.feedback.core.FTuning;
+import io.github.cloby0.feedback.core.unit.Tu;
 import io.github.cloby0.feedback.machine.crucible.CrucibleBlockEntity;
 
 import snownee.jade.api.BlockAccessor;
@@ -65,7 +66,8 @@ public class ThermalComponent implements IBlockComponentProvider {
                 tooltip.add(Component.translatable("feedback.readout.sealed")
                         .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
             else
-                tooltip.add(Readout.temperatureReading(data.getFloat(ThermalServerData.TEMPERATURE)));
+                tooltip.add(Readout.temperatureReading(
+                        new Tu(data.getFloat(ThermalServerData.TEMPERATURE))));
         }
 
         if (accessor.getBlockEntity() instanceof CrucibleBlockEntity crucible) {
@@ -82,7 +84,7 @@ public class ThermalComponent implements IBlockComponentProvider {
             // The trip point is stamped on the strip. It is the reason this strip and not another
             // one was crafted, so hiding it would hide the only thing that distinguishes them.
             tooltip.add(Component.translatable("feedback.spec.trip",
-                    Readout.number(FTuning.BIMETALLIC_TRIP_TU)).withStyle(ChatFormatting.DARK_GRAY));
+                    Readout.number(FTuning.BIMETALLIC_TRIP_TU.value())).withStyle(ChatFormatting.DARK_GRAY));
             tooltip.add(Component.translatable(strip.isTripped()
                             ? "feedback.readout.strip_open"
                             : "feedback.readout.strip_closed")
