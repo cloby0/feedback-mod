@@ -131,6 +131,16 @@ So the timer is a bet (§8), and a worse one than it looks. The hammer's rate de
 
 The player's first instinct — wind it short and accept a few under-worked ingots — is correct, and it is their first encounter with trading yield for safety.
 
+### The anvil is a container, and that changes nothing
+
+The hammer exposes its anvil as a single slot, so a vanilla hopper can feed it and a vanilla hopper can empty it. That is the mod's only item-handling ambition: **moving items is vanilla's job**, and a mod about what happens *to* a workpiece has no business inventing a second pipe network.
+
+It is worth being explicit that this does not smuggle in completion detection. An extractor takes whatever is lying on the anvil, worked or not, because nothing in the mod can ask whether a workpiece is finished — the hammer does not know what it is making and the item does not announce that it has arrived. So a hopper is not a sensor bolted to the machine; it is a second machine running at its own rate, and the player's problem becomes the **race between how fast work goes in and how fast product comes out**. Pull eagerly and you bank half-worked ingots. Pull late and the plate is foil.
+
+Which is the same bet the timer already is, arriving on the other side of the machine and costing something different — capital and layout rather than attention. §5's test passing, in a place nobody installed it.
+
+And because a part-worked item carries its own `Fu` (§9), a hopper pulling one out early has not ruined it. It can go back in, from a chest or by hand, and carry on from where it stopped.
+
 ### Calipers, and what they are actually for
 
 Late in beat 1 — **after** the timer, not before — the player wants something their eyes cannot give them: not to avoid scrap, but to hit **foil deliberately and every time.**

@@ -1,6 +1,7 @@
 package io.github.cloby0.feedback;
 
 import io.github.cloby0.feedback.registry.FBlockEntities;
+import io.github.cloby0.feedback.registry.FCapabilities;
 import io.github.cloby0.feedback.registry.FBlocks;
 import io.github.cloby0.feedback.registry.FCreativeTabs;
 import io.github.cloby0.feedback.registry.FDataComponents;
@@ -36,6 +37,7 @@ public class Feedback {
         FBlockEntities.register(modBus);
         FCreativeTabs.register(modBus);
         FDataComponents.register(modBus);
+        FCapabilities.register(modBus);
 
         NeoForge.EVENT_BUS.addListener(Feedback::onAddReloadListeners);
         NeoForge.EVENT_BUS.addListener(Feedback::onDatapackSync);

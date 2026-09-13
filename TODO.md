@@ -87,6 +87,7 @@ Built and compiling: rotation engine (`RotationNode` / `RotationNetwork` / `Rota
 - [x] **Crank Linkage** — short/long throw, swapped by right-clicking it; rotation to reciprocation
 - [x] **The `Fu` process** — 30 Fu to a plate, then plate → foil → scrap, as a datapack table
 - [x] **Workpiece progress is visible, in adjectives** — "Barely marked" → "Taking shape" → "Visibly worked" → "Nearly there". No figures: that is what calipers are for. The exact `Fu` is on the stack and deliberately not shown
+- [x] **The anvil is a container** — one slot, exposed as an `IItemHandler` capability, so vanilla hoppers feed and empty the hammer and moving items stays vanilla's job. It leaks no completion detection: an extractor takes whatever is on the anvil, worked or not, so a hopper is a second machine racing the first rather than a sensor. A part-worked item keeps its `Fu` and can go back in
 - [x] **Workpiece is visible in the machine too** — `client/MechanicalHammerRenderer` draws it lying on the anvil. Not decoration: beat 1 is meant to be readable by eye, and it cannot be if finding out what a machine holds means pulling the item out of it
 ### Information layer — Jade, JEI, and the debug helmet
 
