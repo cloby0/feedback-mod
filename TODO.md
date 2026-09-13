@@ -43,9 +43,8 @@ by size.
 - [ ] **Real models and textures**, for every block in both beats. Art, and the user's call —
   not something to start unprompted.
 
-**Also still true:** the working tree carried the whole of beat 2 uncommitted at the time this
-list was written. Commit before starting any wide refactor, or the two changes become
-unpickable from each other.
+**No longer true:** beat 2 is committed (`96cea49`), and the GPL relicence with it (`c6f0a8f`).
+The tree is clean, so a wide refactor is now safe to start.
 
 ---
 
@@ -418,7 +417,7 @@ Steel's window is 1420–1480 Tu and iron burns above 1540. So a bare charcoal f
 
 ### Read TerraFirmaCraft, and the licence is not Create's
 
-Reference checkout at `../TFC-reference`. **TFC is EUPL-1.2 — strong copyleft, unlike Create's MIT.** Its code cannot be copied or adapted without obliging Feedback to become EUPL, and that decision has not been made. It is read for *design* only; every place it informed one is named in `THIRD-PARTY-LICENSES.md`.
+Reference checkout at `../TFC-reference`. **TFC is EUPL-1.2 — strong copyleft, unlike Create's MIT, but adaptable.** EUPL-1.2's Article 5 Appendix lists GPL v3 as a Compatible Licence, so a derivative may be distributed under GPL-3.0 — which is what Feedback now is. The condition is that the election is *recorded* at the site. It is still read for *design* only, because the working rule stays stricter than the law; every place it informed one is named in `THIRD-PARTY-LICENSES.md`.
 
 What came of reading it:
 
