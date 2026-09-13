@@ -134,4 +134,17 @@ public record ThermalProcess(List<Ingredient> inputs,
     public boolean spoilsAt(float tu) {
         return tu > spoilTemperature;
     }
+
+    /**
+     * {@code holdTicks} for a process the JEI plugin synthesises from a pooled vanilla/modded
+     * cooking recipe rather than loading from a file -- see {@code FeedbackJeiPlugin.pooled}.
+     * Metal counts an integrated Work total there and food counts plain ticks, neither of which
+     * is "stay in this band for N ticks", so there is no honest number to put here and the card
+     * knows to leave the row off instead of printing one that was never true.
+     */
+    public static final int NO_HOLD = -1;
+
+    public boolean hasHold() {
+        return holdTicks >= 0;
+    }
 }

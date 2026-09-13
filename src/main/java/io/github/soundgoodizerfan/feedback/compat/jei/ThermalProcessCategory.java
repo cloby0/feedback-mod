@@ -55,6 +55,14 @@ import net.minecraft.world.item.crafting.Ingredient;
  * Beat 2's failure modes are asymmetric on purpose: undershooting does nothing, overshooting
  * destroys. Printing the spoil temperature tells the player which way to err long before they can
  * measure anything, which is exactly the lesson §6 wants them to carry into every later process.
+ *
+ * <h2>One card for hand-authored and pooled recipes alike</h2>
+ * A pooled vanilla/modded cooking recipe (see {@code FeedbackJeiPlugin.pooled}) is wrapped as a
+ * {@link ThermalProcess} too, so it draws through this same card rather than a second category and
+ * a second tab. It carries less: {@link ThermalProcess#hasHold()} is false for one, so the Hold
+ * row is left off instead of printing a number nobody measured, and its temperature band is often
+ * open-ended ({@link ThermalProcess#maxTemperature()} of {@code Float.MAX_VALUE}, drawn as
+ * {@code "800+"}) because a bare floor is all §15's two constants ever promised.
  */
 public class ThermalProcessCategory implements IRecipeCategory<ThermalProcess> {
 
@@ -124,27 +132,28 @@ public class ThermalProcessCategory implements IRecipeCategory<ThermalProcess> {
         int y = 18;
         row(graphics, font, y, "feedback.jei.inputs", inputNames(recipe), VALUE_COLOUR);
         y += 12;
-        row(graphics, font, y, "feedback.jei.temperature",
-                Readout.number(recipe.minTemperature()) + "-" + Readout.number(recipe.maxTemperature()) + " Tu",
-                VALUE_COLOUR);
+        String band = recipe.maxTemperature() < Float.MAX_VALUE
+                ? Readout.number(recipe.minTemperature()) + "-" + Readout.number(recipe.maxTemperature()) + " Tu"
+                : Readout.number(recipe.minTemperature()) + "+ Tu";
+        row(graphics, font, y, "feedback.jei.temperature", band, VALUE_COLOUR);
         y += 12;
         // Both, always: the philosophy's own convention for showing time, because ticks are what
-        // the simulation counts and seconds are what the player waits.
-        row(graphics, font, y, "feedback.jei.hold",
-                recipe.holdTicks() + " t (" + Readout.number(recipe.holdTicks() / 20f) + " s)", VALUE_COLOUR);
-        y += 12;
+        // the simulation counts and seconds are what the player waits. Left off entirely for a
+        // pooled recipe -- see ThermalProcess.NO_HOLD -- rather than print a hold time that was
+        // never true of it.
+        if (recipe.hasHold()) {
+            row(graphics, font, y, "feedback.jei.hold",
+                    recipe.holdTicks() + " t (" + Readout.number(recipe.holdTicks() / 20f) + " s)", VALUE_COLOUR);
+            y += 12;
+        }
         if (recipe.maxHeatingTuPerTick() < Float.MAX_VALUE) {
             row(graphics, font, y, "feedback.jei.max_heating",
                     Readout.number(recipe.maxHeatingTuPerTick()) + " Tu/t", VALUE_COLOUR);
             y += 12;
         }
-        if (recipe.spoilTemperature() < Float.MAX_VALUE) {
-            String ruined = recipe.spoiled().isEmpty()
-                    ? Readout.number(recipe.spoilTemperature()) + " Tu"
-                    : "> " + Readout.number(recipe.spoilTemperature()) + " Tu -> "
-                            + recipe.spoiled().getHoverName().getString();
-            row(graphics, font, y, "feedback.jei.spoils", ruined, SPOIL_COLOUR);
-        }
+        if (recipe.spoilTemperature() < Float.MAX_VALUE)
+            row(graphics, font, y, "feedback.jei.spoils", "> " + Readout.number(recipe.spoilTemperature()) + " Tu",
+                    SPOIL_COLOUR);
     }
 
     private static void row(GuiGraphics graphics, Font font, int y, String labelKey, String value, int colour) {

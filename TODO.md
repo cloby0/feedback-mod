@@ -10,78 +10,44 @@ Candidates weighed on 2026-09-12 and deliberately not taken that night. Each one
 here so a fresh session can start on it without re-deriving the scope. Ordered by value, not
 by size.
 
-- [x] **JEI take-over: hide vanilla's smelting/blasting/smoking, dynamically publish every pooled
-  recipe as our own.** Built 2026-09-13, direct follow-on to §4f. `./gradlew build` passes;
-  **unverified by eye** -- nothing confirmed yet that the vanilla categories are actually gone
-  from the browser or that a pooled card renders correctly. The three pieces below as scoped,
-  all landed as planned; the two open judgement calls were both taken the way this entry leaned.
+- [x] **JEI take-over: hide vanilla's smelting/blasting/smoking, publish every pooled recipe as
+  our own.** Built 2026-09-13, direct follow-on to §4f. `./gradlew build` passes; **unverified by
+  eye.** `FeedbackJeiPlugin.onRuntimeAvailable` hides JEI's built-in `SMELTING`/`BLASTING`/`SMOKING`
+  categories, since the Furnace, Smoker and Blast Furnace never touch a vanilla block class any
+  more and the built-ins now describe permanently inert blocks.
 
-  - `FeedbackJeiPlugin.onRuntimeAvailable` calls `hideRecipeCategory` for JEI's `SMELTING`,
-    `BLASTING`, `SMOKING`.
-  - New `VanillaFallbackCategory implements IRecipeCategory<RecipeHolder<AbstractCookingRecipe>>` --
-    input, output, and one free-adjective line: `Component.translatable("feedback.jei.floor.food")`
-    for food, `Readout.temperature(FTuning.METAL_MIN_TU)` wrapped in `feedback.jei.floor.metal` for
-    metal. Never an exact figure, matching `ThermalProcessCategory`'s own reasoning in the other
-    direction.
-  - `FeedbackJeiPlugin.publishFallback` unions JEI's own `createRecipeLookup` for all three vanilla
-    types (no second pooling pass), filters out anything whose input a hand-authored
-    `ThermalProcess` (via `ClientThermalProcesses`) already claims, republishes on the same
-    `ClientThermalProcesses.onChanged` hook `publishThermal` already used.
-  - **Both judgement calls resolved in favour of the option this entry already leaned toward:**
-    the card states the floor in words rather than staying silent about which applies, and all
-    three vessels are registered as the category's catalyst rather than narrowing to Furnace/Blast
-    Furnace -- consistent with "capability is never a hard gate" and with `ThermalProcessCategory`
-    already doing the same for hand-authored recipes.
+  **Got a second pass the same session, after a look at the actual card.** First cut gave pooled
+  recipes their own `VanillaFallbackCategory` and their own tab — wrong, and wrong for a reason
+  worth keeping: a second tab whose only distinction is "we didn't author this one" is a
+  distinction the player has no reason to care about, and it directly contradicted this file's own
+  §2 read of `ThermalProcessCategory` as *the* place a fire's effect on a material is published.
+  Corrected to one category:
 
-  **Original scoping note, kept for the record** -- the three pieces it named are exactly what
-  got built:
-  Furnace, Smoker and Blast Furnace are independent blocks now that never touch vanilla's
-  `AbstractFurnaceBlockEntity`. `process/VanillaFallback` still pools every vanilla/modded
-  `smelting`/`blasting`/`smoking` recipe for anything without a hand-authored `ThermalProcess` —
-  but JEI still shows those under its own built-in "Furnace"/"Smoking"/"Blasting" categories,
-  catalyzed by the now-inert vanilla blocks, which is exactly backwards: our vessels are the only
-  thing that can actually run them any more.
-
-  Three pieces, all in `compat/jei/`:
-
-  1. **Hide the vanilla categories.** In `FeedbackJeiPlugin.onRuntimeAvailable`, call
-     `runtime.getRecipeManager().hideRecipeCategory(...)` for
-     `mezz.jei.api.constants.RecipeTypes.SMELTING`, `.SMOKING`, `.BLASTING`. Confirmed present on
-     the classpath (`jei-1.21.1-common-api` 19.54.0.429): `IRecipeManager.hideRecipeCategory
-     (RecipeType<?>)` is a real, public, abstract method there today.
-
-  2. **A new category for pooled recipes — do not stretch `ThermalProcessCategory` to cover
-     both.** That class's whole card (min/max/hold/spoil, all exact Tu) is real published data
-     about a hand-authored `ThermalProcess`. A pooled `VanillaFallback` recipe has no such figures
-     — only the same two floors every vessel already enforces, `FTuning.FOOD_MAX_TU` and
-     `METAL_MIN_TU` — so a card inventing an exact window for one would violate §8's own rule in
-     the other direction ("a requirement is published data"): this requirement was never written
-     down by anyone, and a card pretending otherwise is the mistake. New
-     `VanillaFallbackCategory implements IRecipeCategory<RecipeHolder<AbstractCookingRecipe>>`,
-     showing input → output and the free adjective for whichever floor applies (food: something
-     like "needs to be hot enough to cook"; metal: `Readout`-style banded language off
-     `METAL_MIN_TU`), never an exact figure. Catalysts: `FItems.FURNACE`, `FItems.SMOKER`,
-     `FItems.BLAST_FURNACE` — all three; which vessel can actually *reach* a given recipe's floor
-     is a fact the card can say in words, not a fact about which block gets to claim it (§15, no
-     whitelists).
-
-  3. **Source the entries from JEI itself, not a second recipe-pooling pass.**
-     `IRecipeManager.createRecipeLookup(RecipeTypes.SMELTING).get()` (and `.SMOKING`, `.BLASTING`)
-     already returns JEI's own deduplicated, already-resolved recipes across every installed mod —
-     the same shape `VanillaFallback.find` already searches, so this does not need a second
-     pooling mechanism written. Union the three lookups, skip any recipe whose input already
-     matches a hand-authored `ThermalProcess` (`ThermalProcessTable.get().entries()` gives the
-     ingredient lists to check against, so steel does not *also* show as a generic smelting card),
-     register what's left under the new category in `onRuntimeAvailable` the same way
-     `FeedbackJeiPlugin.publishThermal` already pushes `ThermalProcess` cards.
-
-  **Left for whoever picks this up to decide, not pre-answered here:** whether the pooled-recipe
-  card should say which floor applies in so many words (probably yes, one line); whether a recipe
-  gated on `METAL_MIN_TU` should still list the Smoker as a catalyst even though it never means to
-  get that hot, or only Furnace/Blast Furnace — leaning toward listing all three and letting the
-  stated floor speak for itself (consistent with "precision is never a hard gate" generalising to
-  "capability is never a hard gate" either, but this is a judgement call worth a second opinion
-  before writing it, not a settled fact like the three pieces above).
+  - Every pooled recipe (from `IRecipeManager.createRecipeLookup` across `SMELTING`, `BLASTING`,
+    `SMOKING` — no second pooling pass, same recipes `VanillaFallback.find` already searches) is
+    wrapped as a `ThermalProcess` in `FeedbackJeiPlugin.pooled`, filtered against
+    `ClientThermalProcesses` so steel does not also show up as a generic smelting card, and
+    published under `ThermalProcessCategory.TYPE` alongside the hand-authored entries.
+  - **What's honest to wrap and what isn't.** Input, output, and whichever floor gates it
+    (`FTuning.METAL_MIN_TU` or `FOOD_MAX_TU`) are real, universal, exact figures — same standing
+    as a machine's own printed spec sheet (§17) — so they're printed as numbers, not softened into
+    an adjective the way the first pass did. `holdTicks` is not honest to invent: metal counts an
+    integrated Work total and food counts plain ticks, neither of which is "N ticks in this band",
+    so a new sentinel `ThermalProcess.NO_HOLD` (`-1`) and `hasHold()` let the card leave the row
+    off instead of printing a number nobody measured.
+  - `ThermalProcessCategory` gained the display-only changes this forced anyway: a temperature
+    band with no ceiling draws as `"800+ Tu"` rather than a bogus range against `Float.MAX_VALUE`,
+    and the catalyst list for the whole category now includes the Furnace, Smoker and Blast
+    Furnace alongside both crucibles — which turned up a real pre-existing gap, not just a
+    consequence of the merge: those three vessels check `ThermalProcessTable` before falling back
+    to `VanillaFallback` (§4e/§4f), so a hand-authored process like steel was already reachable in
+    the Blast Furnace and JEI never said so.
+  - Two small display bugs fixed on the same pass, from a screenshot of the Steel Ingot card:
+    the `Temperature`/`Max heating` labels overlapped their values (longer label than the
+    `LABEL_X`-to-`VALUE_X` gap allows) — shortened to `Tu` / `Max Tu`, matching lang keys
+    `feedback.jei.temperature` / `.max_heating`. And the spoils row no longer names the spoiled
+    result (`"> 1470 Tu -> Burnt Iron"` → `"> 1470 Tu"`), for hand-authored and pooled cards alike
+    — one format, not two.
 
   **Already true, nothing to do here:** vanilla's own in-GUI recipe book (the bookmark-flip
   toggle) doesn't apply to these screens at all any more — `ThermalVesselScreen` never adds one,
@@ -896,8 +862,8 @@ and a blaze rod, pulling a workpiece out and reading its temperature by hovering
   showed *any* tooltip, for anything, until `render()` was overridden to add that one call. The
   temperature-tooltip feature above shipped first and looked broken; the actual bug had nothing to
   do with temperature.
-- [ ] **[OPEN] JEI still shows vanilla's own smelting/blasting/smoking categories**, catalyzed by
-  the now-inert vanilla blocks. Scoped as its own pick-up-list item below — see "JEI take-over."
+- [x] **JEI's own smelting/blasting/smoking categories, hidden.** See "JEI take-over" near the top
+  of this file for the full record, including a same-session correction.
 - [ ] **[OPEN] The fuel slot still accepts anything `FuelTable` recognises but nothing vanilla
   doesn't** — the inverse of the old mixin pass's gap. A `FuelSlot.mayPlace` override already
   exists (`ThermalVesselMenu`); nothing further needed unless a fuel item wants to be *rejected*
