@@ -49,6 +49,19 @@ by size.
     result (`"> 1470 Tu -> Burnt Iron"` → `"> 1470 Tu"`), for hand-authored and pooled cards alike
     — one format, not two.
 
+  **A third pass, from a screenshot of the Baked Potato card: real duplicate-recipe bug, not a
+  display bug.** `pooled()` streamed `SMELTING`/`BLASTING`/`SMOKING` flat and wrapped every
+  `RecipeHolder` on its own. Vanilla ships *two* cooking recipes for potato → baked potato, one
+  `smelting` and one `smoking` — either appliance can cook food — so the flat stream produced two
+  cards for one item, and because `isFood` reads off the specific recipe instance found, the
+  `smelting` copy drew as an ungated metal card (`"800+ Tu"`, no spoils) right next to the correct
+  food one (`"0-400 Tu"`, `"Spoils > 400 Tu"`). `VanillaFallback.find` already resolves this
+  correctly at runtime — best of all three types, shortest cooking time wins — so the vessel
+  itself never had this bug, only the card. Fixed by grouping pooled recipes by input item first
+  in `FeedbackJeiPlugin.pooled`, keeping the shortest-cooking-time entry per item with the same
+  tie-break `VanillaFallback.find` uses, so the card and the block agree on which single recipe an
+  item runs as.
+
   **Already true, nothing to do here:** vanilla's own in-GUI recipe book (the bookmark-flip
   toggle) doesn't apply to these screens at all any more — `ThermalVesselScreen` never adds one,
   since it is not `AbstractFurnaceScreen` and never inherited `RecipeBookComponent`'s ghost-fill.

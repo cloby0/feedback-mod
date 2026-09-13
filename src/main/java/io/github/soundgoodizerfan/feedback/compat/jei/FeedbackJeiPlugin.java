@@ -20,7 +20,9 @@
 package io.github.soundgoodizerfan.feedback.compat.jei;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import io.github.soundgoodizerfan.feedback.Feedback;
@@ -47,6 +49,7 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.AbstractCookingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -184,6 +187,17 @@ public class FeedbackJeiPlugin implements IModPlugin {
      * own. Filtered against {@code handAuthored} so steel does not also show up as a generic
      * smelting card once something hand-authored already claims its input.
      *
+     * <h3>One card per item, same tie-break {@link VanillaFallback#find} uses at runtime</h3>
+     * Vanilla ships more than one cooking-recipe entry for plenty of items -- potato has both a
+     * {@code smelting} and a {@code smoking} recipe to baked potato, since either appliance can
+     * cook food. Streaming all three vanilla types flat and wrapping each holder on its own used
+     * to publish both: two cards for one item, and because {@code isFood} reads off the specific
+     * recipe instance, the {@code smelting} copy of a food item drew as an ungated metal card next
+     * to the correct food one -- {@code "800+ Tu"} beside {@code "0-400 Tu, Spoils > 400 Tu"} for
+     * the same potato. Grouped by input item here instead, keeping the shortest cooking time on a
+     * tie exactly the way {@link VanillaFallback#find} already resolves it for the vessel itself,
+     * so the card and the block agree on which single recipe an item actually runs as.
+     *
      * <h3>What is honest to wrap and what is not</h3>
      * Input, output, and whichever floor gates it ({@link FTuning#METAL_MIN_TU} or
      * {@link FTuning#FOOD_MAX_TU}) are real, universal, and exact -- the same kind of published
@@ -199,11 +213,22 @@ public class FeedbackJeiPlugin implements IModPlugin {
             return List.of();
         HolderLookup.Provider access = client.level.registryAccess();
         IRecipeManager recipes = runtime.getRecipeManager();
-        return Stream.of(
+        Map<Item, RecipeHolder<AbstractCookingRecipe>> best = new LinkedHashMap<>();
+        Stream.of(
                         lookup(recipes, RecipeTypes.SMELTING),
                         lookup(recipes, RecipeTypes.BLASTING),
                         lookup(recipes, RecipeTypes.SMOKING))
                 .flatMap(stream -> stream)
+                .forEach(recipe -> {
+                    ItemStack[] accepted = recipe.value().getIngredients().get(0).getItems();
+                    if (accepted.length == 0)
+                        return;
+                    Item item = accepted[0].getItem();
+                    RecipeHolder<AbstractCookingRecipe> current = best.get(item);
+                    if (current == null || recipe.value().getCookingTime() < current.value().getCookingTime())
+                        best.put(item, recipe);
+                });
+        return best.values().stream()
                 .filter(recipe -> !claimed(recipe, handAuthored))
                 .map(recipe -> toThermalProcess(recipe, access))
                 .toList();
