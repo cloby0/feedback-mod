@@ -46,7 +46,7 @@ Root package `io.github.cloby0.feedback`. The package tree follows the mod's **s
 
 Create a package when there is something to put in it; don't scaffold empty ones.
 
-**Datagen is not written yet.** `src/generated/resources` is a resource root and is committed, but blockstates, models, loot tables and lang are hand-authored under `src/main/resources` for now. Convert when the roster is big enough that hand-editing starts going wrong — not before.
+**Datagen is not written yet.** `src/generated/resources` is a resource root and is committed, but blockstates, models, loot tables, lang, crafting recipes and recipe-unlock advancements are all hand-authored under `src/main/resources` for now. Convert when the roster is big enough that hand-editing starts going wrong — not before. The recipe pass (19 shaped recipes, 3 advancements) was the closest call so far and hand-editing still won.
 
 **All art is placeholder.** Every texture currently referenced is a vanilla one. No Create asset may ever be used here: Create's *code* is MIT, its *assets* are All Rights Reserved. `THIRD-PARTY-LICENSES.md` records what we owe and to whom.
 
@@ -162,5 +162,7 @@ These are settled and constrain any proposal:
 1. **Write document 2 (mechanics).** Not started. `feedback_philosophy.md` defers to it by name throughout — unit arithmetic, per-energy sensor/actuator pairings, the thermal model, overrun band tuning, the vanilla vessel thermal bands.
 2. **Write document 3 (content).** Not started, and downstream of 2.
 3. **Project scaffold is done** — Gradle, run configs, Parchment, deploy script, mod entrypoint. **The data-driven recipe format is now settled by precedent rather than by decree:** four datapack tables (`deformation`, `thermal_process`, `quench`, `fuel`), each a plain `SimpleJsonResourceReloadListener` over a record with a `Codec` and a `StreamCodec`, none of them a vanilla `RecipeType`. §15's "compat authored as a table" is satisfied — a pack that wants coke to burn hotter writes a line of JSON.
-4. **Slice 1 is built, both beats.** Beat 1 (mechanical repetition) is verified in game. Beat 2 (heat) compiles, boots on a dedicated server and its numbers have been simulated, but **nothing in it has been seen running**. Slice 2 opens on tempering, damper and controller, which `feedback_slice_01.md` deliberately leaves dangling.
+
+   **The one vanilla `RecipeType` is `feedback:hand_deformation`**, and it is the exception that states the rule. The ban exists so no *machine* owns a recipe list; a crafting table is vanilla's recipe machine and the player is the one swinging, so hand work is allowed to be a recipe. It is an adapter over `DeformationTable` and not a fifth table — every figure still comes from the datapack, and deleting the class would remove a route to a plate without removing a fact about copper.
+4. **Slice 1 is built, both beats, and is craftable in survival.** Beat 1 (mechanical repetition) is verified in game. Beat 2 (heat) compiles, boots on a dedicated server and its numbers have been simulated, but **nothing in it has been seen running**. The Hand Hammer and the crafting-recipe pass are likewise built and unverified — they are what makes beat 2 reachable without creative mode, so verifying beat 2 is now actually possible. Slice 2 opens on tempering, damper and controller, which `feedback_slice_01.md` deliberately leaves dangling.
 5. **`TODO.md` is the working checklist** — source of truth for *what's next*, where `feedback_philosophy.md` stays source of truth for *why*. Keep it current as items close.

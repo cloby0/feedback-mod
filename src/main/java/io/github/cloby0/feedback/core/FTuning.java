@@ -163,6 +163,30 @@ public final class FTuning {
      * lands and not how fast the job goes. That is exactly why copper -- which yields to almost
      * nothing -- lets a player install the wrong crank and never find out.
      */
+    /**
+     * SLICE: a hand hammer swings at about 3 St.
+     *
+     * <p>Against copper's hardness of 1 that is 3 Fu a swing, so a 14 Fu plate is five swings and
+     * the sixth starts making foil. It is deliberately the same figure as the Mechanical Hammer's
+     * long throw: the gentle machine is doing exactly what the player's arm was doing, only without
+     * ever getting bored, which is the whole of what beat 1 has to say.
+     *
+     * <p>It is also what keeps steel out of reach by hand with no rule about hands anywhere. Steel's
+     * hardness is 15, and 3 St below a hardness of 15 lands nothing at all -- philosophy 7's hard
+     * gate, a genuine impossibility rather than a slow route.
+     */
+    public static final float HAND_HAMMER_ST = 3f;
+
+    /**
+     * Invented. Blows a hand hammer lands before it is finished.
+     *
+     * <p>Sized as a working figure rather than a balance lever: 250 swings is fifty copper plates,
+     * which is plenty to bootstrap a first Mechanical Hammer and nowhere near enough to want to
+     * keep doing it. Philosophy 7 promises manual production stays <em>possible</em>, not that it
+     * stays free.
+     */
+    public static final int HAND_HAMMER_DURABILITY = 250;
+
     public static final float HAMMER_ST_SHORT = 12f;
     public static final float HAMMER_ST_LONG = 3f;
 

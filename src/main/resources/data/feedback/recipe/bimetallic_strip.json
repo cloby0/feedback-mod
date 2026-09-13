@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "F": {
+      "item": "feedback:copper_foil"
+    },
+    "N": {
+      "item": "minecraft:iron_nugget"
+    }
+  },
+  "pattern": [
+    "FF",
+    "NN"
+  ],
+  "result": {
+    "count": 1,
+    "id": "feedback:bimetallic_strip"
+  }
+}

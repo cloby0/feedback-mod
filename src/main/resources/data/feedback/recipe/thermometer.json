@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "G": {
+      "item": "minecraft:glass_pane"
+    },
+    "F": {
+      "item": "feedback:copper_foil"
+    },
+    "P": {
+      "item": "feedback:copper_plate"
+    }
+  },
+  "pattern": [
+    "G",
+    "F",
+    "P"
+  ],
+  "result": {
+    "count": 1,
+    "id": "feedback:thermometer"
+  }
+}

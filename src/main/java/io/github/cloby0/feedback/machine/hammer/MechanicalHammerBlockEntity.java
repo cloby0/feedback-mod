@@ -24,12 +24,8 @@ import io.github.cloby0.feedback.core.thermal.ItemHeat;
 import io.github.cloby0.feedback.machine.linkage.Reciprocating;
 import io.github.cloby0.feedback.machine.linkage.StrengthPair;
 import io.github.cloby0.feedback.machine.linkage.Throw;
-import io.github.cloby0.feedback.process.Deformation;
-import io.github.cloby0.feedback.process.DeformationTable;
+import io.github.cloby0.feedback.process.Deforming;
 import io.github.cloby0.feedback.registry.FBlockEntities;
-import io.github.cloby0.feedback.registry.FDataComponents;
-
-import java.util.Optional;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -56,14 +52,11 @@ import net.minecraft.world.level.block.state.BlockState;
  * foil is a real material the thermometer needs, so the first overrun a player meets is a
  * sidegrade rather than a punishment. Only past foil is there scrap.
  * <p>
- * Nothing here decides any of that. The chain lives in {@link DeformationTable} as a property of
+ * Nothing here decides any of that. The chain lives in {@link io.github.cloby0.feedback.process.DeformationTable} as a property of
  * the material, and the hammer never consults it for anything except "how much work does this
  * need and how hard must I hit it".
  */
 public class MechanicalHammerBlockEntity extends BlockEntity implements Reciprocating, StrengthPair {
-
-    /** Stages one blow may cascade through. A guard against a table that loops back on itself. */
-    private static final int MAX_CASCADE = 8;
 
     private ItemStack workpiece = ItemStack.EMPTY;
 
@@ -155,21 +148,9 @@ public class MechanicalHammerBlockEntity extends BlockEntity implements Reciproc
         if (workpiece.isEmpty())
             return;
 
-        Optional<Deformation> maybe = DeformationTable.get().find(workpiece);
-        if (maybe.isEmpty()) {
-            // Nothing this material does under a hammer. Scrap is already scrap -- but the blow
-            // still lands on something solid, so the force has nowhere to go but into the head.
-            wear(strength);
-            return;
-        }
-
-        Deformation deformation = maybe.get();
-
-        // Nothing heats the anvil. The workpiece carries its own heat (§9), and if it has fallen
-        // out of its working range the hammer goes on hitting it to no effect whatsoever -- which
-        // is the honest answer, because the hammer has no way to tell. The heat is wasted and the
-        // material is intact, matching beat 2's asymmetry: the player loses a trip to the fire,
-        // not the steel.
+        // The blow itself is in Deforming, because a player swinging a hand hammer in a crafting
+        // grid has to land exactly the same blow. What is left here is the half that is genuinely
+        // the machine's: a ceiling, a sound, and somewhere for the force to go when it misses.
         //
         // This is where the two beats meet. A hot ingot is on a clock from the moment it leaves
         // the crucible, so the distance between fire and anvil became a decision nobody installed,
@@ -177,57 +158,18 @@ public class MechanicalHammerBlockEntity extends BlockEntity implements Reciproc
         // brute-force answer is a faster hammer and the Su to sustain it; the other is two hammers
         // and a player willing to shuffle hot metal between them. Capital against attention, in a
         // third place nobody put it (§5).
-        //
-        // The slice always said the hammer wears here and it never did. It does now: the blow is
-        // landing on metal too stiff to move, so all of it comes back up the handle.
-        if (deformation.isHotWorking() && !deformation.worksAt(ItemHeat.get(workpiece, level))) {
+        Deforming.Blow blow = Deforming.strike(workpiece, strength, level);
+
+        // Every way a blow can accomplish nothing lands here, and they all cost the same thing.
+        // The slice always said the hammer wears on metal too stiff to move and it never did until
+        // the outcomes were named: the blow is landing on something that will not give, so all of
+        // it comes back up the handle.
+        if (!blow.landed()) {
             wear(strength);
             return;
         }
 
-        // How much a blow accomplishes is the material's business, not the machine's. Below the
-        // hardness threshold nothing lands at all -- philosophy 7's hard gate, a genuine
-        // impossibility rather than a slower version of the process.
-        int delivered = deformation.workFrom(strength);
-        if (delivered <= 0) {
-            wear(strength);
-            return;
-        }
-
-        int worked = workpiece.getOrDefault(FDataComponents.WORK.get(), 0) + delivered;
-
-        // Surplus carries, and carries through a finished stage into the next one. A blow does
-        // not politely stop at the finish line, which is the whole point: a hard enough blow on
-        // a soft enough material runs straight past what you wanted. Overshoot is the mechanic,
-        // not an edge case.
-        Deformation stage = deformation;
-        for (int guard = 0; guard < MAX_CASCADE && worked >= stage.work(); guard++) {
-            worked -= stage.work();
-
-            // The new stage inherits the old one's heat. Beating a hot ingot into a plate does not
-            // cool it, and losing the stamp here would have made every hot-working chain a single
-            // step by accident.
-            float carried = ItemHeat.get(workpiece, level);
-            workpiece = stage.result().copy();
-            ItemHeat.set(workpiece, carried, level);
-
-            Optional<Deformation> next = DeformationTable.get().find(workpiece);
-            if (next.isEmpty()) {
-                worked = 0;   // nothing further to become; the work has nowhere to go
-                break;
-            }
-            stage = next.get();
-        }
-
-        if (worked > 0) {
-            workpiece.set(FDataComponents.WORK.get(), worked);
-            // Required work rides along so the workpiece can describe its own progress wherever
-            // it goes, without anything having to look the material up.
-            workpiece.set(FDataComponents.WORK_REQUIRED.get(), stage.work());
-        } else {
-            workpiece.remove(FDataComponents.WORK.get());
-            workpiece.remove(FDataComponents.WORK_REQUIRED.get());
-        }
+        workpiece = blow.result();
         sync();
     }
 

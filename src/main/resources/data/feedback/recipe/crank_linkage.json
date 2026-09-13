@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": {
+      "item": "feedback:small_cog"
+    },
+    "P": {
+      "item": "feedback:copper_plate"
+    },
+    "S": {
+      "item": "feedback:shaft"
+    }
+  },
+  "pattern": [
+    "CP",
+    "PS"
+  ],
+  "result": {
+    "count": 1,
+    "id": "feedback:crank_linkage"
+  }
+}

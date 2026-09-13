@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "P": {
+      "item": "feedback:copper_plate"
+    },
+    "S": {
+      "item": "feedback:shaft"
+    },
+    "B": {
+      "item": "minecraft:cobblestone"
+    }
+  },
+  "pattern": [
+    "PPP",
+    " S ",
+    "BBB"
+  ],
+  "result": {
+    "count": 1,
+    "id": "feedback:mechanical_hammer"
+  }
+}

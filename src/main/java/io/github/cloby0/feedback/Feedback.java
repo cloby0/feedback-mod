@@ -24,6 +24,7 @@ import io.github.cloby0.feedback.registry.FCapabilities;
 import io.github.cloby0.feedback.registry.FBlocks;
 import io.github.cloby0.feedback.registry.FCreativeTabs;
 import io.github.cloby0.feedback.registry.FDataComponents;
+import io.github.cloby0.feedback.registry.FRecipes;
 import io.github.cloby0.feedback.registry.FItems;
 
 import com.mojang.logging.LogUtils;
@@ -61,6 +62,7 @@ public class Feedback {
         FCreativeTabs.register(modBus);
         FDataComponents.register(modBus);
         FCapabilities.register(modBus);
+        FRecipes.register(modBus);
 
         NeoForge.EVENT_BUS.addListener(Feedback::onAddReloadListeners);
         NeoForge.EVENT_BUS.addListener(Feedback::onDatapackSync);

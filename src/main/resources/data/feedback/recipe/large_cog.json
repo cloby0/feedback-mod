@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "P": {
+      "tag": "minecraft:planks"
+    },
+    "C": {
+      "item": "feedback:small_cog"
+    }
+  },
+  "pattern": [
+    " P ",
+    "PCP",
+    " P "
+  ],
+  "result": {
+    "count": 1,
+    "id": "feedback:large_cog"
+  }
+}

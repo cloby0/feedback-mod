@@ -39,6 +39,7 @@ public class FCreativeTabs {
                     .title(Component.translatable("itemGroup.feedback"))
                     .icon(() -> new ItemStack(FItems.SHAFT.get()))
                     .displayItems((params, output) -> {
+                        output.accept(FItems.HAND_HAMMER.get());
                         output.accept(FItems.SHAFT.get());
                         output.accept(FItems.SMALL_COG.get());
                         output.accept(FItems.LARGE_COG.get());

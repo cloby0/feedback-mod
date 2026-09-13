@@ -20,8 +20,10 @@
 package io.github.cloby0.feedback.registry;
 
 import io.github.cloby0.feedback.Feedback;
+import io.github.cloby0.feedback.core.FTuning;
 import io.github.cloby0.feedback.item.CalipersItem;
 import io.github.cloby0.feedback.item.DebugHelmetItem;
+import io.github.cloby0.feedback.item.HandHammerItem;
 import io.github.cloby0.feedback.item.ThermometerItem;
 
 import net.minecraft.world.item.BlockItem;
@@ -46,6 +48,17 @@ public class FItems {
 
     public static final DeferredItem<BlockItem> CLUTCH = ITEMS.registerSimpleBlockItem(FBlocks.CLUTCH);
     public static final DeferredItem<BlockItem> TIMER = ITEMS.registerSimpleBlockItem(FBlocks.TIMER);
+
+    /**
+     * The one route to a plate that needs no machine, and the reason there is one at all.
+     *
+     * <p>Philosophy 7 promises manual production stays theoretically possible for a surprising
+     * share of the game. Until this existed the promise was empty in the first ten minutes: a plate
+     * needed a Mechanical Hammer, and a Mechanical Hammer needs plates.
+     */
+    public static final DeferredItem<HandHammerItem> HAND_HAMMER =
+            ITEMS.registerItem("hand_hammer", HandHammerItem::new,
+                    new Item.Properties().stacksTo(1).durability(FTuning.HAND_HAMMER_DURABILITY));
 
     /**
      * The slice's first instrument. Registered here with the blocks rather than off in a tools

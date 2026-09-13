@@ -125,9 +125,9 @@ TFC: Feedback *could* legitimately take GTCEu as a jar dependency without relice
 not want that, for the same reason we do not depend on Create: this mod's point of departure
 from GregTech is architectural, and depending on GregTech to describe it would be absurd.
 
-And note the interaction with the section at the top of this file: while Feedback is All
-Rights Reserved, even the linking permission is unusable. ARR and LGPL cannot be combined
-in a distributed work at all.
+That option is only on the table at all because Feedback is now GPL-3.0. While it was All
+Rights Reserved, even the linking permission was unusable -- ARR and LGPL cannot be combined
+in a distributed work. The relicence opened a door we have chosen not to walk through.
 
 ### What is worth studying, and why it is worth studying early
 
@@ -147,6 +147,37 @@ to do with you. The reason to build it **before** a second cover needs it is the
 `Instrument` was built before the thermometer existed — a high fixed cost paid once beats no
 fixed cost and a medium variable cost paid per feature, and the crossover is earlier than it
 feels.
+
+### Taken: a hand tool that survives the craft
+
+`item/HandHammerItem`, `process/HandDeformationRecipe`.
+
+GregTech's crafting-table tools are not a recipe type and not a special ingredient. A tool is
+an ordinary ingredient matched by tag, and the entire mechanism is that its **crafting
+remainder is itself, one point more damaged** -- `IGTTool#definition$getCraftingRemainingItem`
+copies the stack, damages it, and returns it, so vanilla's own `Recipe#getRemainingItems`
+does the rest. Feedback's Hand Hammer works exactly that way, on NeoForge's
+`Item#getCraftingRemainingItem(ItemStack)`.
+
+Design read, code written here. Nothing was copied; the file is nine lines of logic and the
+shape is the borrowed part.
+
+**Deliberately not taken from GregTech:** the surrounding apparatus. GTCEu indexes nine
+crafting tools by a character symbol in a recipe pattern (`'h'` is a hard hammer) and matches
+them through `craftingTags`, which is the right answer for nine tools and pure overhead for
+one. Feedback matches `instanceof HandHammerItem` and will keep doing so until there is a
+second tool to justify a registry.
+
+**Deliberately not taken from TerraFirmaCraft either**, which solves the same problem with an
+anvil block and a forging minigame. That is a much larger and much better mechanic than this
+slice wants -- hand work here is meant to be *tedious*, not skilful, because philosophy 7
+says automation makes a process practical rather than unlocking it. A hand route that was fun
+would compete with the machine instead of motivating it.
+
+The one thing Feedback does that neither does: the craft is **not** the finished product. A
+blow adds `Fu` to the workpiece and hands the same workpiece back, so five crafts make a
+plate and a sixth makes foil. GregTech's tool recipes are ordinary atomic crafts, which is
+why theirs cannot overshoot and ours must.
 
 ### What was looked at and rejected
 

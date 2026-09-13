@@ -1,0 +1,35 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_item": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "minecraft:copper_ingot"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_item"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "feedback:shaft",
+      "feedback:small_cog",
+      "feedback:large_cog",
+      "feedback:gearbox",
+      "feedback:hand_crank",
+      "feedback:water_wheel",
+      "feedback:crank_linkage",
+      "feedback:mechanical_hammer",
+      "feedback:clutch",
+      "feedback:timer",
+      "feedback:calipers"
+    ]
+  }
+}

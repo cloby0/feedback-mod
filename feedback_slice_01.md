@@ -56,6 +56,15 @@ A hand hammer swings at about 3 St. Against copper's hardness of 1 that is 3 Fu 
 
 This is §7's *possible* column, introduced in the first ten minutes and never taken away. A player can hand-hammer plates for the entire game if they want to. Nobody will.
 
+**It swings in a crafting grid.** Hammer and workpiece in any crafting table, and one craft is one blow — the ingot comes back out of the result slot with 3 more `Fu` on it, five times, and then it is a plate. The hammer loses a point of durability each swing. There is no block to place and no minigame; hand work is meant to be tedious rather than skilful, because a hand route that was *fun* would compete with the machine instead of motivating it.
+
+Two things fall out of that choice, and both were the reason for it:
+
+- **Shift-click is the lesson, delivered early and by the player's own hand.** It crafts until the input runs out, so a careless stack of ingots arrives as plate, then foil, then scrap. Beat 1's gimmick — *it does not know when to stop* — lands before the player has built a single machine, on the material §6 chose precisely because they can afford to waste it.
+- **Steel needs no rule to be out of reach.** 3 St against steel's hardness of 15 lands nothing at all, so the recipe simply does not appear. That is §7's hard gate arriving by arithmetic rather than by a tier check, and nobody wrote a rule about hands.
+
+The bootstrap this fixes was real and was load-bearing: a copper plate needed a Mechanical Hammer, and a Mechanical Hammer needs copper plates. Without a hand route that is a hard gate standing exactly where the philosophy insists there is no physical impossibility.
+
 **Copper is chosen because it is forgiving and abundant** (§6, §7). It is nearly impossible to actually destroy, and the player has stacks of it. The slice needs a material the player can afford to waste while learning that waste is possible.
 
 ### The machine that does not stop
@@ -485,8 +494,9 @@ That is §14's difficulty curve in one component. The new material did not deman
 
 ## Budget check
 
-**Items (12):** Copper Plate · Copper Foil · Copper Scrap · Steel Ingot · Burnt Iron · Hardened Steel · Steel Plate · Hammer · Calipers · Thermometer · Bimetallic Strip · Shaft
+**Items (12):** Copper Plate · Copper Foil · Copper Scrap · Steel Ingot · Burnt Iron · Hardened Steel · Steel Plate · Hand Hammer · Calipers · Thermometer · Bimetallic Strip · Shaft
 *(Copper Ingot, Iron Ingot, Charcoal and Lava are vanilla. Blaze Rod is slice 2.)*
+*(The Hand Hammer was on this list from the first draft and was the last of the twelve to be built. The Bimetallic Strip is a block rather than an item as built — see below — so the count holds only because the Hand Hammer replaced it.)*
 
 **Machines (7 new):** Hand Crank · Water Wheel · Crank Linkage (short/long throw) · Mechanical Hammer · Crucible (small/large/insulated) · Firebox · Powered Bellows · Timer
 *(No controller and no damper. One actuator, one condition — see §13 and "What slice 2 opens on".)*

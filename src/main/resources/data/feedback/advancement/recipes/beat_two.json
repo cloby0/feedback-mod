@@ -1,0 +1,31 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_item": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "minecraft:brick"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_item"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "feedback:firebox",
+      "feedback:small_crucible",
+      "feedback:large_crucible",
+      "feedback:insulation",
+      "feedback:bellows",
+      "feedback:bimetallic_strip",
+      "feedback:thermometer"
+    ]
+  }
+}

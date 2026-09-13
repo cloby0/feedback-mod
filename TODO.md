@@ -20,11 +20,11 @@ by size.
   typed constants and named helpers with no wrapper at all. Compile is the whole test; no game
   session needed, which is why it suits a session that cannot verify by eye anyway.
 
-- [ ] **Crafting recipes, one pass over the roster.** Every block and item in both beats is
-  creative-only, which means beat 2 *cannot* be verified in survival — and beat 2 has never
-  been seen running. Mechanical, no design decisions, trivially resumable if a session runs
-  out partway. The reason it was deferred rather than done is §4b's note that the roster
-  should stop moving first; the roster has now been still for two beats.
+- [x] **Crafting recipes, one pass over the roster.** Done — 19 shaped recipes and 3 unlock
+  advancements, hand-authored under `src/main/resources/data/feedback/`. Both beats are
+  craftable in survival for the first time. It turned out *not* to be the decision-free pass
+  this entry promised: see §3c. The Hand Hammer had to be built first, because a copper plate
+  needed a Mechanical Hammer and a Mechanical Hammer needs copper plates.
 
 - [ ] **The Crude Blast Furnace and the vanilla thermal bands (§15).** Biggest missing
   *lesson* in the slice, and the sharpest claim §7 makes — that the demanding material was
@@ -188,7 +188,7 @@ Governed by §8's *what you need is free, what you have is a cost*. Write these 
 - **Sneak-clicking the Mechanical Hammer now extracts** rather than printing a report. Placing a block against its face while sneaking never worked and still does not; nothing regressed, but it is a behaviour change worth knowing about.
 - **Not built, deliberately: any instrument.** There are still no calipers and no thermometer. `Readout.instrumented()` is a boolean standing where a per-quantity, per-resolution question belongs; the call sites are already shaped for the real answer.
 
-- [ ] **No crafting recipes exist at all yet.** Every block and item is creative-only. Worth doing as one pass rather than piecemeal, once the roster stops moving
+- [x] **Crafting recipes.** Done in one pass — see §3c. Nothing is creative-only any more except the Debug Helmet, which is supposed to be
 
 ### Slice discrepancies — reconciled
 
@@ -218,6 +218,67 @@ Governed by §8's *what you need is free, what you have is a cost*. Write these 
 - **Accelerating force deliberately ignores friction**, with the terminal speed applied as a clamp instead. Using live surplus is more literal but behaves badly — surplus reaches zero exactly at terminal speed, so a run creeps the last revolution for fifteen seconds.
 - **Bearings are the obvious first physical upgrade** — a bushed or greased shaft with lower `Su` cost. Fits "upgrades are physical components" exactly. Not built.
 - **Water wheel speed scales with how many sides have flowing water**, so siting it is a decision rather than a placement. Not from the slice doc — an invention, and cheap to remove.
+
+---
+
+## 3c. The Hand Hammer, and the recipe pass — built, unverified
+
+Slice 1's item budget listed a hand hammer from the first draft and nothing ever implemented
+it, which left §7's sharpest promise — *manual production stays theoretically possible* —
+with nothing behind it in the first ten minutes. It also left a genuine circular dependency:
+a copper plate needs a Mechanical Hammer, a Mechanical Hammer needs copper plates.
+
+- [x] **`Deforming.strike`** — one blow, extracted out of `MechanicalHammerBlockEntity` so
+  the machine and the hand land the *same* blow. It returns a `Blow(result, outcome)` rather
+  than a boolean, because the two callers want different things from a failure: the machine
+  absorbs the force and wears, the crafting grid simply offers no craft. Same rule, seen from
+  the two ends of a handle. The cascade, the heat carry and the hardness floor all moved with
+  it and none of them changed
+- [x] **Hand Hammer** — 3 St, 250 durability. Deliberately the same figure as the Mechanical
+  Hammer's long throw, so the gentle machine is doing exactly what the arm was doing without
+  ever getting bored, which is the whole of what beat 1 has to say
+- [x] **It swings in a crafting grid**, not at a block. Hammer plus one workpiece, one craft
+  per blow, the workpiece handed back with 3 more `Fu` on it. `HandDeformationRecipe` is an
+  adapter over `DeformationTable` and not a fifth table — delete it and no fact about copper
+  is lost
+- [x] **19 shaped recipes + 3 unlock advancements**, hand-authored. Loads clean: 1310 recipes
+  and 1402 advancements on a dedicated server, no parse errors
+- [ ] **Nothing is verified by eye.** Unconfirmed: that five crafts make a plate and a sixth
+  makes foil, that shift-click runs a stack into scrap, that the hammer wears one point a
+  swing and dies at 250, and that the whole roster is reachable in survival
+
+### Decisions taken while building
+
+- **The grid, not a block in the world.** A block route needed a surface to hit, which is the
+  bootstrap problem again, and it would have been a fifth sneak-click handler immediately
+  after four were deleted. The grid also earns something the block could not: **shift-click
+  runs a whole stack straight through plate into foil into scrap**, which is beat 1's entire
+  lesson delivered by the player's own hand before they own a machine. Left sharp on purpose.
+- **A vanilla `RecipeType`, and §2's rule survives it.** Everything else in the mod is a
+  datapack table specifically so that no *machine* owns a recipe list — a machine that knew
+  when it was finished would stop being this mod. A crafting table is vanilla's recipe
+  machine and the player is the one doing the work, and a player is allowed to know what they
+  are making. The result slot previewing the next blow is the player gaining information,
+  which §7 is in favour of; the hammer on the anvil still cannot tell.
+- **Steel is out of reach by hand with no rule about hands.** 3 St under hardness 15 lands
+  nothing, so the recipe never appears. §7's hard gate arriving as arithmetic.
+- **A wasted swing costs nothing.** The Mechanical Hammer wears on force that could not go
+  into the work; a hand hammer has no equivalent, because the grid never offers the craft. You
+  cannot mis-swing at something you were never able to lift.
+- **The level reaches `assemble` by ThreadLocal.** A workpiece computes its temperature from a
+  stamp and a tick, so a blow needs a clock, and `assemble` is the one place vanilla does not
+  pass one — `CraftingMenu.slotChangedCraftingGrid` holds the level and drops it. NeoForge has
+  the identical problem with the crafting player and solves it the identical way
+  (`CommonHooks.craftingPlayer`). Worth knowing the workaround is theirs, not an invention.
+- **Bootstrap is vanilla-only, by necessity.** The Hand Hammer is 5 cobblestone and 2 sticks.
+  Everything downstream can then cost worked copper, which is what the slice always claimed:
+  plates are a real intermediate because they go into the machines.
+- **The Bimetallic Strip is literally bimetallic** — 2 copper foil, 2 iron nuggets. That it
+  consumes *foil* is the nicest accident in the pass: beat 1's first overrun mistake is the
+  material beat 2's only sensor is built out of, so the wasted plate was never wasted.
+- **Unlocks are three grouped advancements**, not nineteen. Bootstrap on cobblestone, beat 1
+  on copper ingot, beat 2 on brick. §8 says a requirement is published data, so there is
+  nothing to protect by staging them finely.
 
 ---
 

@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "L": {
+      "item": "minecraft:leather"
+    },
+    "P": {
+      "tag": "minecraft:planks"
+    },
+    "S": {
+      "item": "feedback:shaft"
+    }
+  },
+  "pattern": [
+    "LPL",
+    "LSL"
+  ],
+  "result": {
+    "count": 1,
+    "id": "feedback:bellows"
+  }
+}

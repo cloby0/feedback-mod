@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "P": {
+      "item": "feedback:copper_plate"
+    },
+    "N": {
+      "item": "minecraft:iron_nugget"
+    }
+  },
+  "pattern": [
+    "P P",
+    " N "
+  ],
+  "result": {
+    "count": 1,
+    "id": "feedback:calipers"
+  }
+}
