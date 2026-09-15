@@ -25,6 +25,15 @@ Only implement Established decisions and explicitly approved proposals. When a p
 move the relevant content out of this document and into document 2 or document 3 (once it exists),
 and mark it Established there — don't leave it dangling here.
 
+**Naming note:** the "Slice N" numbering below (18 candidate content eras) is unrelated to
+`feedback_slice_01.md`'s "slice" — that document is a single **built, playable vertical increment**
+(copper then steel, confirmed in-game per `TODO.md`), while a "slice" here is a **candidate content
+package on the timeline**, most of it unbuilt. The word collision is inherited from this document's
+own framing (`CLAUDE.md`'s table already calls these "18 speculative content slices") and isn't worth
+a rename, but don't read "Slice 1 — Primitive Industry" below as a synonym for `feedback_slice_01.md`
+— the built slice's roster (copper, steel, crucible, thermometer, bellows) is a proper subset of this
+document's Slice 1, not the same object.
+
 ### 0.2 Ask before implementing
 
 Before implementing any item, recipe, machine, progression gate, world-generation rule, or
@@ -50,6 +59,11 @@ vanilla vessels.
 ---
 
 ## 1. Progression model
+
+**Category: Strong direction.** Not itself new — it's §14's already-Established "capability bands,
+not tiers" and "detect before you can act" claims, restated as a per-phenomenon sequence rather than
+a single global list. Nothing below asks the user to accept a new principle, only to apply an existing
+one uniformly.
 
 Overlapping technological horizons, not rigid mutually exclusive tiers — this is the same claim
 `feedback_philosophy.md` §14 makes about capability bands, applied per-phenomenon rather than
@@ -94,6 +108,16 @@ below — see §0.2.
   resonant behavior; blaze material produces extreme heat; nether quartz appears unusually pure /
   thermally useful; ender pearls are anomalous but poorly understood.
 - **Milestone:** steel becomes the first major machine-construction material.
+
+**Grounding note on "amethyst resonance":** this isn't decorative pseudoscience. Amethyst is
+structurally α-quartz (SiO₂ with trace Fe³⁺ substitution for color), and α-quartz is a real
+piezoelectric crystal — the same physical fact that makes quartz crystal oscillators, phonograph
+cartridges, and push-button piezo igniters work. Treating amethyst as an anomalous-but-real resonant
+material is "scientific, not realistic" (`feedback_philosophy.md` §2) rather than crystal-healing
+flavor text, and it's the same real-physics anchor `speculative_physics_inspo_doc.md` already uses for
+piezoelectric ignition and enchanting (§1.4, §5.2 there). What's still fictional and Proposal-level is
+*how far* the resonance goes past real quartz's Curie-point/voltage limits — that's the anomaly worth
+characterizing per §14's "detect before you can act," not the underlying mechanism.
 
 ### Slice 2 — Heat Engineering
 
@@ -153,13 +177,22 @@ scale.
 Steam becomes the first serious industrial prime mover.
 
 - **Materials:** steel, copper, brass, bronze, graphite, refractory ceramics.
-- **Machines:** boiler, steam engine, condenser, pump, pressure regulator, governor, steam valve,
-  flywheel.
+- **Machines:** boiler, steam engine, condenser, pump, pressure relief valve, centrifugal overspeed
+  trip, steam valve, flywheel.
 - **Power chain:** `fuel → boiler → steam → engine → shaft`.
 - **Mechanical specialization:** steam is a large, robust, relatively slow power source; a mechanical
   network can drive crushers, rollers, pumps, hammers, generators simultaneously subject to load.
 - **Minecraft-native:** blaze material as an unusually hot thermal source, ahead of its deeper uses.
 - **Milestone:** industrial-scale mechanical power becomes practical.
+
+**Why not a literal governor:** a real flyball governor continuously throttles the steam valve as a
+function of speed — exactly the proportional "dial" `CLAUDE.md`'s hard design rules ban (§13: "the
+controller is a switch, never a dial"). The historical part worth keeping is the failure character —
+a runaway engine needs a physical, speed-sensed cutoff — so it's rebuilt as a **centrifugal overspeed
+trip**: flyweights that snap a single bang-bang linkage (shut the valve / release the clutch) past a
+fixed RPM, the same shape as the bimetallic strip thermostat (`feedback_philosophy.md` §13) one level
+up in energy type. Fine proportional speed regulation, if wanted at all, stays a player-built deadband
+of sensor + comparator + actuator (§13), never a machine stat.
 
 ### Slice 7 — Petrochemistry
 
@@ -209,8 +242,8 @@ Target point for the first genuinely recognizable electronic circuit.
 
 - **Materials:** aluminum, nickel, chromium, silicon, graphite, titanium, tungsten, cobalt, manganese,
   rare-earth materials.
-- **Products:** aluminum alloys, stainless steel, nichrome, high-speed steel, tungsten carbide, tool
-  carbide, titanium alloys, graphite electrodes, silicon wafers.
+- **Products:** aluminum alloys, stainless steel, nichrome, high-speed steel, tungsten carbide
+  (cutting-tool inserts), titanium alloys, graphite electrodes, silicon wafers.
 - **Machines:** vacuum furnace, arc furnace, induction furnace, crystal-growth system,
   powder-metallurgy press, sintering furnace, vacuum pump.
 - **Processes:** vacuum treatment, high-purity refining, crystal growth, advanced alloying, powder
@@ -244,6 +277,11 @@ Uranium and related materials appear *before* nuclear power is useful.
   electricity`. The reactor produces heat, never directly electricity.
 - **Design principle:** nuclear power is another energy-conversion chain, so it participates in Work
   conservation (`feedback_philosophy.md` §10).
+- **Control rods stay a discrete-options control, not a continuous depth slider** — a small named set
+  of insertion positions (e.g. withdrawn / working / SCRAM), each a physical stop the player or a
+  bang-bang actuator selects, per the hard design rule against continuous knobs and §13's "switch,
+  never a dial." A real reactor's rod position is continuous; Feedback's is not, the same departure
+  slice 6's steam governor already makes.
 - **Milestone:** extremely high energy-density thermal power becomes practical.
 
 ### Slice 13 — Nuclear / Ender Coupling
@@ -267,16 +305,30 @@ The first deliberately high-concept fusion of "ordinary" and Minecraft-native ph
 
 Sculk as a scientific subject, not a final-tier magic resource.
 
+**Partly superseded by `feedback_mechanics.md` §1, which is further along than "Unknown."** That
+section (speculative, not built, but a real working model — see `TODO.md` §1) already settles: XP is
+a physical byproduct with a PneumaticCraft-style two-dimensional quantity(`XPu`)/capacity relationship
+(§1.2), sculk is the **capture/store/transmit conduit, not the source** (§1.3 — deliberately
+separable from "sculk resonance," i.e. vibration sensing, which stays its own domain), and XP is
+explicitly **not a fifth power currency** — no engine converts `XPu` to `Work`; it's only a
+conditioning input (repair, catalysis, material conditioning) on top of one of the four real energy
+domains (§1.4-§1.6). Anything in this slice should build on that framework rather than re-opening it.
+What mechanics.md §1 does *not* cover, and this slice still owns: the vibration-sensing/signal-
+propagation side of Sculk (a genuinely separate phenomenon per §1.3's own note), Echo Shards, and
+memory-like behavior.
+
 - **Materials:** sculk, echo shards, amethyst, redstone, quartz, experience-derived materials if
   desired.
-- **Phenomena to investigate:** vibration sensing, signal propagation, experience interaction, energy
-  absorption, resonance, memory-like behavior.
-- **Candidate machines:** sculk analyzer, resonance transducer, experience accumulator, sculk sensor
-  package, echo memory device.
+- **Phenomena to investigate:** vibration sensing, signal propagation, energy absorption, resonance,
+  memory-like behavior. (XP quantity/level/capacity itself is `feedback_mechanics.md` §1's job, not
+  this slice's — see above.)
+- **Candidate machines:** sculk analyzer, resonance transducer, XP reservoir (the
+  `feedback_mechanics.md` §1.2 reservoir, not a new concept), sculk sensor package, echo memory device.
 - **Candidate outputs:** vibration sensor, resonant transducer, experience-storage component,
   echo-memory component.
-- **IMPORTANT — Unknown.** The physical interpretation of XP, Sculk, and Echo Shards is not finalized.
-  Ask before implementation.
+- **IMPORTANT — Unknown.** Sculk's vibration/signal/memory behavior and Echo Shards' physical
+  interpretation are not finalized. Ask before implementation. (XP's own model is drafted in
+  `feedback_mechanics.md` §1, still with its own `[OPEN]` items there — don't re-derive it here.)
 - **Milestone:** sculk becomes an engineered information/energy material.
 
 ### Slice 15 — Advanced Electronics
@@ -289,9 +341,20 @@ Sculk as a scientific subject, not a final-tier magic resource.
   oscillator, microcontroller.
 - **Machines:** semiconductor fabrication station, doping apparatus, lithography apparatus, wafer
   processing tools, advanced electronic tester.
-- **Controller progression (Strong direction — consistent with `feedback_philosophy.md` §13/§1.3's
-  "old technology keeps its niche"):** `mechanical/punch card → relay logic → electronic logic →
-  programmable controller`, with the older forms staying viable for appropriate applications.
+- **Controller progression — superseded by the built spec, not a competing proposal.** This slice
+  used to name its own four stages (`mechanical/punch card → relay logic → electronic logic →
+  programmable controller`), but `feedback_controller_spec.md` §4 already settled and partly built
+  this: **Punch Card (Su-driven, hard-rewrite) → Circuit Board (electrical, hard-rewrite) → Floppy
+  Disk (electrical, soft-rewrite) → USB/ender-networked (electrical, soft-rewrite, program lives on
+  the controller itself)**, with Punch Card built (`control/controller/`, `control/program/`,
+  `control/programmer/`) and the rest still just the table. Slice 15's electronics roster (diode,
+  transistor, integrated circuit) is the material precondition for the Circuit Board/Floppy Disk
+  media, not a separate tier scheme — defer to `feedback_controller_spec.md` for names and stages.
+  Same principle either way, and it is Established there, not just Strong direction: capability never
+  tiers (a punch card can express anything a late controller can, per `feedback_philosophy.md` §13),
+  only iteration cost falls and how much the controller can hold in mind at once grows, and older
+  media keep their niche (mechanical control has no electricity dependency, so it survives an outage
+  that takes an electronic controller down with it).
 - **Milestone:** compact programmable electronics become manufacturable.
 
 ### Slice 16 — Ender Engineering
@@ -337,6 +400,11 @@ Only after a mature industrial, electrical, thermal, and materials base exists.
 ---
 
 ## 3. Energy / power progression
+
+**Category split:** the *principle* that sources keep separate niches instead of forming a strict
+replacement ladder is Established (`feedback_philosophy.md` §10, §14 "old technology keeps its
+niche"). The *specific ordering* below — which source shows up before which — is Proposal, same as
+everything else in §2.
 
 Not a straight "better generator" ladder — different sources keep different engineering niches
 (`feedback_philosophy.md` §1.3/§14). Candidate progression, overlapping rather than a strict
@@ -464,8 +532,9 @@ Ask the user rather than deciding silently:
 6. Exact radiation model (slice 11).
 7. Exact nuclear fuel-cycle complexity (slice 12).
 8. Exact relationship between nuclear phenomena and Ender phenomena (slice 13).
-9. Exact physical interpretation of Redstone, Sculk/XP, and Amethyst's useful properties (slices 4, 8,
-   14, 15).
+9. Exact physical interpretation of Redstone, Sculk's vibration/signal/memory behavior, and Amethyst's
+   full useful-property ceiling (slices 4, 8, 14, 15) — XP itself has a drafted model already
+   (`feedback_mechanics.md` §1), narrower open items tracked there, not here.
 10. Exact Netherite metallurgy (slice 17).
 11. Exact fusion implementation (slice 18).
 12. Whether any proposed slice 9+ system should exist in the final mod at all.
