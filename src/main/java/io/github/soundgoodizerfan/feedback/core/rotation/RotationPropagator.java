@@ -20,13 +20,14 @@
 package io.github.soundgoodizerfan.feedback.core.rotation;
 import io.github.soundgoodizerfan.feedback.core.unit.Rpm;
 
+import it.unimi.dsi.fastutil.objects.Object2FloatMap;
+import it.unimi.dsi.fastutil.objects.Object2FloatOpenHashMap;
+
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import net.minecraft.core.BlockPos;
@@ -108,7 +109,10 @@ public class RotationPropagator {
         // relative speeds straight while it coasts.
         RotationNode reference = strongest != null ? strongest : start;
 
-        Map<RotationNode, Float> ratios = new HashMap<>();
+        // NaN default so a lookup can tell "never assigned" from "assigned zero" without a
+        // second containsKey call -- and so ratios never boxes a Float per node.
+        Object2FloatMap<RotationNode> ratios = new Object2FloatOpenHashMap<>();
+        ratios.defaultReturnValue(Float.NaN);
         if (!assignRatios(level, reference, ratios)) {
             // Two sources are fighting over the same run. Something has to give, and it is the
             // block that was just placed to complete the conflict.
@@ -137,7 +141,8 @@ public class RotationPropagator {
 
         RotationNetwork network = registry.create();
         for (RotationNode node : component) {
-            node.setRatio(ratios.getOrDefault(node, 0f));
+            float r = ratios.getFloat(node);
+            node.setRatio(Float.isNaN(r) ? 0f : r);
             node.setNetwork(network);
             network.add(node);
         }
@@ -159,26 +164,29 @@ public class RotationPropagator {
      *
      * @return false if two sources demand incompatible speeds of the same node.
      */
-    private static boolean assignRatios(Level level, RotationNode reference, Map<RotationNode, Float> ratios) {
+    private static boolean assignRatios(Level level, RotationNode reference, Object2FloatMap<RotationNode> ratios) {
         ratios.put(reference, 1f);
         float referenceRpm = reference.getGeneratedRpm().value();
 
         Deque<RotationNode> queue = new ArrayDeque<>();
         queue.add(reference);
+        // One buffer, refilled per node rather than allocated per node -- see floodFill for why.
+        List<RotationNode> neighbours = new ArrayList<>(6);
 
         while (!queue.isEmpty()) {
             RotationNode current = queue.poll();
-            float currentRatio = ratios.get(current);
+            float currentRatio = ratios.getFloat(current);
 
-            for (RotationNode neighbour : connectedNeighbours(level, current)) {
+            connectedNeighbours(level, current, neighbours);
+            for (RotationNode neighbour : neighbours) {
                 float gearing = ratioBetween(level, current, neighbour);
                 if (gearing == 0)
                     continue;
 
                 float conveyed = currentRatio * gearing;
 
-                Float existing = ratios.get(neighbour);
-                if (existing != null) {
+                float existing = ratios.getFloat(neighbour);
+                if (!Float.isNaN(existing)) {
                     // Rejoining the walk at a node we have already set is fine, as long as both
                     // routes agree. Disagreement means the run is geared against itself.
                     if (Math.abs(existing - conveyed) > 1e-4f)
@@ -205,6 +213,9 @@ public class RotationPropagator {
         List<RotationNode> found = new ArrayList<>();
         Set<BlockPos> seen = new HashSet<>();
         Deque<RotationNode> queue = new ArrayDeque<>();
+        // Reused across every node visited, instead of a fresh ArrayList<>(6) each time --
+        // connectedNeighbours only needs its result for the body of this loop, never after.
+        List<RotationNode> neighbours = new ArrayList<>(6);
 
         queue.add(start);
         seen.add(start.getBlockPos());
@@ -212,21 +223,22 @@ public class RotationPropagator {
         while (!queue.isEmpty()) {
             RotationNode current = queue.poll();
             found.add(current);
-            for (RotationNode neighbour : connectedNeighbours(level, current))
+            connectedNeighbours(level, current, neighbours);
+            for (RotationNode neighbour : neighbours)
                 if (seen.add(neighbour.getBlockPos()))
                     queue.add(neighbour);
         }
         return found;
     }
 
-    private static List<RotationNode> connectedNeighbours(Level level, RotationNode node) {
-        List<RotationNode> neighbours = new ArrayList<>(6);
+    /** Fills {@code out} with every node coupled to {@code node}. Clears it first. */
+    private static void connectedNeighbours(Level level, RotationNode node, List<RotationNode> out) {
+        out.clear();
         for (Direction face : Direction.values()) {
             RotationNode other = nodeAt(level, node.getBlockPos().relative(face));
             if (other != null && ratioBetween(level, node, other) != 0)
-                neighbours.add(other);
+                out.add(other);
         }
-        return neighbours;
     }
 
     /**

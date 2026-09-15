@@ -52,7 +52,7 @@ Note also what it does not separately state: how hard a blow has to be. Hardness
 
 ### Doing it by hand
 
-A hand hammer swings at about 3 St. Against copper's hardness of 1 that is 3 Fu a swing, so five swings make a plate — and a sixth starts making foil. It works, and it is exactly as fiddly as counting swings sounds.
+A hand hammer swings at about 3 St. Against copper's hardness of 1 that is 3 Fu a swing, so five swings make a plate — and the **eighth** swing overshoots it into foil, not the sixth. (Got wrong here once, and worth recording why it was tempting: "one more swing than it took to reach the last stage" assumes every stage costs about the same and starts from zero, but it does not — the fifth swing lands 15 Fu against a 14 Fu requirement, so 1 Fu carries into the plate, and the plate itself costs 9 more. Three swings at 3 Fu clears that, landing on the eighth. Confirmed by `gametest/HandDeformationGameTests`, `TODO.md`.) It works, and it is exactly as fiddly as counting swings sounds.
 
 This is §7's *possible* column, introduced in the first ten minutes and never taken away. A player can hand-hammer plates for the entire game if they want to. Nobody will.
 

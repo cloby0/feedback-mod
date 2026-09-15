@@ -263,14 +263,20 @@ by size.
   `ItemHeat.set`. Nothing new needed writing for either case — the convention from the thermal
   and rotation passes covered both.
 
-- [ ] **Allocation pass on `RotationPropagator`.** Not urgent and not a bug — every rebuild
-  trigger is correctly edge-triggered, so nothing runs per tick. But one `rebuildFrom` on an
-  *n*-node network allocates **~3n objects**: `connectedNeighbours` builds a fresh
-  `ArrayList<>(6)` per node and is called once from `floodFill` and again from `assignRatios`,
-  and `Map<RotationNode, Float>` boxes every ratio. A 500-shaft rebuild is ~1500 objects.
-  The fixes are mechanical — reuse a buffer in `connectedNeighbours`, swap the map for
-  fastutil's `Object2FloatMap` (already on the classpath via Minecraft). Worth doing before
-  networks get large, and worth measuring first rather than assuming.
+- [x] **Allocation pass on `RotationPropagator`.** Done. `connectedNeighbours` now fills a
+  caller-owned buffer instead of allocating a fresh `ArrayList<>(6)` per node — `floodFill` and
+  `assignRatios` each keep one list for the life of their own walk and clear-and-refill it per
+  node, since neither ever needs a neighbour list to outlive the loop body that consumes it.
+  `assignRatios`'s `Map<RotationNode, Float>` is now fastutil's `Object2FloatOpenHashMap`
+  (already on the classpath via Minecraft itself — confirmed in `.minecraft/libraries`, not
+  added as a new dependency), with `defaultReturnValue(NaN)` standing in for "never assigned"
+  so a lookup answers both questions `containsKey`+`get` used to split across two calls. Same
+  trick reused for the final `ratios.getOrDefault(node, 0f)` sweep. No behaviour change —
+  `./gradlew build` passes clean and nothing about ratio assignment, rebuild triggering, or
+  conflict detection moved. Not measured before or after (the item itself says to measure
+  first, and 500-shaft networks don't exist yet to measure against); this is the mechanical
+  half of the fix, done because it was cheap and correct rather than because a profiler asked
+  for it.
 
 - [ ] **Real models and textures**, for every block in both beats. Art, and the user's call —
   not something to start unprompted.
@@ -494,12 +500,29 @@ a copper plate needs a Mechanical Hammer, a Mechanical Hammer needs copper plate
   is lost
 - [x] **19 shaped recipes + 3 unlock advancements**, hand-authored. Loads clean: 1310 recipes
   and 1402 advancements on a dedicated server, no parse errors
-- [ ] **Nothing is verified by eye.** Unconfirmed: that five crafts make a plate and a sixth
-  makes foil, that shift-click runs a stack into scrap, that the hammer wears one point a
-  swing and dies at 250, that the clang fires once per craft and once per shift-click, and
-  that the whole roster is reachable in survival.
-  **A GameTest would settle most of this without a window** — the recipe is pure server logic,
-  so a test that feeds a `CraftingInput` five times and asserts a plate is cheap. Not written
+- [x] **The recipe arithmetic is now settled by a GameTest, not a guess.** This mod's first
+  GameTest: `gametest/HandDeformationGameTests`, exercising `HandDeformationRecipe` directly
+  (`matches`/`assemble` against a hand-built `CraftingInput`) rather than through a real
+  crafting menu, since those two methods are the entire rule per that class's own javadoc.
+  Needed the mod's first GameTest structure too — `data/feedback/structure/empty.nbt`, a bare
+  1x1x1 with no blocks, no palette, no entities, hand-built (no running client to bake one with
+  a structure block) and round-tripped through `NbtIo` before being trusted. `./gradlew
+  runGameTestServer` passes all three tests clean.
+
+  **Corrected this file's own guess in the process.** This entry used to say "a sixth [blow]
+  makes foil," flagged unverified — wrong. The arithmetic: a Hand Hammer lands `3 St / hardness
+  1 = 3 Fu` a blow (`Deformation.workFrom`); the ingot needs 14 Fu, so blow five lands 15 and
+  overshoots by 1 Fu carried into the plate stage; the plate needs 9 more, and 3 Fu a blow does
+  not clear that until three blows later. **Foil lands on the eighth blow, not the sixth.**
+  `eighthBlowMakesFoil` asserts exactly this, and asserts every one of blows six and seven is
+  still a plate. Worth keeping as a record of the actual failure mode this section exists to
+  prevent: an unverified figure sat in the working checklist as if it were a fact.
+
+  Still unconfirmed, and this test does not touch any of it: shift-click running a stack into
+  scrap (menu-level batching, not the recipe itself), the hammer wearing one point a swing and
+  dying at 250 (`getCraftingRemainingItem`, a different code path this test never exercises),
+  the clang firing once per craft and once per shift-click, and the whole roster being reachable
+  in survival. Those still want a client or a fuller crafting-menu simulation.
 
 ### Decisions taken while building
 
