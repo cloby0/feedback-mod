@@ -4,6 +4,14 @@
 # feedback_mechanics.md first. CLAUDE.md says those two documents are
 # authoritative and required before any implementation; nothing enforced
 # that before this hook, so an agent could skip straight to code.
+#
+# Checks marker files (written by mark-design-doc-read.sh's PostToolUse hook
+# on Read) rather than re-parsing the transcript JSONL. The transcript
+# approach was unreliable for background/subagent sessions — the JSONL isn't
+# guaranteed flushed to disk by the time this hook runs for the very next
+# tool call, so a subagent that had genuinely just Read both docs could
+# still get blocked. The marker file is written synchronously by the Read
+# call's own PostToolUse hook, so it has no such race.
 set -euo pipefail
 
 input=$(cat)
@@ -17,20 +25,14 @@ case "$file_path" in
   *) exit 0 ;;
 esac
 
-[[ -n "$transcript" && -f "$transcript" ]] || exit 0
+[[ -n "$transcript" ]] || exit 0
 
-was_read() {
-  jq -e --arg pat "$1" '
-    select(.type == "assistant")
-    | .message.content[]?
-    | select(.type == "tool_use" and .name == "Read")
-    | select(.input.file_path | test($pat))
-  ' "$transcript" >/dev/null 2>&1
-}
+markerdir="${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/.read-markers"
+key=$(printf '%s' "$transcript" | md5sum | cut -d' ' -f1)
 
 missing=()
-was_read 'feedback_philosophy\.md$' || missing+=("feedback_philosophy.md")
-was_read 'feedback_mechanics\.md$' || missing+=("feedback_mechanics.md")
+[[ -f "$markerdir/$key.philosophy" ]] || missing+=("feedback_philosophy.md")
+[[ -f "$markerdir/$key.mechanics" ]] || missing+=("feedback_mechanics.md")
 
 if [[ ${#missing[@]} -eq 0 ]]; then
   exit 0
