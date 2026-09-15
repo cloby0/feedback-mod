@@ -77,7 +77,7 @@ The full pattern:
 
 > **Observe → exploit → characterize → control → reproduce → engineer**
 
-A Blaze Rod is the model case. The first Blaze technology can be genuinely primitive — Blaze Rod plus a crude heat exchanger gives a dramatically hotter working fluid, and the player has no idea why. That is enough. Later they discover it behaves differently under containment; later still they measure its emission rate, find a relationship between its state and its temperature, stumble onto some bizarre interaction with another material, and eventually understand enough to manufacture the phenomenon deliberately.
+A Blaze Rod is the model case. The first Blaze technology can be genuinely primitive — Blaze Rod plus a crude heat exchanger gives a dramatically hotter working fluid, and the player has no idea why. That is enough. Later they discover it holds heat unusually well when insulated; later still they measure its emission rate, find a relationship between its state and its temperature, stumble onto some bizarre interaction with another material, and eventually understand enough to manufacture the phenomenon deliberately.
 
 Iron does not need to walk that whole sequence, because humans already understand iron. Blaze material, redstone, Ender phenomena, Sculk and Nether materials all can. This is also where the compendium earns its place — not as a pile of late-game explanations, but as **a reservoir of hypotheses about what an engineer might notice** when handling Minecraft's stranger materials. A natural Blaze Rod is not a disposable early fuel — it is an existence proof that motivates an entire branch of thermal engineering.
 
@@ -655,7 +655,7 @@ Feedback has multiple genuinely independent energy systems. Which one drives a m
 | Energy | Native sources | Transport | Typical uses |
 | :--- | :--- | :--- | :--- |
 | **Mechanical** | Water wheels, windmills, treadmills, steam pistons | Physical linkage only — shafts, gears, belts. Lossy to friction; needs lubrication upkeep | Mixers, grinders, presses, saws, pumps, drills |
-| **Thermal** | Fire, lava, contained Blazes, Nether/geothermal taps, thermal mass | Conducts through connected blocks; steam is the primary *vehicle* | Furnaces, boilers, evaporators, stills |
+| **Thermal** | Fire, lava, Blaze Rod (heat battery) / Blaze Powder (extreme fast-burning fuel), Nether/geothermal taps, thermal mass | Conducts through connected blocks; steam is the primary *vehicle* | Furnaces, boilers, evaporators, stills |
 | **Chemical** | Combustion fuels, and reactive intermediates | Moves as physical substance, not as a field | Reactors: alloying, explosives, synthesis |
 | **Electrical** | Lightning capture; conversion from the other three | Wires, lossy over distance without upgrades | Sensors, logic, precision control, electrolysis, electromagnets |
 | **Spatial** | Ender Pearls, Chorus Fruit (→ Liquid Teleportant) | Does not transmit — consumed per discrete jump | Signal relay, small-scale item/fluid transport |
@@ -702,7 +702,7 @@ The conversion is a **linkage** — a crank or cam — and it is a component the
 
 A heat pump left unattended overruns **in both directions at once** — an over-cooled source and an over-heated sink from one neglected machine. That the core loop generalizes cleanly to a device with two outputs is a good sign for the loop.
 
-A **contained Blaze** is a renewable thermal source: a flame-permeable cage holds a living Blaze captive while it radiates heat. Mismanaged containment does not simply "break" — the Blaze escapes and turns hostile. A hazard-tier outcome with real teeth. (GT6's community successor has an "Infernal Boiler" on similar ground, which validates the direction; our differentiator is that thermal drives machines *directly* rather than being funneled to electricity.)
+**Cut: caging a living Blaze as a renewable thermal source.** An earlier pass here had a flame-permeable cage holding a living Blaze captive, escaping and turning hostile on mismanaged containment — a hazard-tier outcome with real teeth, and GT6's community successor has an "Infernal Boiler" on similar ground, which made the shape look field-tested. It's dead anyway: a creature held captive in a cage, escaping on failure, is Create's Blaze Burner specifically, not just "an anomalous thermal source" generally, and the rotation network already draws enough from Create that converging on this one too would undo the differentiation. What stays instead: **Blaze Rod** is a genuinely good heat battery — it holds heat unusually well, an anomalous property worth the "recognize before understanding" treatment (§2) on its own. **Blaze Powder** is an extreme-temperature, fast-burning fuel — very hot, very short burn. Neither needs a cage or a hazard mechanic; the anomaly is in the material, not in an escape-failure state.
 
 **Chemical** splits in two. Combustion fuels are chemical energy deliberately converted to heat — they feed Thermal and need no transmission network of their own. **Reactive intermediates** stay chemical: unstable synthesized compounds that move as physical substances and have a **shelf life**, decaying to inert waste if they sit too long or travel too far before the next reactor consumes them. This mirrors real process chemistry, where many intermediates cannot be stored or shipped and must be consumed on site — and it gives Chemical a failure mode no other system has. It **expires**, where Thermal dissipates and Electrical merely resists.
 
@@ -895,7 +895,7 @@ This yields the single most useful question to ask of any proposed piece of tech
 
 > **Which axis does this advance?**
 
-A bigger boiler advances scale. A thermocouple advances observation. A deadband controller advances control. A centrifuge advances separation. A pressure vessel advances process conditions. A Blaze cage advances energy exploitation *and* anomalous characterization. None of them need to be "tier 4 machines." They are pieces of an ecosystem, and the interesting moments are where two or three axes cross and something new becomes possible that neither would have allowed alone.
+A bigger boiler advances scale. A thermocouple advances observation. A deadband controller advances control. A centrifuge advances separation. A pressure vessel advances process conditions. A Blaze Rod heat battery advances energy exploitation *and* anomalous characterization. None of them need to be "tier 4 machines." They are pieces of an ecosystem, and the interesting moments are where two or three axes cross and something new becomes possible that neither would have allowed alone.
 
 ### Difficulty stays flat. Novelty goes up.
 
