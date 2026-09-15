@@ -4,8 +4,9 @@
     { "item": "minecraft:charcoal" }
   ],
   "min_temperature": 1350,
+  "optimal_temperature": 1380,
   "max_temperature": 1410,
-  "hold_ticks": 600,
+  "required_tpu": 600,
   "max_heating": 5,
   "result": { "id": "feedback:steel_ingot" },
   "spoil_temperature": 1470,

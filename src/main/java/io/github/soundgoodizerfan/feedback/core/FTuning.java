@@ -603,8 +603,9 @@ public final class FTuning {
      * Invented. Above this, a food-type cooking recipe burns instead of finishing, in Tu.
      *
      * <h3>Why food and metal are told apart by recipe type, not a material table</h3>
-     * The fallback (see {@link #FALLBACK_WORK_PER_200_TICKS}) exists so that no recipe in any
-     * installed mod is uncraftable, which rules out a hand-authored temperature per material --
+     * The fallback (see {@link io.github.soundgoodizerfan.feedback.process.VanillaFallback})
+     * exists so that no recipe in any installed mod is uncraftable, which rules out a
+     * hand-authored temperature per material --
      * that is exactly the per-item table the fallback is there to avoid needing. Vanilla's own
      * {@code minecraft:smoking} recipe type already says "this is food"; reusing it is a
      * heuristic, not a physical measurement, and it is licensed by the same sentence that
@@ -701,23 +702,45 @@ public final class FTuning {
     public static final Conductance BLAST_FURNACE_LEAK = new Conductance(0.01f);
 
     /**
-     * Invented. Work required for a 200-tick (vanilla's own default) cooking recipe to finish,
-     * under the fallback that governs every vanilla and modded smelting recipe this mod has not
-     * hand-authored a {@code ThermalProcess} for.
+     * Invented. Ticks-equivalent of TPu lost per tick a hand-authored or vanilla-fallback
+     * process spends outside its useful temperature range, per {@code tpu_spec_doc.md}'s
+     * "TPu May Decay" and "TPu Should Not Necessarily Be Monotonic" sections.
      *
-     * <h3>The reference constant, computed rather than guessed at</h3>
-     * Philosophy 15: "one unspecified smelt costs one-eighth of the total heat one piece of coal
-     * yields in a plain stone furnace." Taken literally -- the {@code coal} fuel entry burns at
-     * 1180 Tu for 2400 ticks, so held at exactly its own flame temperature for its whole burn it
-     * delivers {@code (1180 - 20) * 2400 = 2,784,000} Work. An eighth of that is 348,000, which
-     * is what is here. A recipe that declares a longer cooking time scales this up proportionally
-     * rather than asking for a higher temperature, per the same section.
-     * <p>
-     * "Held at exactly its flame temperature" is an idealisation -- the real vessel approaches it
-     * and never quite arrives -- but the alternative is a constant that depends on which vessel's
-     * mass and leak you plug in, and the doc calls this <em>the</em> reference constant, singular.
+     * <h3>Why one global constant rather than a per-process field</h3>
+     * The doc calls the exact decay rule "a tuning decision", not a material property -- nothing
+     * about how fast a batch forgets its progress is something a modpack author would credibly
+     * want to retune per recipe. Set equal to the fastest possible accumulation rate (suitability
+     * 1.0 = 1 TPu/t), so a process interrupted right at its optimum loses ground exactly as fast
+     * as it could gain it -- no free ratchet in either direction.
      */
-    public static final float FALLBACK_WORK_PER_200_TICKS = 348_000f;
+    public static final float TPU_DECAY_PER_TICK = 1f;
+
+    /**
+     * Invented. Where a {@code minecraft:smoking}-classified vanilla-fallback recipe accumulates
+     * TPu fastest, in Tu -- {@code tpu_spec_doc.md}'s "Smoking" thermal hint: food-like, prefers
+     * lower and more stable heat. Sits well inside {@link #FOOD_MAX_TU}'s wall so a hold near
+     * the optimum has real margin before the recipe burns instead of finishing.
+     */
+    public static final Tu SMOKING_OPTIMAL_TU = new Tu(250f);
+
+    /**
+     * Invented. Where a generic (non-blasting) metal-classified vanilla-fallback recipe -- the
+     * {@code smelting} hint -- accumulates TPu fastest, in Tu. Set just above {@link
+     * #METAL_MIN_TU} rather than deep into blasting territory: {@code tpu_spec_doc.md}'s Furnace
+     * section wants the generalist "capable of both bands, optimized for neither", and this is
+     * the metal half of that mediocrity.
+     */
+    public static final Tu SMELTING_OPTIMAL_TU = new Tu(1000f);
+
+    /**
+     * Invented. Where a {@code minecraft:blasting}-classified vanilla-fallback recipe accumulates
+     * TPu fastest, in Tu -- {@code tpu_spec_doc.md}'s "Blasting" hint: metallurgical, rewards a
+     * hotter environment. Above {@link #SMELTING_OPTIMAL_TU} on purpose: it is the whole reason a
+     * hotter, better-insulated vessel (a blast furnace) ends up finishing ore faster than a plain
+     * furnace without either block ever checking the other's identity -- see {@link
+     * io.github.soundgoodizerfan.feedback.process.VanillaFallback} for where this is read.
+     */
+    public static final Tu BLASTING_OPTIMAL_TU = new Tu(1400f);
 
     /**
      * What a full draught of air multiplies a fuel's flame temperature by.

@@ -341,7 +341,12 @@ File exists now: `feedback_mechanics.md`. Only section written: Experience (XP) 
 - [x] Hot workpiece cooling rate (§9). Built — 1.5 Tu/t, linear, stamp-and-timestamp. There is no `Hot Steel Ingot` item to revert: heat is two components on the ordinary ingot
 - [ ] Write both of the above up in doc 2, from the code rather than from scratch
 - [ ] Vanilla vessel bands — smoker ceiling, Crude Blast Furnace floor, plain furnace span (§15)
-- [ ] Fallback smelting: 1/8-coal reference constant, cook-time scaling (§15)
+- [x] Fallback smelting. Superseded by TPu (`tpu_spec_doc.md`) before doc 2 ever described the
+  1/8-coal Work-per-tick version — see `feedback_mechanics.md` §3.4 for what actually shipped:
+  `VanillaFallback` reads a recipe's own cooking time as a `requiredTpu` baseline directly, and
+  its type (`smelting`/`blasting`/`smoking`) as one of three suitability curves in `FTuning`,
+  evaluated against the vessel's live temperature instead of picked once by shortest time
+- [x] TPu suitability-and-decay model written up in doc 2 — `feedback_mechanics.md` §3
 
 **Instruments & control**
 - [ ] The six apparatus properties as numbers — range, resolution, accuracy, control, response, stability (§8)

@@ -159,13 +159,22 @@ public class ThermalProcessCategory implements IRecipeCategory<ThermalProcess> {
                 : Readout.number(recipe.minTemperature().value()) + "+ Tu";
         row(graphics, font, y, "feedback.jei.temperature", band, VALUE_COLOUR);
         y += 12;
+        // A requirement, not a reading -- philosophy 8's "what a process requires is free" -- so
+        // the optimum is printed plainly rather than treated as TPu made player-facing.
+        // tpu_spec_doc.md is explicit that TPu itself is never shown; this is a Tu figure, same
+        // as the band above it.
+        row(graphics, font, y, "feedback.jei.optimal", Readout.number(recipe.optimalTemperature().value()) + " Tu", VALUE_COLOUR);
+        y += 12;
         // Both, always: the philosophy's own convention for showing time, because ticks are what
-        // the simulation counts and seconds are what the player waits. Left off entirely for a
-        // pooled recipe -- see ThermalProcess.NO_HOLD -- rather than print a hold time that was
+        // the simulation counts and seconds are what the player waits. This is time to complete
+        // held exactly at the optimum -- see ThermalProcess#requiredTpu -- not a flat countdown;
+        // real time depends on how close the player actually holds it. Left off entirely for a
+        // pooled recipe -- see ThermalProcess.NO_HOLD -- rather than print a figure that was
         // never true of it.
         if (recipe.hasHold()) {
+            int atOptimum = Math.round(recipe.requiredTpu());
             row(graphics, font, y, "feedback.jei.hold",
-                    recipe.holdTicks() + " t (" + Readout.number(recipe.holdTicks() / 20f) + " s)", VALUE_COLOUR);
+                    atOptimum + " t (" + Readout.number(atOptimum / 20f) + " s) at optimum", VALUE_COLOUR);
             y += 12;
         }
         if (recipe.maxHeatingTuPerTick().tuPerTick() < Float.MAX_VALUE) {

@@ -103,8 +103,8 @@ public class ThermalVesselBlockEntity extends BlockEntity
             setChanged();
         }
     };
-    private final float[] work = new float[SLOTS];
-    private int holdTicks;
+    private final float[] tpu = new float[SLOTS];
+    private float currentTpu;
     private float lastDelta;
 
     private float temperature = FTuning.AMBIENT_TU.value();
@@ -212,7 +212,7 @@ public class ThermalVesselBlockEntity extends BlockEntity
         if (process.isPresent()) {
             advanceProcess(process.get(), contents);
         } else {
-            holdTicks = 0;
+            currentTpu = 0f;
             for (int slot = 0; slot < SLOTS; slot++)
                 advanceSlot(slot);
         }
@@ -248,70 +248,84 @@ public class ThermalVesselBlockEntity extends BlockEntity
     }
 
     /**
-     * One slot's own single-item vanilla recipe, independent of every other slot -- see the
-     * class doc on why food counts ticks and metal counts Work.
+     * One slot's own single-item vanilla recipe, independent of every other slot -- see {@link
+     * VanillaFallback} on how the recipe's type becomes a thermal-suitability curve instead of a
+     * fake-Work fallback (({@code tpu_spec_doc.md}'s "The Problem With the Existing System").
      */
     private void advanceSlot(int slot) {
         ItemStack input = items.get(slot);
         if (input.isEmpty()) {
-            work[slot] = 0;
+            tpu[slot] = 0;
             return;
         }
 
-        Optional<RecipeHolder<AbstractCookingRecipe>> maybe = VanillaFallback.find(level, input);
+        Optional<VanillaFallback.Match> maybe = VanillaFallback.find(level, input, temperature);
         if (maybe.isEmpty()) {
-            work[slot] = 0;
+            tpu[slot] = 0;
             return;
         }
-        RecipeHolder<AbstractCookingRecipe> recipe = maybe.get();
+        RecipeHolder<AbstractCookingRecipe> recipe = maybe.get().recipe();
         boolean food = VanillaFallback.isFood(recipe);
 
         if (food && temperature > FTuning.FOOD_MAX_TU.value()) {
             items.set(slot, ItemStack.EMPTY);
-            work[slot] = 0;
+            tpu[slot] = 0;
             return;
         }
-        boolean inBand = food || temperature >= FTuning.METAL_MIN_TU.value();
-        if (!inBand)
-            return;
 
-        work[slot] += food ? 1f : Math.max(0, temperature - FTuning.AMBIENT_TU.value());
-        float required = food
-                ? recipe.value().getCookingTime() * input.getCount()
-                : VanillaFallback.requiredWork(recipe, FTuning.FALLBACK_WORK_PER_200_TICKS) * input.getCount();
-        if (work[slot] >= required) {
+        float suitability = maybe.get().suitability();
+        if (suitability <= 0f) {
+            tpu[slot] = Math.max(0f, tpu[slot] - FTuning.TPU_DECAY_PER_TICK);
+            return;
+        }
+        tpu[slot] += suitability;
+
+        float required = recipe.value().getCookingTime() * input.getCount();
+        if (tpu[slot] >= required) {
             ItemStack result = recipe.value().assemble(new SingleRecipeInput(input), level.registryAccess());
             if (!result.isEmpty()) {
                 result.setCount(result.getCount() * input.getCount());
                 items.set(slot, result);
             }
-            work[slot] = 0;
+            tpu[slot] = 0;
         }
     }
 
     /** The {@link ThermalProcessTable} path, run exactly the way the crucible runs one. */
     private void advanceProcess(ThermalProcess process, List<ItemStack> contents) {
-        if (process.spoilsAt(new Tu(temperature))) {
+        Tu tu = new Tu(temperature);
+        if (process.spoilsAt(tu)) {
             spoilProcess(process, contents);
             return;
         }
-        if (!process.inBand(new Tu(temperature))) {
-            holdTicks = 0;
-            return;
-        }
-        if (Math.abs(lastDelta) > process.maxHeatingTuPerTick().tuPerTick()) {
-            holdTicks = 0;
-            return;
-        }
         // Tempering's shape -- see CrucibleBlockEntity#advanceProcess. In-band alone isn't
-        // enough; a flat or rising tick just stalls the hold rather than resetting it.
+        // enough; a flat or rising tick pauses the hold rather than either advancing or decaying
+        // it.
         if (process.requireCooling() && lastDelta >= 0)
             return;
-        if (++holdTicks < process.holdTicks())
+
+        if (process.requiredTpu() <= 0f) {
+            // A melt: min_temperature is the whole requirement, so being in band completes it
+            // outright regardless of suitability -- see ThermalProcess#requiredTpu.
+            if (process.inBand(tu))
+                completeProcess(process, contents);
+            return;
+        }
+
+        float suitability = process.suitability(tu);
+        if (Math.abs(lastDelta) > process.maxHeatingTuPerTick().tuPerTick())
+            suitability = 0f;
+        if (suitability <= 0f) {
+            currentTpu = Math.max(0f, currentTpu - FTuning.TPU_DECAY_PER_TICK);
+            return;
+        }
+
+        currentTpu += suitability;
+        if (currentTpu < process.requiredTpu())
             return;
 
         completeProcess(process, contents);
-        holdTicks = 0;
+        currentTpu = 0f;
     }
 
     private void completeProcess(ThermalProcess process, List<ItemStack> contents) {
@@ -340,7 +354,7 @@ public class ThermalVesselBlockEntity extends BlockEntity
         ItemStack ruined = process.spoiled().copy();
         if (!ruined.isEmpty())
             place(ruined);
-        holdTicks = 0;
+        currentTpu = 0f;
         setChanged();
     }
 
@@ -429,9 +443,9 @@ public class ThermalVesselBlockEntity extends BlockEntity
         tag.putInt("FuelDuration", fuelDuration);
         tag.putFloat("FlameRoll", flameRollTu);
         tag.putFloat("Air", air);
-        tag.putInt("HoldTicks", holdTicks);
+        tag.putFloat("CurrentTpu", currentTpu);
         for (int slot = 0; slot < SLOTS; slot++)
-            tag.putFloat("Work" + slot, work[slot]);
+            tag.putFloat("Tpu" + slot, tpu[slot]);
         tank.writeToNBT(registries, tag);
     }
 
@@ -445,9 +459,9 @@ public class ThermalVesselBlockEntity extends BlockEntity
         fuelDuration = tag.getInt("FuelDuration");
         flameRollTu = tag.getFloat("FlameRoll");
         air = tag.getFloat("Air");
-        holdTicks = tag.getInt("HoldTicks");
+        currentTpu = tag.getFloat("CurrentTpu");
         for (int slot = 0; slot < SLOTS; slot++)
-            work[slot] = tag.getFloat("Work" + slot);
+            tpu[slot] = tag.getFloat("Tpu" + slot);
         tank.readFromNBT(registries, tag);
     }
 

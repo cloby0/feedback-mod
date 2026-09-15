@@ -54,6 +54,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.AbstractCookingRecipe;
+import net.minecraft.world.item.crafting.BlastingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.neoforged.neoforge.fluids.FluidStack;
@@ -190,7 +191,7 @@ public class FeedbackJeiPlugin implements IModPlugin {
      * own. Filtered against {@code handAuthored} so steel does not also show up as a generic
      * smelting card once something hand-authored already claims its input.
      *
-     * <h3>One card per item, same tie-break {@link VanillaFallback#find} uses at runtime</h3>
+     * <h3>One card per item -- a static grouping, not {@link VanillaFallback#find}'s tie-break</h3>
      * Vanilla ships more than one cooking-recipe entry for plenty of items -- potato has both a
      * {@code smelting} and a {@code smoking} recipe to baked potato, since either appliance can
      * cook food. Streaming all three vanilla types flat and wrapping each holder on its own used
@@ -198,17 +199,20 @@ public class FeedbackJeiPlugin implements IModPlugin {
      * recipe instance, the {@code smelting} copy of a food item drew as an ungated metal card next
      * to the correct food one -- {@code "800+ Tu"} beside {@code "0-400 Tu, Spoils > 400 Tu"} for
      * the same potato. Grouped by input item here instead, keeping the shortest cooking time on a
-     * tie exactly the way {@link VanillaFallback#find} already resolves it for the vessel itself,
-     * so the card and the block agree on which single recipe an item actually runs as.
+     * tie. This no longer matches {@link VanillaFallback#find} exactly -- that now picks whichever
+     * type is most suitable at the vessel's <em>current</em> temperature, per {@code
+     * tpu_spec_doc.md}'s "Do Not Let the Shortest Vanilla Recipe Win" -- and that is fine: a JEI
+     * card is static and cannot show a dynamic per-temperature answer anyway, so it only needs one
+     * honest representative, and shortest-time remains as reasonable a pick as any for that.
      *
      * <h3>What is honest to wrap and what is not</h3>
      * Input, output, and whichever floor gates it ({@link FTuning#METAL_MIN_TU} or
      * {@link FTuning#FOOD_MAX_TU}) are real, universal, and exact -- the same kind of published
-     * figure a machine's own spec sheet is (§17). {@code holdTicks} is not: metal counts an
-     * integrated Work total and food counts plain ticks, neither of which is "stay in this band
-     * for N ticks", so it is left at {@link ThermalProcess#NO_HOLD} and {@link
-     * ThermalProcessCategory} knows to leave the row off rather than print a number that was never
-     * true.
+     * figure a machine's own spec sheet is (§17). {@code requiredTpu} is not: which of the three
+     * thermal profiles actually applies depends on the vessel's live temperature, so there is no
+     * single honest figure to put here, and it is left at {@link ThermalProcess#NO_HOLD} --
+     * {@link ThermalProcessCategory} knows to leave the row off rather than print a number that
+     * was never true.
      */
     private static List<ThermalProcess> pooled(List<ThermalProcess> handAuthored) {
         Minecraft client = Minecraft.getInstance();
@@ -261,10 +265,12 @@ public class FeedbackJeiPlugin implements IModPlugin {
         if (VanillaFallback.isFood(recipe))
             // No real floor -- food cooks at any heat and is destroyed outright above the
             // ceiling, with nothing named to replace it, so both the band and the destination
-            // are printed plainly rather than invented.
-            return new ThermalProcess(inputs, new Tu(0f), FTuning.FOOD_MAX_TU, ThermalProcess.NO_HOLD,
+            // are printed plainly rather than invented. optimal_temperature is real here (drawn
+            // as the card's Optimal row) even though requiredTpu is not.
+            return new ThermalProcess(inputs, new Tu(0f), FTuning.SMOKING_OPTIMAL_TU, FTuning.FOOD_MAX_TU, ThermalProcess.NO_HOLD,
                     new TuRate(Float.MAX_VALUE), result, FTuning.FOOD_MAX_TU, ItemStack.EMPTY, FluidStack.EMPTY, false);
-        return new ThermalProcess(inputs, FTuning.METAL_MIN_TU, new Tu(Float.MAX_VALUE), ThermalProcess.NO_HOLD,
+        Tu optimal = recipe.value() instanceof BlastingRecipe ? FTuning.BLASTING_OPTIMAL_TU : FTuning.SMELTING_OPTIMAL_TU;
+        return new ThermalProcess(inputs, FTuning.METAL_MIN_TU, optimal, new Tu(Float.MAX_VALUE), ThermalProcess.NO_HOLD,
                 new TuRate(Float.MAX_VALUE), result, new Tu(Float.MAX_VALUE), ItemStack.EMPTY, FluidStack.EMPTY, false);
     }
 }

@@ -140,6 +140,7 @@
   "feedback.jei.thermal_process": "Thermal process",
   "feedback.jei.inputs": "Inputs",
   "feedback.jei.temperature": "Tu",
+  "feedback.jei.optimal": "Optimal",
   "feedback.jei.hold": "Hold",
   "feedback.jei.max_heating": "Max Tu",
   "feedback.jei.spoils": "Spoils",

@@ -7,6 +7,7 @@
     ]
   ],
   "min_temperature": 1600,
-  "hold_ticks": 0,
+  "optimal_temperature": 1600,
+  "required_tpu": 0,
   "result_fluid": { "id": "feedback:molten_iron", "amount": 144 }
 }

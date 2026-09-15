@@ -44,22 +44,36 @@ import net.neoforged.neoforge.fluids.FluidStack;
  * mass produce, and what happens to them is their own business. A crucible asked what it makes
  * has no answer, which is correct.
  *
+ * <h2>Completion is TPu, not elapsed time</h2>
+ * {@code tpu_spec_doc.md} replaces a flat {@code holdTicks} with {@code requiredTpu}: a process
+ * needs a quantity of progress, not a duration, and how fast that progress accrues is a property
+ * of the current thermal conditions rather than the recipe. {@code requiredTpu} is expressed in
+ * the same units the old field was -- ticks-equivalent, at perfect conditions -- so a process
+ * held exactly at {@link #optimalTemperature} completes in exactly {@code requiredTpu} ticks, the
+ * same number that used to be a flat countdown. Drift off the optimum and it takes longer; drift
+ * out of the band entirely and it starts giving ground back (see {@link #suitability}). This is
+ * what lets a better vessel, a hotter fire, or simply better aim finish the same transformation
+ * faster, which a flat tick count could never express.
+ *
  * <h2>Four numbers, four different kinds of failure</h2>
  * Philosophy 6 wants overrun to have a character rather than to be a timer running out, and the
  * shape of that is in these fields:
  * <ul>
- *   <li><b>Below {@code minTemperature}</b> -- nothing happens, and nothing is lost. The player
- *       may fail safely in this direction all day.</li>
- *   <li><b>Above {@code maxTemperature}</b> -- also nothing, but now they are climbing towards
+ *   <li><b>Below {@code minTemperature}</b> -- no TPu accumulates, and what has already been
+ *       gained decays gently ({@code FTuning.TPU_DECAY_PER_TICK}) rather than resetting outright.
+ *       The player may fail safely in this direction all day; they only pay for how long they
+ *       stayed there.</li>
+ *   <li><b>Above {@code maxTemperature}</b> -- the same decay, but now they are climbing towards
  *       the expensive direction and have no way of knowing how close they are.</li>
  *   <li><b>Above {@code spoilTemperature}</b> -- the inputs are destroyed, immediately, and turn
  *       into {@code spoiled}. This is the overrun, and it is the same idea as a plate being
  *       hammered into foil: the machine did not stop, so it kept doing what it does.</li>
  *   <li><b>Rising faster than {@code maxHeatingTuPerTick}</b> -- the process will not take, and
- *       whatever hold has accumulated is lost. Nothing is destroyed; the player simply cannot
- *       work out why it is not working, which is the one failure that instruments genuinely fix.
- *       It is also what makes a large vessel <em>necessary</em> rather than merely nicer: a small
- *       crucible on a full fire climbs at 29 Tu/t and can never satisfy a 25 Tu/t limit.</li>
+ *       accumulated TPu decays the same as being out of band. Nothing is destroyed; the player
+ *       simply cannot work out why it is not working, which is the one failure that instruments
+ *       genuinely fix. It is also what makes a large vessel <em>necessary</em> rather than merely
+ *       nicer: a small crucible on a full fire climbs at 29 Tu/t and can never satisfy a 25 Tu/t
+ *       limit.</li>
  * </ul>
  *
  * <h2>Tempering: a hold that only counts on the way down</h2>
@@ -67,19 +81,24 @@ import net.neoforged.neoforge.fluids.FluidStack;
  * says an actuator is a switch, never a dial, so there is no rate to store here -- the only lever
  * a Damper gives the player is on/off, timed by hand or by a controller, exactly like the Bellows/
  * Bimetallic-Strip thermostat. So the process asks for a direction instead of a rate: while this is
- * true, a tick where the body is flat or heating does not advance {@code holdTicks}, the same
- * "safe direction, nothing lost" treatment the out-of-band case above already gets -- it simply
- * does not count until the body is actually cooling in-band. The player still has to get it there
- * by reheating past the band first and then shutting the fire off or opening a Damper; nothing new
- * is needed for that half, it falls out of the existing fire/leak model.
+ * true, a tick where the body is flat or heating neither accumulates nor decays TPu -- paused, not
+ * lost, unlike the out-of-band case above -- until the body is actually cooling in-band. The
+ * player still has to get it there by reheating past the band first and then shutting the fire off
+ * or opening a Damper; nothing new is needed for that half, it falls out of the existing fire/leak
+ * model.
  *
  * @param inputs              everything that must be present. Ingredients, so tags work and no
  *                            identity is ever named.
  * @param minTemperature      bottom of the band, in Tu. For a melt, this is the melt point and
  *                            the only number that matters -- see the class doc.
+ * @param optimalTemperature  where TPu accumulates fastest (suitability 1.0), in Tu.
  * @param maxTemperature      top of the band, in Tu.
- * @param holdTicks           how long the contents must stay inside the band, cumulatively.
- * @param maxHeatingTuPerTick fastest the vessel may be climbing while the hold accumulates.
+ * @param requiredTpu         how much progress the transformation needs, in ticks-equivalent at
+ *                            {@link #optimalTemperature}. {@link #NO_HOLD} for a pooled
+ *                            vanilla-fallback card with no honest figure to publish; {@code 0}
+ *                            (a melt) completes the instant it is in band, regardless of
+ *                            suitability.
+ * @param maxHeatingTuPerTick fastest the vessel may be climbing while TPu accumulates.
  * @param result              what the inputs become, if it is an item. Empty for a melt, where
  *                            {@link #resultFluid} is the real output instead.
  * @param spoilTemperature    above this the batch is ruined. Same as {@code maxTemperature} would
@@ -91,8 +110,9 @@ import net.neoforged.neoforge.fluids.FluidStack;
  */
 public record ThermalProcess(List<Ingredient> inputs,
                              Tu minTemperature,
+                             Tu optimalTemperature,
                              Tu maxTemperature,
-                             int holdTicks,
+                             float requiredTpu,
                              TuRate maxHeatingTuPerTick,
                              ItemStack result,
                              Tu spoilTemperature,
@@ -103,11 +123,12 @@ public record ThermalProcess(List<Ingredient> inputs,
     public static final Codec<ThermalProcess> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Ingredient.CODEC.listOf().fieldOf("inputs").forGetter(ThermalProcess::inputs),
             Units.codec(Tu::new).fieldOf("min_temperature").forGetter(ThermalProcess::minTemperature),
+            Units.codec(Tu::new).fieldOf("optimal_temperature").forGetter(ThermalProcess::optimalTemperature),
             // Open by default -- a melt has a floor and nothing else, the same open-ended shape
             // the pooled vanilla-fallback cards already draw as "800+ Tu" (see
             // ThermalProcessCategory). An ordinary band-and-hold process still states both ends.
             Units.codec(Tu::new).optionalFieldOf("max_temperature", new Tu(Float.MAX_VALUE)).forGetter(ThermalProcess::maxTemperature),
-            Codec.INT.fieldOf("hold_ticks").forGetter(ThermalProcess::holdTicks),
+            Codec.FLOAT.fieldOf("required_tpu").forGetter(ThermalProcess::requiredTpu),
             Units.codec(TuRate::new).optionalFieldOf("max_heating", new TuRate(Float.MAX_VALUE)).forGetter(ThermalProcess::maxHeatingTuPerTick),
             ItemStack.OPTIONAL_CODEC.optionalFieldOf("result", ItemStack.EMPTY).forGetter(ThermalProcess::result),
             Units.codec(Tu::new).optionalFieldOf("spoil_temperature", new Tu(Float.MAX_VALUE)).forGetter(ThermalProcess::spoilTemperature),
@@ -135,7 +156,8 @@ public record ThermalProcess(List<Ingredient> inputs,
                             INPUTS.decode(buffer),
                             new Tu(buffer.readFloat()),
                             new Tu(buffer.readFloat()),
-                            buffer.readVarInt(),
+                            new Tu(buffer.readFloat()),
+                            buffer.readFloat(),
                             new TuRate(buffer.readFloat()),
                             ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer),
                             new Tu(buffer.readFloat()),
@@ -148,8 +170,9 @@ public record ThermalProcess(List<Ingredient> inputs,
                 public void encode(RegistryFriendlyByteBuf buffer, ThermalProcess process) {
                     INPUTS.encode(buffer, process.inputs());
                     buffer.writeFloat(process.minTemperature().value());
+                    buffer.writeFloat(process.optimalTemperature().value());
                     buffer.writeFloat(process.maxTemperature().value());
-                    buffer.writeVarInt(process.holdTicks());
+                    buffer.writeFloat(process.requiredTpu());
                     buffer.writeFloat(process.maxHeatingTuPerTick().tuPerTick());
                     ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, process.result());
                     buffer.writeFloat(process.spoilTemperature().value());
@@ -168,16 +191,35 @@ public record ThermalProcess(List<Ingredient> inputs,
     }
 
     /**
-     * {@code holdTicks} for a process the JEI plugin synthesises from a pooled vanilla/modded
-     * cooking recipe rather than loading from a file -- see {@code FeedbackJeiPlugin.pooled}.
-     * Metal counts an integrated Work total there and food counts plain ticks, neither of which
-     * is "stay in this band for N ticks", so there is no honest number to put here and the card
-     * knows to leave the row off instead of printing one that was never true.
+     * How fast TPu accumulates at {@code tu}, as a fraction of the rate at {@link
+     * #optimalTemperature} -- 0 outside the band, ramping up to 1.0 at the optimum and back down
+     * to 0 at the far edge. Philosophy 8's "quality should fall off gracefully, not switch off":
+     * the same triangular shape as the worked example in {@code tpu_spec_doc.md}, kept to three
+     * points (min/optimal/max) rather than the doc's illustrative six -- the exact curve is
+     * explicitly a tuning decision there, and three points is the minimum that has a peak at all.
      */
-    public static final int NO_HOLD = -1;
+    public static float suitability(float tu, float min, float optimal, float max) {
+        if (tu <= min || tu >= max)
+            return 0f;
+        return tu <= optimal ? (tu - min) / (optimal - min) : (max - tu) / (max - optimal);
+    }
+
+    public float suitability(Tu tu) {
+        return suitability(tu.value(), minTemperature.value(), optimalTemperature.value(), maxTemperature.value());
+    }
+
+    /**
+     * {@code requiredTpu} for a process the JEI plugin synthesises from a pooled vanilla/modded
+     * cooking recipe rather than loading from a file -- see {@code FeedbackJeiPlugin.pooled}.
+     * Neither food's plain-tick baseline nor metal's is "stay in this band for N ticks" once
+     * either is scaled by a live suitability curve the display can't animate, so there is no
+     * honest single number to put here and the card knows to leave the row off instead of
+     * printing one that was never true.
+     */
+    public static final float NO_HOLD = -1f;
 
     public boolean hasHold() {
-        return holdTicks >= 0;
+        return requiredTpu >= 0f;
     }
 
     /** Whether this entry is a melt -- its output is a fluid rather than an item. */

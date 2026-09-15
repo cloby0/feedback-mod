@@ -926,7 +926,21 @@ A significant step should ideally satisfy all four:
 
 A particularly strong pattern: give the player the ability to **detect** a phenomenon well before they can exploit it. A radiation sensor can teach a player that certain materials emit something strange long before any nuclear machinery exists.
 
+This is a general pattern, not a one-off: electricity may be observable (static, conductivity, a twitching needle) long before it is an industrial power network; Redstone may show strange electrical behavior before it is deliberately exploited; Amethyst may show resonance before it is a precision component; a Blaze Rod may be an unusual heat source before it is understood; an Ender Pearl's spatial anomaly may be unmistakable long before spatial engineering exists; Sculk may show signal/experience-related behavior long before an engineered information device does; Uranium may be discoverable long before it can be measured, let alone reactored. Observation, measurement, and control are three different unlocks, and a material is allowed to sit at any one of them for a long time.
+
 This makes the world feel like a continuous field of discoveries rather than a sequence of unlock screens, and it gives the player questions to carry forward.
+
+### Old technology keeps its niche
+
+Progression should not read as a straight ladder of replacements. A newer energy system or machine earns a place *alongside* the old one, not instead of it — mechanical power stays useful once electricity exists (§10), and the Crude Blast Furnace never becomes obsolete once the crucible exists precisely because it was never competing on the crucible's axis (§15). The same is meant to hold for systems not yet built: steam should keep a niche once combustion engines exist, mechanical/punch-card control should keep a niche once electronic control exists, and belts/pipes should keep a niche once spatial transport exists (§10's Liquid Teleportant link is deliberately capped below belt throughput for this reason). The test for a new system is whether it earns a *different* niche — cost, reliability, scale, attention — never whether it is strictly better.
+
+### Materials have histories
+
+A material is not identical to its ore/block form forever. It moves through a processing history — something like `ore → crushed ore → concentrated ore → chemically treated material → refined metal → alloy → finished stock → precision component` — and purity, processing history, geometry, and thermal/mechanical state may all matter where doing so creates a decision (§3's anti-simulator test still applies: track a step only if skipping it or doing it badly is a real, playable mistake).
+
+### Geology should matter
+
+**[OPEN]** Ore generation should eventually move toward large, irregular, geologically coherent deposits — associated minerals, low-grade peripheral material, richer cores, depth-dependent composition — rather than isolated decorative ore blocks. This is inspired by GregTech-style large-vein generation, but the mineral roster, deposit geometry, and generation algorithm are all undecided; see §18.
 
 ### Progression should be visible in the factory
 
@@ -1031,13 +1045,13 @@ It also names something the mod has been trading in without acknowledging: **pla
 
 Feedback cannot hand-specify a process for every smelting recipe in every mod a player has installed, and unspecified recipes must not break.
 
-The reference constant: **one unspecified smelt costs one-eighth of the total heat one piece of coal yields in a plain stone furnace**, matching vanilla's eight-items-per-coal. A recipe that declares a longer cook time scales up proportionally — it needs **more Work, not a higher temperature.**
+**This section originally specified a Work-based mechanism, and it was wrong — recorded here because the error is the reusable part.** The first version costed progress as `X` Work per tick, `X` being how far above ambient the vessel sat: hold a vessel `X` Tu above ambient and it costs `X` Work per tick, an item needs some total quantity of Work, and progress accrues at the vessel's own temperature. That reads as physically motivated, and it is exactly the trap `tpu_spec_doc.md` names: `Tu × ticks` is not Work, because temperature is a state and never an amount of anything (§17). It also meant three vanilla recipe types collapsed into "whichever is shortest," permanently — an iron ore's blast-furnace time won in every vessel, including a plain Furnace that can never actually reach blasting conditions, which is a hidden recipe rule wearing §15's own "specialisation is emergent" claim as a disguise.
 
-The mechanism is deliberately the simplest thing that can work. Holding a vessel `X` Tu above ambient costs `X` Work per tick. An item needs some total quantity of Work. Progress therefore accrues at the rate the vessel is above ambient, and **the fallback imposes no ceiling on how fast an item may absorb it.** If a recipe wants 10,000 Work and the player can deliver 10,000 Tu in a single tick, they are welcome to.
+**The mechanism is now TPu**, per `tpu_spec_doc.md` and `feedback_mechanics.md` §3: a process-local progress quantity, not energy. A recipe's declared cooking time becomes a baseline requirement in the same ticks-equivalent units the process would need at perfect conditions; the vanilla recipe type (`smelting`/`blasting`/`smoking`) becomes a thermal-suitability hint rather than a fixed multiplier, evaluated against the vessel's *current* temperature every tick rather than settled once. An ore therefore finishes faster in a genuinely hot vessel and slower in a mediocre one, without either block ever checking what kind of vessel it is — the same emergent specialisation this section already promised for the three vessels themselves, now applied to the fallback that feeds them.
 
-That is not physically honest, and it is not meant to be. **The fallback is a compatibility shim, not a model of the world.** Its one job is to guarantee that no item in any installed mod becomes uncraftable — not to make that item's process interesting, balanced, or true. Interesting belongs to hand-authored processes, which impose real windows and real rate limits (steel will not tolerate being blasted). The shim exists so that the nine hundred recipes nobody will ever hand-author keep working.
+That is still not physically honest, and it is not meant to be. **The fallback is a compatibility shim, not a model of the world.** Its one job is to guarantee that no item in any installed mod becomes uncraftable — not to make that item's process interesting, balanced, or true. Interesting belongs to hand-authored processes, which impose real windows and real rate limits (steel will not tolerate being blasted). The shim exists so that the nine hundred recipes nobody will ever hand-author keep working.
 
-Two properties make the looseness acceptable. **Total Work is conserved** whether it is delivered in one tick or six hundred, so nothing is free — speed still has to be paid for in heating capacity the player must actually own. And **the fallback is data-driven by construction**, which is the real goal: writing compatibility for a new mod should be a table, not an essay.
+Two properties make the looseness acceptable. **The fallback still imposes no ceiling on how fast an item may absorb progress** — a vessel held exactly at a recipe's optimum finishes in exactly its baseline tick count, however that heat was delivered — so nothing is free; speed still has to be paid for in heating capacity and aim the player must actually own. And **the fallback is data-driven by construction**, which is the real goal: writing compatibility for a new mod should be a table, not an essay.
 
 Hand-authored processes override the fallback. Everything else keeps working untouched. This is what makes "the world and the machines obey the same rules" affordable rather than an infinite content obligation.
 
@@ -1199,6 +1213,7 @@ Carried forward, and not to be treated as settled:
 - Where each Minecraft-exotic phenomenon first appears, what is measurable about it, and how its natural form becomes an engineered one (§2, §14).
 - The full era arc beyond the opening: how many broad eras exist, where the "detect before you can act" bridges land, and which discoveries pay off later (§14).
 - The personal empowerment curve (§14).
+- Ore deposit geometry and generation algorithm, and the prospecting progression that reveals it (§14). Candidate content lives in `feedback_progression_roadmap.md`.
 
 ## 18a. Parked
 

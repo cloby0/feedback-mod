@@ -108,3 +108,37 @@ The idea that Blaze's `spread`-driven variance could be a *feature* for a proces
 - **Prior art not yet read.** Real hand warmers and dust explosions are both genuine physical phenomena (surface-area-to-volume ratio governing reaction/release rate), so this section is on solid "scientific, not realistic" ground without needing outside mod precedent for the mechanism itself. Still worth checking whether TFC or GTCEu — both already reference mods here — have a rod/dust dual-item precedent worth reading before building.
 - **[OPEN]** `ItemHeat` cooling rate needs to move from a global constant to per-material data — see §2.2.
 - **Rejected:** the live-containment `HeatSource` block and its water-kill condition — see the note at the top of this section.
+
+---
+
+## 3. The Thermal Process Model: TPu
+
+Built, not speculative — `tpu_spec_doc.md` (the brainstorm this section implements) is the fuller account; this is the built shape. Replaces `holdTicks` in `ThermalProcess`, `ThermalVesselBlockEntity` and `CrucibleBlockEntity`, and the Work-based `VanillaFallback` mechanism `feedback_philosophy.md` §15 originally specified (now corrected there in the same change, per the living-document rule).
+
+### 3.1 What TPu is, and isn't
+
+TPu (Thermal Process Units) is process-local progress, not a physical quantity — it does not join §17's unit table, has no codec-through-`Unit` machinery, and is never displayed. A `ThermalProcess`'s `required_tpu` field is a plain float, the same "no type" treatment `Work` already gets, for the same reason: a wrapper here would imply TPu joins the physical quantities it is explicitly not one of.
+
+**Never player-facing**, per the source doc: no tooltip, no measurement tool, no HUD figure. What *is* shown on a process's JEI card is `required_tpu` itself, printed as "ticks (seconds) at optimum" — that is a **requirement**, and philosophy 8's table says requirements are free, exact, and published regardless of instrumentation. The number a player reads is never "how much TPu has accumulated" (a reading, which would cost an instrument and doesn't exist), only "how many ticks this needs if held exactly at the optimum" (a spec, same status as steel's temperature band).
+
+### 3.2 Accumulation: a triangular suitability curve
+
+Every `ThermalProcess` now carries `optimal_temperature` alongside `min`/`max`. `ThermalProcess.suitability(tu)` returns a 0-to-1 fraction: 0 at or outside the band edges, 1.0 at the optimum, ramping linearly between. Each tick in band, `currentTpu += suitability`; the process completes when `currentTpu >= requiredTpu`. Held exactly at the optimum, this reproduces the old flat-`holdTicks` behaviour exactly (`requiredTpu` ticks, no more); drift off it and the same number of ticks stops being enough, which is the entire point — a better vessel or a better-aimed player finishes measurably faster, something a flat countdown could never express.
+
+This is philosophy 8's "quality should fall off gracefully, not switch off" applied to completion itself rather than to yield. Three points (min/optimal/max) rather than the source doc's illustrative six-point table — the doc calls the exact curve shape a tuning decision, and three is the minimum that has a peak at all.
+
+### 3.3 Decay, not reset
+
+Outside the band, or heating faster than `max_heating` tolerates, `currentTpu` decays at `FTuning.TPU_DECAY_PER_TICK` (one tick-equivalent per tick, matching the fastest possible gain) rather than resetting to zero. This is a real behaviour fix, not only a doc-follow: `CrucibleBlockEntity` already stalled progress out-of-band ("nothing lost") while `ThermalVesselBlockEntity` reset it outright for the identical case — two block entities disagreeing about the same rule. Decay is the correct middle ground the source doc asks for, and now both share it.
+
+Tempering's `require_cooling` flag keeps its own, different rule: a flat or rising tick **pauses** (no accumulation, no decay) rather than either advancing or decaying, because philosophy 13's actuator-is-a-switch constraint means the player has no rate to hold steady with, only on/off timed by hand or a Damper — punishing the wait as harshly as an out-of-band drift would make the mechanic itself the trap.
+
+A melt (`required_tpu: 0`) bypasses suitability entirely and completes the instant it is in band, exactly as `hold_ticks: 0` did.
+
+### 3.4 The vanilla fallback: thermal hints, not a fixed pick
+
+`VanillaFallback.find` used to return one recipe — whichever of `smelting`/`blasting`/`smoking` had the shortest declared cooking time, decided once. That made an ore's blast-furnace time win in every vessel permanently, including a plain Furnace that can never reach blasting conditions — exactly the hidden-recipe-rule `tpu_spec_doc.md`'s "Do Not Let the Shortest Vanilla Recipe Win" section calls out, and exactly what §15's "specialisation is emergent, not enforced" already promised not to do.
+
+`find` now returns a `Match(recipe, suitability)`, recomputed every tick against the vessel's *current* temperature: `smoking` maps to a food-like low/stable profile (`FTuning.SMOKING_OPTIMAL_TU`, ceiling at `FOOD_MAX_TU`), `blasting` to a hot metallurgical profile (`BLASTING_OPTIMAL_TU`, no ceiling), and plain `smelting` to a generic middle profile (`SMELTING_OPTIMAL_TU`) — three curves through the same `ThermalProcess.suitability` math a hand-authored process uses, never a per-vessel identity check. An ore now finishes faster in a vessel that is actually hot, and slower in one that isn't, without either block knowing what the other is.
+
+The recipe's own declared cooking time is the `required_tpu` baseline directly (no separate Work calibration constant), per the source doc's "convert vanilla cooking time into baseline TPu" — this also retires `FTuning.FALLBACK_WORK_PER_200_TICKS` and the `Tu × ticks`-as-Work arithmetic it fed, which is the exact "fake Work" pattern the source doc opens by rejecting.

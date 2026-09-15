@@ -121,7 +121,7 @@ public class CrucibleBlockEntity extends BlockEntity implements ThermalBody, Mol
     private float temperature = FTuning.AMBIENT_TU.value();
     /** How fast it moved last tick. A process may care about that as well as how hot it got. */
     private float lastDelta;
-    private int holdTicks;
+    private float currentTpu;
 
     private int insulation;
     private int dampers;
@@ -171,8 +171,8 @@ public class CrucibleBlockEntity extends BlockEntity implements ThermalBody, Mol
         return new TuRate(lastDelta);
     }
 
-    public int getHoldTicks() {
-        return holdTicks;
+    public float getCurrentTpu() {
+        return currentTpu;
     }
 
     @Override
@@ -268,7 +268,7 @@ public class CrucibleBlockEntity extends BlockEntity implements ThermalBody, Mol
         contents.set(slot, ItemStack.EMPTY);
         if (level != null)
             ItemHeat.set(taken, new Tu(temperature), level);
-        holdTicks = 0;
+        currentTpu = 0f;
         sync();
         return taken;
     }
@@ -301,40 +301,49 @@ public class CrucibleBlockEntity extends BlockEntity implements ThermalBody, Mol
     private void advanceProcess() {
         Optional<ThermalProcess> maybe = ThermalProcessTable.get().find(contents);
         if (maybe.isEmpty()) {
-            holdTicks = 0;
+            currentTpu = 0f;
             return;
         }
         ThermalProcess process = maybe.get();
+        Tu tu = new Tu(temperature);
 
         // Overrun. The vessel did not stop, so the batch kept getting hotter, so it is ruined --
         // and it is ruined the instant it passes the line rather than after a grace period,
         // because a grace period would be the machine noticing.
-        if (process.spoilsAt(new Tu(temperature))) {
+        if (process.spoilsAt(tu)) {
             spoil(process);
             return;
         }
 
-        // Outside the band nothing happens and nothing is lost. Progress stalls rather than
-        // resetting: the safe direction is meant to be genuinely safe (§6), and a player who
-        // drops a little under the window should not be punished for the same mistake twice.
-        if (!process.inBand(new Tu(temperature)))
-            return;
-
-        // Climbing too fast is the one failure with no visible cause, and therefore the one an
-        // instrument genuinely fixes. It is also what makes a bigger vessel necessary rather than
-        // merely nicer -- a small crucible on a full fire cannot satisfy a 25 Tu/t limit at all.
-        if (lastDelta > process.maxHeatingTuPerTick().tuPerTick()) {
-            holdTicks = 0;
-            return;
-        }
-
-        // Tempering's shape: in-band is not enough, the body has to be cooling to count. Same
-        // "nothing lost" treatment as the in-band check above -- a flat or rising tick just
-        // doesn't advance the hold, it doesn't undo what was already accumulated.
+        // Tempering's shape: in-band is not enough, the body has to be cooling to count. A flat
+        // or rising tick pauses the hold rather than advancing or decaying it -- see
+        // ThermalProcess's class doc.
         if (process.requireCooling() && lastDelta >= 0)
             return;
 
-        if (++holdTicks < process.holdTicks())
+        if (process.requiredTpu() <= 0f) {
+            // A melt: min_temperature is the whole requirement, in band completes it outright.
+            if (process.inBand(tu))
+                complete(process);
+            return;
+        }
+
+        // Outside the band, or climbing too fast to trust (the one failure with no visible
+        // cause, and therefore the one an instrument genuinely fixes -- also what makes a bigger
+        // vessel necessary rather than merely nicer, since a small crucible on a full fire cannot
+        // satisfy a 25 Tu/t limit at all), TPu decays rather than resetting outright: the safe
+        // direction is meant to be genuinely safe (§6), so a player who drifts a little pays for
+        // how long they drifted rather than for the whole batch's progress at once.
+        float suitability = process.suitability(tu);
+        if (lastDelta > process.maxHeatingTuPerTick().tuPerTick())
+            suitability = 0f;
+        if (suitability <= 0f) {
+            currentTpu = Math.max(0f, currentTpu - FTuning.TPU_DECAY_PER_TICK);
+            return;
+        }
+
+        currentTpu += suitability;
+        if (currentTpu < process.requiredTpu())
             return;
 
         complete(process);
@@ -361,7 +370,7 @@ public class CrucibleBlockEntity extends BlockEntity implements ThermalBody, Mol
             place(result);
         }
 
-        holdTicks = 0;
+        currentTpu = 0f;
         sync();
     }
 
@@ -380,7 +389,7 @@ public class CrucibleBlockEntity extends BlockEntity implements ThermalBody, Mol
             place(ruined);
         }
 
-        holdTicks = 0;
+        currentTpu = 0f;
         sync();
     }
 
@@ -435,7 +444,7 @@ public class CrucibleBlockEntity extends BlockEntity implements ThermalBody, Mol
         super.saveAdditional(tag, registries);
         ContainerHelper.saveAllItems(tag, contents, true, registries);
         tag.putFloat("Temperature", temperature);
-        tag.putInt("HoldTicks", holdTicks);
+        tag.putFloat("CurrentTpu", currentTpu);
         tag.putInt("Insulation", insulation);
         tag.putInt("Dampers", dampers);
         tank.writeToNBT(registries, tag);
@@ -460,7 +469,7 @@ public class CrucibleBlockEntity extends BlockEntity implements ThermalBody, Mol
         temperature = tag.contains("Temperature")
                 ? tag.getFloat("Temperature")
                 : FTuning.AMBIENT_TU.value();
-        holdTicks = tag.getInt("HoldTicks");
+        currentTpu = tag.getFloat("CurrentTpu");
         insulation = tag.getInt("Insulation");
         dampers = tag.getInt("Dampers");
         tank.readFromNBT(registries, tag);
