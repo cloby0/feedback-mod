@@ -2,6 +2,21 @@
 
 Working checklist. Source of truth for *what's next*; `feedback_philosophy.md` stays source of truth for *why*.
 
+**Controllers have their own spec now: `feedback_controller_spec.md`.** Tier 1 (Punch Card) is
+built — the program-graph model (`control/program/`), the Controller and Programmer blocks
+(`control/controller/`, `control/programmer/`), and the `Switchable`/`DataNode` widening it
+needed on `ClutchBlockEntity`. Tiers 2-4 of the medium progression are still just the document.
+Replaces the old `controller_spec.txt`, which is deleted.
+
+**First real playtest found three things wrong with that first pass**, all fixed the same day:
+the Greater/Less palette buttons silently no-op'd (a typeKey mismatch between
+`ProgrammerScreen`'s `AddNode` and `ProgrammerBlockEntity`'s switch); linking a sensor needed an
+undiscoverable second click after placing the card (placing now auto-consumes a pending Data
+Connector selection, §3); and the fixed-grid card layout the spec cut on purpose turned out to
+be a real usability regression against the mockup, so free drag-and-drop is built after all
+(§8). Number ports also gained `Quantity` typing (§2.1) so a comparator can't silently mix Tu
+against Su — ports are colour-coded per quantity in the GUI now, not just Number/Boolean.
+
 ---
 
 ## Pick-up list — costed, start cold
@@ -101,8 +116,71 @@ by size.
   passes and a dedicated server mixes all three mixins into their targets and boots clean —
   **nothing has been seen running.** Detail in §4e.
 
-- [ ] **The cover system (§4d).** Blocked on reading GregTech CEu Modern's first, which is a
-  session's work by itself. Do not start the code before the read.
+- [x] **Melting and casting: ore no longer smelts straight to an ingot.** Built 2026-09-13.
+  Read TFC's crucible/mold/casting shape first (see THIRD-PARTY-LICENSES.md) — idea only, not
+  code. `./gradlew build` passes and a dedicated server boots the datapack clean (recipe/thermal
+  process/casting codecs all verified against the actual NeoForge/Minecraft source, not guessed);
+  **nothing has been seen running.**
+
+  **Melting turned out to just be `ThermalProcess`, not a new table.** First instinct was a
+  separate `Melting` table, on the same logic that gave the pooled-recipe merge its own tab —
+  wrong for the same reason, caught the same session. Band/hold/spoil are per-entry fields on
+  `ThermalProcess` already, not a type distinction, and a melt is just an entry whose
+  `result_fluid` is set instead of `result`: min temperature is the melt point, everything else
+  at its ordinary (often absent) defaults. One new optional field, not a fifth table. Casting
+  *is* separate — real reasons at `Casting`'s own class doc, not habit.
+  - `FFluids`/`FFluidTypes`: real NeoForge fluids (molten copper/gold/iron), not a lightweight
+    stand-in — pipes and tanks are a committed later step, so a real `Fluid` is not speculative.
+    Non-placeable for now (no bucket, no world block registered): placement is its own design
+    question (does it ignite things? flow? cool into a block?) and was deliberately left `[OPEN]`
+    rather than falling out of this as a side effect. Placeholder art is vanilla's own lava
+    texture, tinted per metal via `IClientFluidTypeExtensions` — no new texture files, no Create
+    or TFC asset anywhere near this.
+  - Crucible and Thermal Vessel both gained an internal `FluidTank` (`MoltenVessel` interface),
+    filled by `complete()`/`completeProcess()` when the matched process has a fluid result.
+    Overflow past the tank's capacity is silently lost, same as an item result already is when
+    every slot is full — `[OPEN]`, worth a second look once anything can overflow this by more
+    than a sliver.
+  - `MoldItem` (`feedback:ingot_mold`) holds its contents as a `SimpleFluidContent` component and
+    is a workpiece like any other for heat — it reuses `ItemHeat`/`TEMPERATURE` rather than a
+    parallel heat system, unlike TFC's separate mold capability. Two clicks, both real actions:
+    `onItemUseFirst` against a `MoltenVessel` fills it (stamped to the vessel's own temperature,
+    the same claim `CrucibleBlockEntity#removeItem` already makes for an ordinary workpiece);
+    `use()` in the air casts it once `Casting.isSolidAt` says it has cooled enough, computed on
+    demand off `ItemHeat` — no tick listener anywhere in this chain.
+  - `Casting` is its own table (`data/feedback/casting/`), server-only: no JEI card yet (real
+    follow-up work, not a decision that the table is wrong), and it duplicates the solidify
+    temperature a `ThermalProcess` melt entry for the same metal already states rather than
+    reaching across tables for it — every other table in this mod is already self-contained the
+    same way.
+  - Content: melting + casting entries for iron, gold and copper (ore, deepslate ore, raw-ore
+    item, all as one OR'd input — vanilla's own array-form `Ingredient` JSON, confirmed against
+    the actual codec rather than assumed). Iron's melt point (1600 Tu) sits above what an unblown
+    fire reaches (charcoal alone tops out at 1220 Tu, ~1830 fully blown) so it genuinely needs
+    the Blast Furnace + bellows tier — which is the first time §4c's own `[OPEN]` complaint (the
+    Blast Furnace's lesson "had nothing to land on") has anything to land on. Copper (1000 Tu)
+    and gold (950 Tu) sit low enough for a plain fire, matching their real relative melting
+    points. All three numbers are invented, same as everything else in `FTuning`.
+  - The 20 matching vanilla `*_ingot_from_smelting_*`/`*_ingot_from_blasting_*` recipes (every
+    ore/deepslate-ore/raw-ore route, all three metals) are `neoforge:false`-overridden dead —
+    same trick already used on the vanilla furnace/smoker/blast-furnace crafting recipes. Ore no
+    longer becomes an ingot any way except melt-and-cast. Deliberately no dual path (direct-smelt
+    kept as a cheap/lossy alternative was considered and rejected — this was not built as a
+    puzzle-for-its-own-sake, so §5's "two correct approaches" argument does not apply here).
+  - Fluid amounts are 144 mB/ingot, matching the modded-Minecraft-wide convention (16 mB/nugget, 9
+    ingots/block) rather than an invented round number — free interop for nothing.
+  - **Refrigeration slots in for free, later, and needed no design foresight to enable.**
+    `Casting.isSolidAt` only ever asks whether a mold's `ItemHeat` currently reads at or below a
+    number; it does not know or care *why*. A future actuator that pulls a vessel below ambient
+    (the reverse of a firebox) changes nothing here.
+  - **Not built:** a JEI casting card; an `IFluidHandler` capability exposed externally (nothing
+    needs one yet — no pipe, no hopper-for-fluids, no other mod's tank sits against ours);
+    non-vanilla ore mods' equivalents (only the three base-game metals); anything about placing
+    molten metal in the world.
+
+- [x] **The fitting system (§4d), infrastructure pass.** GTCEu read, named (not "cover" — see
+  §4d for why), `fitting/` package built and compiling. Not attached to anything yet; see §4d
+  for what's next.
 
 - [x] **Reading wear with calipers.** Built. `Quantity.CONDITION`, `CalipersItem` reading at 5%
   resolution, and a refusal while the machine is running. It was mostly typing, and the two places
@@ -148,11 +226,42 @@ by size.
   `mB`, with a stated conversion from the force compressing the bag) or the firebox is
   re-expressed in a unit that exists. A rename would hide it; this is a design decision.
 
-- [ ] **`core/unit/` for the datapack records.** The deliberate remainder: `Deformation`,
-  `ThermalProcess`, `Quench` and `Fuel` still hold floats, because retyping them touches wire
-  formats and pack-facing JSON. `Units.codec` / `Units.streamCodec` were written for exactly
-  this, so the JSON does not change — a pack written today keeps working. Small, and worth doing
-  before a fifth table copies the untyped pattern.
+- [x] **`core/unit/` for the datapack records.** Done. `Deformation`, `ThermalProcess`, `Quench`
+  and `Fuel` retyped, and nothing else about them changed — `Units.codec`/`Units.streamCodec`
+  keep the on-disk JSON a bare number, so a pack written against the old float fields still
+  loads unmodified. Retyped: `Deformation.minTemperature`/`maxTemperature`, `ThermalProcess`'s
+  three temperature fields, `Quench.minTemperature`, `Fuel.temperature` → `Tu`;
+  `ThermalProcess.maxHeatingTuPerTick` → `TuRate`; `Deformation.hardness` → `St`. Verified the
+  same way as the first two passes: substituting `strength` (an `St`) for the `Tu` `worksAt`
+  expects in `Deforming.strike` fails to compile. `./gradlew build` passes clean.
+
+  Left float, deliberately, and out of scope for this pass: `Deformation.work` and
+  `FDataComponents.WORK`/`WORK_REQUIRED` (an `int`, semantically `Fu`, but untyped everywhere it
+  already lives — retyping the workpiece's own work tracking is a bigger, separate change than
+  "the datapack records still hold floats"); `holdTicks`/`duration` (ticks, dimensionless);
+  `Fuel.spread` (a fraction, dimensionless).
+
+  **`Deformation.hardness` is `St`, not a bare number, and that is the actual finding.** §17 was
+  already explicit that "work delivered per blow is St ÷ hardness" — a blow and the floor it is
+  compared against share a unit, the same shape as leak-and-conductance from the thermal pass.
+  Typing it that way turned two sites that unwrapped-then-rewrapped a float across the
+  `Deforming`/`Deformation` boundary (`strength.value()` in, `Math.round(...)` out) into two
+  sites that just pass the `St` through, which is a small case of a units type doing its actual
+  job rather than merely being honest about a dimension.
+
+  **`FeedbackJeiPlugin.toThermalProcess` got simpler, not harder.** `FTuning.FOOD_MAX_TU` and
+  `METAL_MIN_TU` were already `Tu` (from the thermal pass); the pooled-recipe constructor was
+  unwrapping them to `float` only to satisfy `ThermalProcess`'s old signature, then the record
+  sat there as a bare number anyway. Retyping removed the unwrap — evidence that a mismatched
+  boundary was already costing a line, quietly, before anything here broke because of it.
+
+  Every consuming call site that already held a typed value (`ItemHeat.get(...)` returning `Tu`,
+  a `CrankLinkage`'s `St strength`) now passes it straight through with no unwrap at all. Every
+  site holding a raw primitive field per the third unit rule (`CrucibleBlockEntity.temperature`,
+  `ThermalVesselBlockEntity.temperature`, `FireboxBlockEntity.burnTu`) wraps inline at the call
+  (`new Tu(temperature)`), the same pattern those fields already used a few lines away for
+  `ItemHeat.set`. Nothing new needed writing for either case — the convention from the thermal
+  and rotation passes covered both.
 
 - [ ] **Allocation pass on `RotationPropagator`.** Not urgent and not a bug — every rebuild
   trigger is correctly edge-triggered, so nothing runs per tick. But one `rebuildFrom` on an
@@ -212,7 +321,7 @@ Dev environment loads **JEI**, **PonderLib**, **Jade** and **Flywheel** out of `
 - [x] **Registrate** — **no.** Saves registration boilerplate but hides what registration says. Legibility beats brevity on this project
 - [x] **Jade** in the dev environment (15.10.6). Compat not written yet — see below
 - [x] **Jade / TheOneProbe** — **Jade, yes; TheOneProbe, no.** A HUD that prints `1247 Tu` on a bare crucible gives away the thermometer and guts §8. One that shows *"really hot!!!"* until an instrument is installed, and figures after, is the adjectives rule on a HUD. Written that way; still `compileOnly`, still not shipped. TOP would be a second copy of the same policy to keep honest, for no new capability
-- [x] **Mixin** — ships with NeoForge. The route for reworking the vanilla furnace/smoker/blast furnace (§15) without replacing the blocks
+- [x] ~~**Mixin**~~ — **removed entirely, see §4f.** Originally the route for reworking the vanilla furnace/smoker/blast furnace (§15) without replacing the blocks. That approach fought vanilla internals one crash at a time and never made it to a player; the Total Conversion rewrite replaced it with independent `feedback:furnace/smoker/blast_furnace` blocks instead, and no mixin config or class remains in the source tree at all
 
 Also decided in passing: **`src/generated/resources` is committed.** Datagen output is reviewable, and a diff on it is the cheapest way to see what a registry change actually did.
 
@@ -220,7 +329,7 @@ Also decided in passing: **`src/generated/resources` is committed.** Datagen out
 
 ## 3. Document 2 — mechanics
 
-Not started. Philosophy defers to it **by name** in these places; each is a debt.
+File exists now: `feedback_mechanics.md`. Only section written: Experience (XP) — speculative, ahead of any code, per its own status note. Everything below is still not started. Philosophy defers to it **by name** in these places; each is a debt.
 
 **Units & arithmetic**
 - [ ] Exact ranges and arithmetic for every unit (§17)
@@ -428,7 +537,7 @@ a copper plate needs a Mechanical Hammer, a Mechanical Hammer needs copper plate
 
 ## 4. Document 3 — content
 
-Downstream of doc 2. The roster: every item, material, machine, cover, process.
+Downstream of doc 2. The roster: every item, material, machine, fitting, process.
 
 - [ ] Seed from slice 1's 12 items / 7 machines
 - [ ] Then slice 2
@@ -591,7 +700,7 @@ All of beat 2 compiles, boots on a dedicated server, loads its four datapack tab
 - [x] **Crucible, small and large** — one class, one block entity type, and the *only* difference is thermal mass. Everything the slice claims about the pair falls out of that number
 - [x] **Insulation** — a block you stack against a vessel. No block entity, no behaviour; the vessel counts its neighbours
 - [x] **Powered Bellows** — `Reciprocating`, so it reuses beat 1's crank linkage, and the long throw is the useful one. Its `getMaxStrength()` is its long throw, so gearing buys stroke rate and never more air per stroke — which is the physics, not a restriction
-- [x] **Thermometer** — a carried instrument, not a cover. One class, zero display code touched, exactly as the `Instrument` interface promised
+- [x] **Thermometer** — a carried instrument, not a fitting. One class, zero display code touched, exactly as the `Instrument` interface promised
 - [x] **Bimetallic Strip** — reads an adjacent vessel, switches any adjacent `Switchable`. No setting on it (§3), and it closes the loop with no logic block anywhere
 - [x] **Carburizing, and burning the batch** — band, hold, max heating rate, spoil temperature. Four fields, four genuinely different failure modes
 - [x] **Quench** — no machine. Throw the hot ingot in any water. A quench tank was drafted and cut for having no decision inside it
@@ -647,10 +756,10 @@ What came of reading it:
 
 ---
 
-## 4d. The cover system — queued, and deliberately early
+## 4d. The fitting system — infrastructure landed, nothing concrete attached yet
 
-The thermometer **should** become a cover eventually. Right now it is a carried instrument,
-which is the right call for one instrument and the wrong shape for five.
+The thermometer **should** become one eventually. Right now it is a carried instrument, which
+is the right call for one instrument and the wrong shape for five.
 
 Build the infrastructure **before** it is necessary, for the same reason `Instrument` was
 written before any instrument existed: a high fixed cost paid once beats no fixed cost and a
@@ -658,27 +767,153 @@ medium variable cost paid per feature, and the crossover is earlier than it feel
 thermometer then becomes one class that touches no display code, exactly as it did the first
 time.
 
-- [ ] **Read GregTech CEu Modern's cover system first.** Checkout at
+- [x] **Read GregTech CEu Modern's cover system first.** Checkout at
   `../GregTech-Modern-7.5.3`. **LGPL-3.0 — design only, no code.** See
   `THIRD-PARTY-LICENSES.md` for why "weak copyleft" does not mean what it sounds like.
-- [ ] The split worth studying is three-way, and the split is the lesson, not any class:
+- [x] The split studied is three-way, and the split is the lesson, not any class:
   `CoverDefinition` (what kinds exist) · `CoverBehavior` (one attached instance, knowing only
   its holder and its side) · `ICoverable` (what it means for a block to accept covers) ·
   `IIOCover` / `IUICover` (optional capability interfaces a cover opts into, rather than a
   base class every cover pays for)
-- [ ] The last of those maps straight onto `Instrument` and is the bit to get right
-- [ ] **What already wants to be a cover:** the thermometer, the bimetallic strip (currently a
-  block, and it was a cover in the slice draft), and whatever slice 2's damper turns out to
-  need. Three is enough to justify the fixed cost; one was not
-- [ ] `ThermalBody.hasThermowell()` is already the right seam — a vessel declaring whether it
-  can be got at is exactly "does this block accept covers", narrowed to one quantity. Widen it
-  rather than replacing it
-- [x] **Narrowed once already, before the cover system exists.** It used to gate *any* instrument
-  outright; it now gates only passive/ambient reading (a HUD card, and eventually a cover's
-  auto-attach). A carried thermometer can still take one manual reading of a sealed vessel —
-  see `ThermometerItem.onItemUseFirst` — the same shape as calipers reading a wearing machine.
-  Worth remembering when covers arrive: the cover is the *ambient* watcher this flag was always
-  actually about, not a second gate on top of the manual dip
+- [x] **Not called "cover."** GTCEu's cover is one concept — a sided I/O filter. Feedback needs
+  three, and they don't share a shape the way GTCEu's sided covers do:
+  - **Sensor** — sided, read-only, outputs data (not redstone — that link doesn't exist yet,
+    see §control below). The bimetallic strip's eventual home
+  - **Upgrade** — unsided, an addon that changes the holder's own numbers directly. Philosophy
+    §4's "physical component you could point at," made attachable
+  - **Adapter** — sided like a Sensor, but an addon like an Upgrade: grants the holder a second
+    energy type to run on (a motor on a mechanical machine, a coil in a crucible). Already
+    named in philosophy §10 ("local conversion covers") before this pass, just not by this word
+  - Calling all three "cover" would be the GTCEu name wearing a shape it was never built for.
+    The umbrella is **Fitting**; renamed throughout `feedback_philosophy.md` and
+    `feedback_slice_01.md` in the same pass (`cover` → `fitting`/`adapter`/`sensor fitting`
+    as the sentence needed) — the old word is gone from the docs, not left stale beside the new
+    one
+  - `IIOCover`/`IUICover`'s lesson (optional capability, not a base class every fitting pays
+    for) is why `SensorFitting`/`UpgradeFitting`/`AdapterFitting` carry no shared method beyond
+    `Fitting`'s pick-item/attach/remove — there's nothing to share yet with one implementor
+    each, and inventing shared methods now would be guessing at a shape instead of finding one
+- [x] **Built:** `fitting/` — `Fitting` (pick item, `onAttached`/`onRemoved`), `SidedFitting`
+  (sealed, permits exactly `SensorFitting` and `AdapterFitting` — a third sided kind is a fourth
+  fitting kind, not a variant of this one), `SensorFitting extends Instrument` (a sensor and a
+  carried instrument answer the same three questions — what, how finely, called what — so it's
+  the same contract found two ways, not two contracts), `AdapterFitting` (empty on purpose —
+  see below), `UpgradeFitting` (empty on purpose), `Fittable` (what a block needs to accept
+  fittings: per-side sensor/adapter slot, a `canMount` hook, an unsided upgrade list). Compiles;
+  **nothing implements it yet.**
+- [x] **`Fittable` wired into a real holder.** `CrucibleBlockEntity`, not `ThermalVesselBlockEntity`
+  as first guessed above — the crucible is philosophy's own "vessel designed to be measured"
+  (see its class doc), so it is the vessel a tech demo should actually be able to watch. Six
+  sided slots (`SidedFitting[]`, indexed by `Direction#get3DDataValue()`), an empty
+  `List<UpgradeFitting>` (nothing concrete exists to put in it yet), NBT persistence for
+  whichever concrete fitting is attached per side. Furnace/Smoker/Blast Furnace family
+  (`ThermalVesselBlockEntity`) still doesn't implement `Fittable` — queued, not done
+- [x] `ThermalBody.hasThermowell()` **widened, not replaced**, at its first real call site:
+  `CrucibleBlockEntity.canMount` consults `hasThermowell()` for `SensorFitting` attachments.
+  Always true today (a crucible is never sealed), so the override currently decides nothing a
+  bare `true` wouldn't — but it's the real seam wired up rather than a copy of the rule, so the
+  day a sealed `Fittable` holder exists it inherits the check instead of needing it re-added
+- [x] **The first concrete fitting: `TemperatureSensorFitting`.** Proves the shape the way the
+  Thermometer proved `Instrument`. Attached by `TemperatureSensorItem` (right-click a crucible
+  face; `onItemUseFirst`, same seam as `ThermometerItem`/`CalipersItem`). Resolves at
+  `FTuning.TEMPERATURE_SENSOR_RESOLUTION_TU` (10 Tu, finer than the carried thermometer's 25 —
+  a bolted fixture buys back some of what carrying loses)
+- [x] **The bimetallic strip is still a plain block, deliberately, for now.** It was the
+  candidate fitting-to-migrate this pass considered and didn't take — migrating it means
+  removing a whole existing block/BE/recipe/lang path, which is real surface area on its own
+  and orthogonal to proving the data-link tech demo. Queued as its own item, not forgotten
+- [x] **[OPEN, resolved]** *How a `SensorFitting`'s reading reaches anything* is answered below
+  by §4d-1's data-link system: pulled on demand by whatever is linked to the fitting, never
+  pushed. See that section for what was read and what was and wasn't taken from it
+- [x] **Narrowed once already, before the fitting system existed.** `hasThermowell` used to gate
+  *any* instrument outright; it now gates only passive/ambient reading (a HUD card, and
+  eventually a sensor fitting's auto-attach). A carried thermometer can still take one manual
+  reading of a sealed vessel — see `ThermometerItem.onItemUseFirst` — the same shape as calipers
+  reading a wearing machine. Worth remembering when fittings arrive: the fitting is the
+  *ambient* watcher this flag was always actually about, not a second gate on top of the manual
+  dip
+
+---
+
+## 4d-1. Data links — tech demo built
+
+Philosophy's own §"how data gets to the controller" already committed to the shape: no cable
+block, no network, a controller reads a nearby data-offering block and the client draws a
+cosmetic link line. What was missing was doc-2-level mechanics and any code. This pass built
+the mechanics and the code, minus the line.
+
+- [x] **Read MrCrayfish's Furniture Mod: Refurbished's electricity system first.**
+  `../MrCrayfishFurnitureMod-Refurbished`. **MIT — adaptable outright**, and read anyway
+  rather than taken wholesale, for the usual reason: a borrowed implementation is a borrowed
+  set of assumptions. See `THIRD-PARTY-LICENSES.md` for the full account
+- [x] **Taken:** the three-part split (`IElectricityNode` capability / `Connection` value /
+  `LinkManager` per-player state machine) as `DataNode` / `DataNodeRef` / `DataLinkManager`,
+  and the select-then-connect interaction itself (first click remembers a node, second click
+  attempts a link, nothing in the world at any point)
+- [x] **Widened:** a node's identity is position **and** an optional side, not position alone.
+  CFM never needs this — one electrical connection point per block entity, full stop. Feedback
+  needs it the moment a `Fittable` holder can carry six sensor fittings at once
+- [x] **Deliberately not taken:** the power/source/consumer semantics (`ISourceNode`,
+  `IModuleNode`, overload, powerable-zone radius) — a data link relays a reading, never current,
+  so there is nothing to power or overload. Also not taken: sub-block node raycasting
+  (`NodeHitResult`, a custom `BlockGetter.traverseBlocks` walk) — Feedback's sided fittings
+  land exactly on vanilla's own block-face hit result, so `DataConnectorItem` just reads
+  `UseOnContext#getClickedFace()`. Adapting the read changed the shape of the problem, which is
+  the whole point of reading first
+- [x] **Correction mid-session: the renderer needed the right branch, not a rewrite.** First
+  pass cloned CFM-Refurbished's *default* branch (`26.1.2`) and concluded its GPU frame-graph
+  renderer had no equivalent on Feedback's 1.21.1 toolchain — true of that branch, but the
+  wrong branch to have read. The repository also has a `1.21.1` branch, whose renderer is a
+  plain `BlockEntityRenderer` queuing draws into a deferred list and flushing them once a frame
+  into `mc.levelRenderer.entityTarget()` (vanilla's own glowing-entity-outline target) — nothing
+  this toolchain lacks. **Check out the branch matching the target Minecraft version before
+  reading, every time** — see `THIRD-PARTY-LICENSES.md` for the full correction
+- [x] **Built: the node/link overlay.** `DeferredDataRenderer` (the queue-then-flush shape and
+  the `entityTarget()` trick), `DataNodeRenderer` (a `BlockEntityRenderer<T>` drawing a small
+  box per `DataNode` a block hosts — itself if it is one, one per attached sided fitting if it
+  is a `Fittable` — plus a thin rotated box per link, all only while `DataConnectorItem` is in
+  the main hand), `DataLinkFrame` (the `RenderLevelStageEvent.AFTER_BLOCK_ENTITIES` flush hook).
+  Registered on `CrucibleBlockEntity` and `DebugControllerBlockEntity`. Each link is stored on
+  both ends and drawn once, from whichever end's `DataNodeRef` sorts first
+  (`DataNodeRef.compareTo`) — no shared per-frame "already drawn" set needed, unlike CFM's
+  `DRAWN_CONNECTIONS`
+- [ ] **Not taken (this pass): the hover/selection feedback.** CFM's success/error/default link
+  colours and "this node is currently selected" highlight are real polish, not load-bearing for
+  the tech demo's actual claim (a link is invisible except with the tool out). Every node
+  renders the same colour regardless of connector-selection state; queued, not forgotten
+- [x] **Built:** `control/data/` — `DataNodeRef` (position + optional side, resolved fresh each
+  time rather than cached), `DataNode` (the capability: link set, `linkTo`/`unlink`,
+  `resolve()` bridging an unsided node or a `Fittable`'s sided fitting), `DataLinkManager`
+  (server-side per-player pending selection, cleared on logout). `SensorFitting` now extends
+  `DataNode` and gained `readValue()` — pulled on demand, never pushed
+- [x] **Built: the tech-demo vertical slice.** `TemperatureSensorItem` attaches a sensor to a
+  crucible face; `DataConnectorItem` links two nodes; `control/debug/DebugControllerBlock(Entity)`
+  is an unsided `DataNode` that resolves every link and shows each `SensorFitting`'s
+  `readValue()` on Jade (`DebugControllerServerData`/`DebugControllerComponent`). It is a
+  development cheat, the same shape and the same reasoning as `DebugHelmetItem`: deliberately
+  out of `FCreativeTabs.MAIN`. Both now live in vanilla's own Operator Utilities tab instead of
+  needing `/give` -- added mid-session once the user pointed out that tab exists; see
+  `FCreativeTabs.buildOperatorTab`
+- [x] `./gradlew build` passes. `runData` boots the mod, registers everything, and finishes
+  clean. `runGameTestServer` loads every registry and both Jade plugins with no errors before
+  hitting an unrelated, pre-existing limit (`No test functions were given!` — this mod has no
+  registered game tests, nothing to do with this change)
+- [ ] **Unverified by eye, and doubly so for the renderer.** Nobody has yet loaded a client,
+  attached a sensor, linked it to a debug controller, and read Jade — nor confirmed the
+  overlay actually draws through a wall rather than merely compiling. No headless display was
+  available to smoke-test client rendering this session; `DataNodeRenderer`/
+  `DeferredDataRenderer` are unverified beyond matching their reference method-for-method
+- [ ] **Not built:** removing a fitting (a crowbar-equivalent interaction); a crafting recipe
+  for either new item (both are creative-tab-reachable only for now, same as most of this
+  session's casting work); wiring `Fittable` into `ThermalVesselBlockEntity`; any second
+  concrete `SensorFitting`, `UpgradeFitting`, or `AdapterFitting`; `DataNode.getMaxNodeLinks()`'s
+  cap of 4 is a made-up number, not tuned to anything
+- [x] **[OPEN, resolved] What a *real* (non-debug) controller does with a link.** Answered by
+  `feedback_controller_spec.md`'s Tier 1 build: a real Controller (`control/controller/`) runs a
+  `ProgramGraph` (`control/program/`) printed onto a Punch Card by a Programmer
+  (`control/programmer/`), reading each `Read Sensor` card's `SensorFitting.readRaw()` and
+  calling `Switchable.setEngaged` from each `Flip Clutch` card, per switch philosophy §13. The
+  debug controller is untouched and still only ever displays
 
 ---
 
@@ -790,7 +1025,7 @@ the recipe pooling, the Smoker's ceiling) which all carried over into §4f uncha
   they fall straight through to the vanilla pool — no vessel needed to be told it is the ore
   machine (§15)
 - [x] **`ThermalBody.hasThermowell()` narrowed, and the Furnace stopped being sealed.** See the
-  cover-system section above for the seam change. The Furnace has an open door you can watch the
+  fitting-system section above for the seam change. The Furnace has an open door you can watch the
   fire through and was never actually sealed like the Smoker or the Blast Furnace — treating all
   three identically was a simplification that didn't survive contact with the real objects
 - [ ] **[OPEN] The fuel slot still accepts anything vanilla considers fuel.** `canPlaceItem` was
@@ -798,7 +1033,7 @@ the recipe pooling, the Smoker's ceiling) which all carried over into §4f uncha
   there inertly rather than being rejected. Cosmetic UX gap, not a correctness one
 - [ ] **[OPEN] The heat gauge has no hover tooltip.** Calipers and the thermometer both narrate a
   reading through chat; the gauge is silent about which band it's showing beyond the colour.
-  Probably fine — it's the free sense, not an instrument — but worth a second look once a cover
+  Probably fine — it's the free sense, not an instrument — but worth a second look once a fitting
   can actually sit on one of these and something needs to react to a number
 - [ ] Real models — none of this changed any art, and none needed to
 
@@ -887,6 +1122,10 @@ and a blaze rod, pulling a workpiece out and reading its temperature by hovering
   one-crash-at-a-time surgery this whole rewrite exists to get away from, to guard against an edge
   case (another mod or a datapack handing the player a vanilla furnace) that disabling the
   recipe already covers for a normal playthrough.
+- [ ] **Planned: replace vanilla furnace/smoker/blast furnace occurrences in generated structures**
+  (villages etc.) with Feedback's own equivalents. Not mixin-patching block behavior — this is a
+  worldgen/structure-processor swap, a different technique from the item above and not blocked by
+  the reasoning that ruled that one out.
 
 ---
 
@@ -894,10 +1133,98 @@ and a blaze rod, pulling a workpiece out and reading its temperature by hovering
 
 Scope already known. Three things arrive together, each making the others necessary:
 
-- [ ] **Tempering** — a controlled *cool*, not a hold. First thing the player can't ask for
-- [ ] **Damper** — the way to ask for it. Second actuator
-- [ ] **Controller** — tape writer + tape reader. Needed because two actuators means two conditions
+- [x] **Tempering** — a controlled *cool*, not a hold. First pass built (2026-09-14).
+  `ThermalProcess` gained one new field, `requireCooling` (optional, defaults `false`, so all
+  four existing datapack files load unchanged) — when true, `holdTicks` only advances on a tick
+  where the body is actually cooling in-band; flat or rising just stalls it, the same
+  "nothing lost" treatment the existing out-of-band check already gets, not a reset. Wired into
+  both places `holdTicks` accumulates (`CrucibleBlockEntity`/`ThermalVesselBlockEntity`
+  `advanceProcess`, which already duplicate this logic independently — not unified here either).
+  **Deliberately no rate field.** The slice doc asks for cooling "at a rate", but philosophy 13
+  says an actuator is a switch, never a dial — there is no continuous rate anywhere in this mod's
+  actuators to store one for. The only lever is the Damper's on/off timing, exactly like the
+  Bellows/Bimetallic-Strip thermostat. New content: `data/feedback/thermal_process/tempered_steel.json`
+  (Hardened Steel, 300-400 Tu, 400 hold ticks, `require_cooling: true` → `feedback:tempered_steel`,
+  a new item). No spoil temperature — this pass doesn't invent an overrun nobody asked for.
+  Player sequence (not encoded specially, falls out of the existing fire/leak model plus the one
+  boolean): reheat Hardened Steel past the band in a crucible, then cut the fire and/or open a
+  Damper so it cools back down *through* the band; hold only counts on the way down.
+- [x] **Damper** — the way to ask for it. First pass built (2026-09-14), `machine/damper/`.
+  `DamperBlockEntity implements Switchable, DataNode` — same pairing `ClutchBlockEntity` uses and
+  for the same reason (a Punch Card's generic actuator card needs a real target), but standalone:
+  not a `RotationNode`, no drag or inertia, unsided. `DamperBlock` mirrors `ClutchBlock`'s
+  right-click-toggles shape, minus everything rotational — a vent flap needs no force input from
+  a crank, it's binary, open or shut, so it's a plain `Switchable` rather than a
+  `Reciprocating`/`StrengthPair` linkage part like the Bellows. **Crucible-only, on purpose** —
+  matches `InsulationBlock`'s existing scope; the Furnace/Smoker/Blast Furnace family never grew
+  an insulation-neighbour scan either, and Damper follows that line rather than drawing a new one.
+  `CrucibleBlockEntity` gained a `dampers` field, recomputed on the same recheck interval
+  insulation already uses, and `getLeak()` now adds `dampers * FTuning.DAMPER_LEAK_BONUS`
+  **additively** on top of insulation's existing multiplicative factor — insulation slows the
+  base path, a vent punches a bypass through it rather than negating it, so add-then-multiply
+  order matters and this is add-on-top. New `FTuning.DAMPER_LEAK_BONUS` (0.05, double the base
+  vessel leak per open damper) and `DAMPER_MAX_BLOCKS` (4, matching insulation's cap) — both
+  invented, "fiction until playtesting" like everything else in that file.
+  **No crafting recipe for the Damper or for Tempered Steel this pass**, deliberately — same
+  precedent as the Boiler, Steam Engine and the fitting system's first concrete fitting, all of
+  which landed creative-tab-only first with recipes done later in a dedicated pass. Both are
+  reachable via creative tab / `/give` only. Placeholder blockstate/model only (two cube models,
+  vanilla iron block/iron bars textures for closed/open — no new texture files, matching "all art
+  is placeholder").
+  **Unverified by eye, same standing as every other infra-first pass in this file.** `./gradlew
+  build` passes clean; nobody has placed a Damper, reheated a Hardened Steel ingot, or watched a
+  tempered result actually complete in a running game.
+- [x] **Controller** — Tier 1 (Punch Card) built, see `feedback_controller_spec.md` and
+  `control/controller/`, `control/program/`, `control/programmer/`. Needed because two actuators
+  means two conditions; a single `ProgramGraph` can hold both a Damper and a Clutch card, and
+  `ActuatorNode` (`control/program/`) is already generic over any `Switchable`+`DataNode` target,
+  so the Damper above plugs in with no controller-side change at all
 - [ ] **Blaze Rod** — Nether opens at the end of slice 1 (flint and steel takes steel)
+
+---
+
+## 5a. Boiler and Steam Engine — infrastructure landed, unverified, no recipes
+
+Not required by slice 1 or 2. Built now anyway, on the same corollary that justified `Instrument`
+and `fitting/` before either had a concrete use: the fixed cost is small today and grows the
+longer it waits. This is the mod's first working bridge between two energy types (philosophy
+§10) — `machine/boiler/` (`ThermalBody` → Steam) and `machine/steamengine/` (Steam → `Su`/`Rpm`).
+
+- [x] `BoilerBlockEntity` — heated from below exactly like a crucible (`HeatSource.below`), turns
+  water into Steam once past `FTuning.BOILER_WORKING_TU`. No rotation code anywhere in it.
+- [x] `SteamEngineBlockEntity` — a plain `RotationNode`. No thermal code anywhere in it; it pulls
+  Steam from any neighbour exposing `Capabilities.FluidHandler` and has no way to tell a boiler
+  apart from anything else that fills a tank with the same fluid.
+- [x] `Steam` registered as a real, unplaced `Fluid`/`FluidType` pair (`FFluids`, `FFluidTypes`),
+  same shape as the molten metals.
+- [x] Compiles. **Not run.** Nobody has placed either block in a world yet — same standing as
+  beat 2's heat model when it first compiled; see §4c.
+
+**Two blocks, not one, and this was a mid-session correction, not the first draft.** The first
+pass fused boiler and turbine into a single block, on the theory that `ThermalVesselBlockEntity`
+already makes that exact simplification over the crucible-plus-firebox pair. Wrong here: a
+furnace is always its own fire, but what makes the boiler's heat is precisely the axis philosophy
+§10 says has to stay open. Quoting the correction, because it belongs in the design record
+verbatim rather than paraphrased: *"there shouldn't be anything stopping you from using
+electricity to heat a coil to heat steam to turn a shaft inside a magnet to make less electricity
+than you started with, other than your own mind telling you that's stupid. It also means that
+ANY form of heat is a viable form of steam creation, which gives the player the option to
+explore."* A fused block forecloses that by construction — only whatever the class author
+imagined can fire it. Two blocks joined by a real fluid do not, and cost the same to build once
+Steam is a real `Fluid` anyway. See `THIRD-PARTY-LICENSES.md`'s GregTech CEu Modern section and
+`FTuning`'s `--- the boiler ---` doc for the full account of what was read to get here.
+
+Open, deliberately:
+
+- [ ] **[OPEN] No recipes.** Both blocks are creative-tab only. "Change the numbers and the
+  recipes later" was the ask this session; the numbers are in `FTuning`, the recipes are not.
+- [ ] **[OPEN] No steam bucket.** Same call the molten metals already made and for the same
+  reason (see `FFluids`) — a real fluid today, a bucket only once something actually needs to
+  carry it by hand rather than through the `Capabilities.FluidHandler` both blocks expose.
+- [ ] **[OPEN] Flat output, not a throttle.** `STEAM_ENGINE_CAPACITY_SU`/`RPM` are a threshold,
+  not a curve — seen running in game, not just simulated
+- [ ] **[OPEN] The exploding boiler.** §14 names GTCEu's over-restricted boiler explosion as good
+  precedent for a genuine hard-gate consequence. No failure state exists to explode into yet.
 
 ---
 
@@ -909,7 +1236,7 @@ From `feedback_philosophy.md` §18. Not urgent; do not answer early — answerin
 - [ ] Machine roster + physical upgrade path per process family (§14)
 - [ ] How far vanilla reinterpretation goes beyond smelting (§15)
 - [ ] Create compatibility — ship it or not, and how deep (§16)
-- [ ] Local conversion covers: electrical to mechanical, electrical to thermal (§10)
+- [ ] Local conversion adapters: electrical to mechanical, electrical to thermal (§10)
 - [ ] Visual architecture of each factory era (§14)
 - [ ] Where each exotic phenomenon first appears and how it becomes engineered (§2, §14)
 - [ ] Full era arc; where the "detect before you can act" bridges land (§14)

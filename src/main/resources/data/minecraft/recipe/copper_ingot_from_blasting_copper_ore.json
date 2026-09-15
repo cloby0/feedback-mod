@@ -1,0 +1,10 @@
+{
+  "neoforge:conditions": [
+    { "type": "neoforge:false" }
+  ],
+  "type": "minecraft:blasting",
+  "ingredient": { "item": "minecraft:copper_ore" },
+  "result": { "id": "minecraft:copper_ingot" },
+  "experience": 0,
+  "cookingtime": 200
+}

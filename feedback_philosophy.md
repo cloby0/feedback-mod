@@ -4,7 +4,7 @@
 >
 > - **1 — Philosophy** *(this document)*: identity, principles, constraints. Worked examples appear only where they prove a principle is real.
 > - **2 — Mechanics**: how each principle is actually implemented. Units and their arithmetic, the sensor/actuator matrix, the thermal model, the energy networks, overrun band tuning, the control node set.
-> - **3 — Content**: the roster. Every item, material, machine, cover and process, and what each one does.
+> - **3 — Content**: the roster. Every item, material, machine, fitting and process, and what each one does.
 >
 > Keeping these separate is load-bearing, not tidiness. Mixed together, you end up revising the philosophy every time a hypothetical copper furnace turns out not to make sense.
 >
@@ -675,7 +675,7 @@ Two true statements that look contradictory:
 1. Late-game factories move energy predominantly as electricity, because it is compact, controllable, and convenient over distance.
 2. Electricity is not the universal currency that everything secretly converts into.
 
-Both hold, because **transport and consumption are different things.** Long-haul energy is electrical; the final conversion happens locally, at the machine, through covers and blocks — a motor cover driving a shaft, a heating coil warming a vessel. The player puts the right form of energy next to the process that needs it instead of rebuilding the factory around every conversion. What the player never has to do is route a mechanical process through electricity to make it usable.
+Both hold, because **transport and consumption are different things.** Long-haul energy is electrical; the final conversion happens locally, at the machine, through fittings and blocks — an adapter motor driving a shaft, an adapter coil warming a vessel. The player puts the right form of energy next to the process that needs it instead of rebuilding the factory around every conversion. What the player never has to do is route a mechanical process through electricity to make it usable.
 
 **And an implementation rule that belongs here as a principle:** *do not build eight electricities.* If the energy types differ only in name, texture, and unit, this whole section is decoration. Each type must be behaviorally distinct in ways the player feels — how it is transported, whether it can be stored, how it degrades, and above all **how it fails and how it stops** (§8, and the per-type breakdown below).
 
@@ -716,7 +716,7 @@ Because data transmission reuses the energy transmission rules, the expected pat
 
 ## 11. No Identity Checks
 
-**Nothing in this mod may perform an identity check.** No block, cover, pipe, or logic node may act on "if item == iron ingot." There is no generic filter.
+**Nothing in this mod may perform an identity check.** No block, fitting, pipe, or logic node may act on "if item == iron ingot." There is no generic filter.
 
 All sorting and quality control must exploit real physical properties:
 
@@ -777,7 +777,7 @@ A sufficiently determined player will notice that switching a supply on and off 
 
 At the very beginning there is no control hardware at all. The player watches, decides, and acts. **They are the controller**, and every later tier is an attempt to get that job done without them standing there.
 
-The first piece of hardware to take any of it over is not a controller either. A sensor cover wired directly to an actuator is a **thermostat**: a bimetallic strip trips at a temperature, the bellows stops. One condition, one response, no logic block anywhere.
+The first piece of hardware to take any of it over is not a controller either. A sensor fitting wired directly to an actuator is a **thermostat**: a bimetallic strip trips at a temperature, the bellows stops. One condition, one response, no logic block anywhere.
 
 Only then does a controller arrive, and it arrives for a reason — the moment one condition stops being enough.
 
@@ -825,7 +825,7 @@ This also leaves the Ender Relay's job intact (§10). Sixteen blocks is a worksh
 
 Early controllers take **rotation**. Late ones take **electricity, natively.**
 
-This is not the ordinary conversion story where a late machine takes power because a motor cover handles it (§10). It is literal: an early controller is an analogue machine that physically turns a tape past a reader, so it wants a shaft. A late controller is a computer, and computers run on electricity.
+This is not the ordinary conversion story where a late machine takes power because an adapter handles it (§10). It is literal: an early controller is an analogue machine that physically turns a tape past a reader, so it wants a shaft. A late controller is a computer, and computers run on electricity.
 
 Two consequences worth having on purpose.
 
@@ -966,7 +966,9 @@ The player should gradually become more capable in the world, ending with genuin
 
 If heat is a real continuous quantity and materials accumulate temperature, then the vanilla furnace cannot remain an instant raw-item-to-finished-item black box sitting in the same world. Vanilla mechanics get reinterpreted through the same physical rules wherever a visible contradiction would otherwise exist.
 
-**The decision: the three vanilla smelting blocks are reworked, not removed.** They become the crudest real apparatus in the game — genuine thermal vessels with genuine thermal behavior, sitting at the bottom of the same ladder as everything the player builds later.
+**The decision: the three vanilla smelting operations are preserved, but the vanilla blocks themselves are superseded.** First attempt reworked them in place via Mixin, patching `AbstractFurnaceBlockEntity` and its two subclasses; that fought vanilla internals one crash at a time and never reached a player. Feedback now ships its own `feedback:furnace`/`smoker`/`blast_furnace` — a single `ThermalVesselBlockEntity` parameterized by `VesselKind` — with the same recipe and role vanilla's versions had, but genuine thermal behavior. They become the crudest real apparatus in the game, sitting at the bottom of the same ladder as everything the player builds later.
+
+The original vanilla blocks stay registered (existing worlds, mod compatibility) but are uncraftable — the recipe is gone, not the block. They still generate in structures for now; replacing those occurrences too is future work, not yet built.
 
 ### Three vessels, three personalities
 

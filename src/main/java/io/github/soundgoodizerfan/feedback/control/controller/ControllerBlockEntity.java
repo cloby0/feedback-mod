@@ -1,0 +1,195 @@
+/*
+ * Feedback -- a Minecraft technology mod.
+ * Copyright (C) 2026 soundgoodizerfan
+ *
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <https://www.gnu.org/licenses/>.
+ *
+ * Assets under src/main/resources/assets are NOT covered by this licence.
+ * See LICENSE-ASSETS.
+ */
+package io.github.soundgoodizerfan.feedback.control.controller;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import io.github.soundgoodizerfan.feedback.control.Switchable;
+import io.github.soundgoodizerfan.feedback.control.data.DataNode;
+import io.github.soundgoodizerfan.feedback.control.data.DataNodeRef;
+import io.github.soundgoodizerfan.feedback.control.program.ProgramEvaluator;
+import io.github.soundgoodizerfan.feedback.control.program.ProgramGraph;
+import io.github.soundgoodizerfan.feedback.control.program.ProgramNode;
+import io.github.soundgoodizerfan.feedback.control.program.SensorNode;
+import io.github.soundgoodizerfan.feedback.core.FTuning;
+import io.github.soundgoodizerfan.feedback.core.rotation.RotationNode;
+import io.github.soundgoodizerfan.feedback.core.unit.Su;
+import io.github.soundgoodizerfan.feedback.fitting.SensorFitting;
+import io.github.soundgoodizerfan.feedback.registry.FBlockEntities;
+import io.github.soundgoodizerfan.feedback.registry.FDataComponents;
+
+import org.jetbrains.annotations.Nullable;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+
+/**
+ * Reads sensors, compares numbers, switches actuators -- controller spec §1's whole allowed
+ * list, run from whatever {@link ProgramGraph} its held Punch Card carries. Su-powered per the
+ * spec's tier table: it must be turning to evaluate at all, the same "no motive force, no
+ * switching" logic that already governs {@code ClutchBlockEntity}.
+ * <p>
+ * Not itself a {@link DataNode} -- see {@code control/program}'s class docs. A card carries its
+ * own {@link DataNodeRef} directly, so nothing here needs to be the other end of a link.
+ */
+public class ControllerBlockEntity extends RotationNode implements Container {
+
+    private static final String CARD = "Card";
+
+    private ItemStack card = ItemStack.EMPTY;
+
+    /**
+     * The last quantised reading seen for each {@link SensorNode}, by node id -- spec §2.5: the
+     * graph is only re-evaluated when one of these actually moves. Not persisted; losing it on
+     * reload just costs one extra evaluation, which is harmless.
+     */
+    private final Map<Integer, Float> lastSensorValues = new HashMap<>();
+    private ProgramGraph lastGraph = ProgramGraph.EMPTY;
+
+    public ControllerBlockEntity(BlockPos pos, BlockState state) {
+        super(FBlockEntities.CONTROLLER.get(), pos, state);
+    }
+
+    @Override
+    public Su getLoadSu() {
+        return FTuning.CONTROLLER_LOAD_SU;
+    }
+
+    public void tickServer() {
+        if (level == null || level.isClientSide || getRpm().value() == 0)
+            return; // no motive force, no switching -- outputs hold their last state
+
+        ProgramGraph graph = card.getOrDefault(FDataComponents.PROGRAM_GRAPH, ProgramGraph.EMPTY);
+        if (graph.nodes().isEmpty())
+            return;
+
+        boolean sameGraph = graph.equals(lastGraph);
+        Map<Integer, Float> current = new HashMap<>();
+        for (ProgramNode node : graph.nodes())
+            if (node instanceof SensorNode sensor)
+                current.put(sensor.id(), readSensor(sensor.target()));
+
+        boolean changed = !sameGraph || !current.equals(lastSensorValues);
+        if (!changed)
+            return;
+
+        Optional<List<Integer>> order = ProgramEvaluator.topologicalOrder(graph);
+        if (order.isPresent())
+            ProgramEvaluator.evaluate(graph, order.get(), this::readSensor, this::writeActuator);
+
+        lastGraph = graph;
+        lastSensorValues.clear();
+        lastSensorValues.putAll(current);
+    }
+
+    private float readSensor(@Nullable DataNodeRef ref) {
+        if (level == null || ref == null)
+            return 0f;
+        return DataNode.resolve(level, ref)
+                .filter(SensorFitting.class::isInstance)
+                .map(SensorFitting.class::cast)
+                .map(SensorFitting::readRaw)
+                .orElse(0f);
+    }
+
+    private void writeActuator(@Nullable DataNodeRef ref, boolean engaged) {
+        if (level == null || ref == null)
+            return;
+        DataNode.resolve(level, ref)
+                .filter(Switchable.class::isInstance)
+                .map(Switchable.class::cast)
+                .ifPresent(sw -> sw.setEngaged(engaged));
+    }
+
+    // --- Container (one Punch Card slot) ---------------------------------------------------
+
+    @Override
+    public int getContainerSize() {
+        return 1;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return card.isEmpty();
+    }
+
+    @Override
+    public ItemStack getItem(int slot) {
+        return card;
+    }
+
+    @Override
+    public ItemStack removeItem(int slot, int count) {
+        ItemStack result = card.split(count);
+        if (!result.isEmpty())
+            setChanged();
+        return result;
+    }
+
+    @Override
+    public ItemStack removeItemNoUpdate(int slot) {
+        ItemStack result = card;
+        card = ItemStack.EMPTY;
+        return result;
+    }
+
+    @Override
+    public void setItem(int slot, ItemStack stack) {
+        card = stack;
+        card.limitSize(getMaxStackSize(card));
+        setChanged();
+    }
+
+    @Override
+    public boolean stillValid(Player player) {
+        return Container.stillValidBlockEntity(this, player);
+    }
+
+    @Override
+    public void clearContent() {
+        card = ItemStack.EMPTY;
+    }
+
+    // --- persistence --------------------------------------------------------------------------
+
+    @Override
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        if (!card.isEmpty())
+            tag.put(CARD, card.save(registries, new CompoundTag()));
+    }
+
+    @Override
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        card = tag.contains(CARD)
+                ? ItemStack.parse(registries, tag.getCompound(CARD)).orElse(ItemStack.EMPTY)
+                : ItemStack.EMPTY;
+    }
+}

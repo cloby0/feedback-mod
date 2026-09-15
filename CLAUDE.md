@@ -33,14 +33,15 @@ Root package `io.github.soundgoodizerfan.feedback`. The package tree follows the
 | Package | Holds |
 | --- | --- |
 | `registry/` | every `DeferredRegister` — one place to look |
-| `core/unit/` | **the units of §17 as types, and the machinery for the next one.** Ten live: `Tu`, `TuRate`, `ThermalMass`, `Conductance`, `Su`, `Rpm`, `Fu` (an int), `St`, `Drag` (`Su/RPM`), `Inertia` (`Su·t/RPM`). Thin records, one component *named for the dimension* — that naming is the second guard, after the parameter type. **No arithmetic on them**: they type the plumbing and the physics unwraps inline to floats, so `Heat.tick` still reads like the equation. `Unit` is the common interface, `Units` holds codec/wire/format helpers — **the checklist for adding a unit is in `Units`**. Datapack records stay float (wire formats); `Work`, condition and ticks have no type, for stated reasons |
+| `core/unit/` | **the units of §17 as types, and the machinery for the next one.** Ten live: `Tu`, `TuRate`, `ThermalMass`, `Conductance`, `Su`, `Rpm`, `Fu` (an int), `St`, `Drag` (`Su/RPM`), `Inertia` (`Su·t/RPM`). Thin records, one component *named for the dimension* — that naming is the second guard, after the parameter type. **No arithmetic on them**: they type the plumbing and the physics unwraps inline to floats, so `Heat.tick` still reads like the equation. `Unit` is the common interface, `Units` holds codec/wire/format helpers — **the checklist for adding a unit is in `Units`**. Datapack records (`Deformation`, `ThermalProcess`, `Quench`, `Fuel`) are typed too now, via `Units.codec`/`Units.streamCodec` so the on-disk JSON stays a bare number; `Work`, condition and ticks have no type, for stated reasons |
 | `core/rotation/` | the mechanical network — `RotationNode`, `RotationNetwork`, `RotationPropagator` |
 | `core/thermal/` | the thermal model — `ThermalBody` (has a temperature and a mass), `HeatSource` (has a flame temperature and no mass), `Heat` (the maths), `ItemHeat` (a workpiece's own heat) |
 | `machine/` | physical operations. A machine class never names a recipe |
 | `process/` | operation definitions, completion, and overrun behaviour |
-| `instrument/` | sensors. Read-only by construction — an instrument has no way to act |
-| `control/` | controllers, timers, data links |
+| `instrument/` | carried sensors. Read-only by construction — an instrument has no way to act |
+| `control/` | controllers, timers, data links. `control/data/` (`DataNode`, `DataNodeRef`, `DataLinkManager`) is the data-link system's tech-demo pass — read from MrCrayfish's Furniture Mod: Refurbished's electricity system (MIT), **its `1.21.1` branch specifically, not the repo's default `26.1.2`** — check out the branch matching the target Minecraft version before reading, always; see `TODO.md` §4d-1. `control/debug/` is its debug-only display sink, same standing as `DebugHelmetItem`. The node/link overlay (`client/DataNodeRenderer`, `DeferredDataRenderer`, `DataLinkFrame`) is also from that read: a `BlockEntityRenderer` queuing draws that get flushed once a frame into vanilla's entity-outline render target, visible only while the connector is held |
 | `actuator/` | things that start and stop a supply |
+| `fitting/` | **the addon system, and it is not called "cover."** GTCEu's cover is one sided-I/O-filter concept; Feedback needs three shapes that don't share one: `Sensor` (sided, read-only, a `DataNode` — an `Instrument` found attached instead of carried), `Upgrade` (unsided, changes the holder's own numbers), `Adapter` (sided like a Sensor, addon-shaped like an Upgrade — grants a second energy type to run on). `CrucibleBlockEntity` is the one `Fittable` holder so far; `fitting/sensor/TemperatureSensorFitting` is the one concrete fitting. `Upgrade` and `Adapter` still have no concrete implementer — see `TODO.md` §4d |
 | `data/` | datagen |
 | `client/` | renderers and screens |
 
@@ -69,9 +70,10 @@ The design is intended to live in **three documents on a spectrum from idea to i
 | File | Role |
 | --- | --- |
 | `feedback_philosophy.md` | **Document 1 — authoritative.** Identity, principles, constraints. Worked examples only where they prove a principle is real. Open questions are marked `**[OPEN]**` inline and collected in §18; §19 lists things that look decided and are not. |
-| *(document 2 — mechanics)* | **Does not exist yet.** How each principle is implemented: unit arithmetic, the sensor/actuator matrix, the thermal model, energy networks, overrun band tuning, the control node set. |
-| *(document 3 — content)* | **Does not exist yet.** The roster: every item, material, machine, cover and process, and what each does. |
+| `feedback_mechanics.md` | **Document 2 — mechanics. Started, not comprehensive.** How each principle is implemented: unit arithmetic, the sensor/actuator matrix, the thermal model, energy networks, overrun band tuning, the control node set. First section written speculatively, ahead of code: XP as an energy phenomenon (quantity vs. level, storage substrate, why it isn't a fifth power currency, sensing, applications). Everything else `TODO.md` §3 owes is still unwritten. |
+| *(document 3 — content)* | **Does not exist yet.** The roster: every item, material, machine, fitting and process, and what each does. |
 | `feedback_slice_01.md` | **Working document, not one of the three.** The first playable vertical slice, built by `feedback_philosophy.md` §20's method — two beats (mechanical repetition, then thermal control), copper then steel. Concrete but explicitly placeholder-numbered. Its rules feed document 2; its objects feed document 3. Where it and the philosophy disagree, the philosophy wins. |
+| `feedback_controller_spec.md` | **Working document, not one of the three.** The controller/program-graph design slice 1 deliberately left dangling: the dataflow-graph program model, port/type shapes, the four-tier medium progression, and the `Switchable`/`DataNode` widening it needs. Nothing in it built yet. Replaces `controller_spec.txt` (deleted). |
 | `LICENSING.md` | **Feedback is GPL-3.0-or-later (code) + All Rights Reserved (assets).** Full copyleft on purpose, not LGPL: anything built on this code is free too, because a mod arguing that systems should be legible and open to being taken apart would be incoherent if its licence let people build closed things on it. Accepted cost: no closed-source addons. Also records who owns it and the AI-authorship caveat. |
 | `THIRD-PARTY-LICENSES.md` | **What we owe and to whom.** All three reference mods are now legally adaptable; the working rule stays stricter than the law — read the design, write the code — and every debt is recorded per site. Their *assets* are off limits universally and permanently. |
 | `speculative_physics_inspo_doc.md` | *A Speculative Physics and Biochemistry Compendium of Minecraft (Vanilla and Modded)* — the user's own worldbuilding document, ~2800 lines. Explicitly **not canon**. A **mindset reference** (how to reason about Minecraft phenomena scientifically) and a parts bin — the Liquid Teleportant chain and the "flagged exception" treatment of Redstone were already lifted from it. |
@@ -88,9 +90,9 @@ The last clause is the whole differentiator. GregTech 6 already has machines tha
 **Ask the user whether there is a relevant open-source mod to study before implementing
 anything non-trivial.** This is now an established pattern rather than a suggestion — the
 rotation network came out of reading Create, the thermal model was materially improved by
-reading TerraFirmaCraft *after* it was written, and the cover system is queued behind reading
-GregTech CEu Modern. Each time, the reading changed the design, and each time it would have
-been cheaper before the code than after.
+reading TerraFirmaCraft *after* it was written, and the fitting system's infrastructure came
+out of reading GregTech CEu Modern's cover system. Each time, the reading changed the design,
+and each time it would have been cheaper before the code than after.
 
 The user knows this ecosystem far better than any model does, and knows which mod solved a
 given problem well. Asking costs one question. Not asking costs a rewrite — TFC's reading
@@ -118,9 +120,11 @@ What "study" means here is strict, and it is the second half of the rule:
 
 The corollary, and the reason this is worth the fixed cost: **infrastructure should be built
 slightly before it is necessary.** `Instrument` was written before any instrument existed and
-the thermometer then cost one class and touched no display code. A cover system should be
-built the same way — a high fixed cost paid once beats no fixed cost and a medium variable
-cost paid per feature, and the crossover arrives earlier than it feels like it will.
+the thermometer then cost one class and touched no display code. The `fitting/` package was
+built the same way — high fixed cost paid once beats no fixed cost and a medium variable cost
+paid per feature, and the crossover arrives earlier than it feels like it will. Its first
+concrete fitting (`TemperatureSensorFitting`) proved it the same way; see `TODO.md` §4d/§4d-1
+for what's next.
 
 ## Hard design rules
 
@@ -163,7 +167,7 @@ These are settled and constrain any proposal:
 
 ## Outstanding work
 
-1. **Write document 2 (mechanics).** Not started. `feedback_philosophy.md` defers to it by name throughout — unit arithmetic, per-energy sensor/actuator pairings, the thermal model, overrun band tuning, the vanilla vessel thermal bands.
+1. **Write document 2 (mechanics).** Started (`feedback_mechanics.md`) — XP section only, speculative and ahead of code. `feedback_philosophy.md` defers to it by name throughout for the rest — unit arithmetic, per-energy sensor/actuator pairings, the thermal model, overrun band tuning, the vanilla vessel thermal bands.
 2. **Write document 3 (content).** Not started, and downstream of 2.
 3. **Project scaffold is done** — Gradle, run configs, Parchment, deploy script, mod entrypoint. **The data-driven recipe format is now settled by precedent rather than by decree:** four datapack tables (`deformation`, `thermal_process`, `quench`, `fuel`), each a plain `SimpleJsonResourceReloadListener` over a record with a `Codec` and a `StreamCodec`, none of them a vanilla `RecipeType`. §15's "compat authored as a table" is satisfied — a pack that wants coke to burn hotter writes a line of JSON.
 

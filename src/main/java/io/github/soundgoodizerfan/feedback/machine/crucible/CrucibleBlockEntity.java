@@ -19,6 +19,7 @@
  */
 package io.github.soundgoodizerfan.feedback.machine.crucible;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,6 +32,13 @@ import io.github.soundgoodizerfan.feedback.core.unit.Conductance;
 import io.github.soundgoodizerfan.feedback.core.unit.ThermalMass;
 import io.github.soundgoodizerfan.feedback.core.unit.Tu;
 import io.github.soundgoodizerfan.feedback.core.unit.TuRate;
+import io.github.soundgoodizerfan.feedback.fitting.Fittable;
+import io.github.soundgoodizerfan.feedback.fitting.SensorFitting;
+import io.github.soundgoodizerfan.feedback.fitting.SidedFitting;
+import io.github.soundgoodizerfan.feedback.fitting.UpgradeFitting;
+import io.github.soundgoodizerfan.feedback.fitting.sensor.TemperatureSensorFitting;
+import io.github.soundgoodizerfan.feedback.machine.damper.DamperBlockEntity;
+import io.github.soundgoodizerfan.feedback.process.MoltenVessel;
 import io.github.soundgoodizerfan.feedback.process.ThermalProcess;
 import io.github.soundgoodizerfan.feedback.process.ThermalProcessTable;
 import io.github.soundgoodizerfan.feedback.registry.FBlockEntities;
@@ -48,6 +56,8 @@ import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 
 /**
  * A vessel that was designed to be measured.
@@ -57,7 +67,7 @@ import net.minecraft.world.level.block.state.BlockState;
  * follows from being closed. A carried thermometer can still be dipped through the door for one
  * manual reading -- see {@code ThermometerItem#onItemUseFirst} -- so a sealed vessel was never
  * truly unmeasurable. What it refuses is being <em>watched</em>: no ambient reading, no HUD card,
- * no cover ever auto-attaching a sensor to it ({@link ThermalBody#hasThermowell()}). That is
+ * no sensor fitting ever auto-attaching itself to it ({@link ThermalBody#hasThermowell()}). That is
  * exactly what a controller needs and a manual spot check cannot give it, so the player's best
  * vessel and their first automated loop are still mutually exclusive, and no amount of iron fixes
  * it. The way out is not a better furnace; it is a vessel with a hole in it.
@@ -81,13 +91,26 @@ import net.minecraft.world.level.block.state.BlockState;
  * arrived at by stacking blocks against it. Neither is "+50% anything"; both are things you could
  * point at.
  */
-public class CrucibleBlockEntity extends BlockEntity implements ThermalBody {
+public class CrucibleBlockEntity extends BlockEntity implements ThermalBody, MoltenVessel, Fittable {
 
     /** How often the vessel looks around to see what has been built against it. */
     private static final int INSULATION_RECHECK_INTERVAL = 20;
 
+    /** One slot per face -- a sensor or an adapter, never both, the same one-per-side rule a
+     * cover uses. Indexed by {@link Direction#get3DDataValue()}. */
+    private final SidedFitting[] fittings = new SidedFitting[Direction.values().length];
+    /** Empty for now: no concrete {@link UpgradeFitting} exists yet (see {@code fitting/}). */
+    private final List<UpgradeFitting> upgrades = new ArrayList<>();
+
     private final NonNullList<ItemStack> contents =
             NonNullList.withSize(FTuning.CRUCIBLE_SLOTS, ItemStack.EMPTY);
+
+    private final FluidTank tank = new FluidTank(FTuning.VESSEL_TANK_CAPACITY_MB) {
+        @Override
+        protected void onContentsChanged() {
+            sync();
+        }
+    };
 
     /**
      * Stored as a primitive, and wrapped only at the accessor. A {@link Tu} in a field would
@@ -101,6 +124,7 @@ public class CrucibleBlockEntity extends BlockEntity implements ThermalBody {
     private int holdTicks;
 
     private int insulation;
+    private int dampers;
     private int sinceInsulationCheck;
 
     public CrucibleBlockEntity(BlockPos pos, BlockState state) {
@@ -129,12 +153,18 @@ public class CrucibleBlockEntity extends BlockEntity implements ThermalBody {
     @Override
     public Conductance getLeak() {
         return new Conductance(FTuning.VESSEL_LEAK.workPerTickPerTu()
-                * (float) Math.pow(FTuning.INSULATION_LEAK_FACTOR, insulation));
+                * (float) Math.pow(FTuning.INSULATION_LEAK_FACTOR, insulation)
+                + dampers * FTuning.DAMPER_LEAK_BONUS.workPerTickPerTu());
     }
 
     /** How many insulating blocks are packed against it. Shown as a spec, not as a reading. */
     public int getInsulation() {
         return insulation;
+    }
+
+    /** How many open Dampers are packed against it. Shown as a spec, not as a reading. */
+    public int getOpenDampers() {
+        return dampers;
     }
 
     public TuRate getHeatingRate() {
@@ -143,6 +173,54 @@ public class CrucibleBlockEntity extends BlockEntity implements ThermalBody {
 
     public int getHoldTicks() {
         return holdTicks;
+    }
+
+    @Override
+    public FluidTank getTank() {
+        return tank;
+    }
+
+    // --- fitting ------------------------------------------------------------------------------
+
+    @Override
+    public SidedFitting getSidedFitting(Direction side) {
+        return fittings[side.get3DDataValue()];
+    }
+
+    @Override
+    public void setSidedFitting(Direction side, SidedFitting fitting) {
+        fittings[side.get3DDataValue()] = fitting;
+        sync();
+    }
+
+    /**
+     * {@code hasThermowell()} widened, not replaced (see {@code TODO.md} §4d): a crucible is
+     * always thermowelled by default, so this always says yes for a sensor today, but the check
+     * lives here rather than being silently true so the day a sealed {@code Fittable} holder
+     * exists, it inherits the real rule instead of a copy of it.
+     */
+    @Override
+    public boolean canMount(SidedFitting fitting, Direction side) {
+        return !(fitting instanceof SensorFitting) || hasThermowell();
+    }
+
+    @Override
+    public List<UpgradeFitting> getUpgrades() {
+        return upgrades;
+    }
+
+    @Override
+    public boolean addUpgrade(UpgradeFitting upgrade) {
+        boolean added = upgrades.add(upgrade);
+        if (added)
+            sync();
+        return added;
+    }
+
+    @Override
+    public void removeUpgrade(UpgradeFitting upgrade) {
+        if (upgrades.remove(upgrade))
+            sync();
     }
 
     // --- contents ---------------------------------------------------------------------------
@@ -211,6 +289,7 @@ public class CrucibleBlockEntity extends BlockEntity implements ThermalBody {
         if (++sinceInsulationCheck >= INSULATION_RECHECK_INTERVAL) {
             sinceInsulationCheck = 0;
             insulation = countInsulation();
+            dampers = countOpenDampers();
         }
 
         Tu fireTu = HeatSource.below(level, worldPosition);
@@ -230,7 +309,7 @@ public class CrucibleBlockEntity extends BlockEntity implements ThermalBody {
         // Overrun. The vessel did not stop, so the batch kept getting hotter, so it is ruined --
         // and it is ruined the instant it passes the line rather than after a grace period,
         // because a grace period would be the machine noticing.
-        if (process.spoilsAt(temperature)) {
+        if (process.spoilsAt(new Tu(temperature))) {
             spoil(process);
             return;
         }
@@ -238,16 +317,22 @@ public class CrucibleBlockEntity extends BlockEntity implements ThermalBody {
         // Outside the band nothing happens and nothing is lost. Progress stalls rather than
         // resetting: the safe direction is meant to be genuinely safe (§6), and a player who
         // drops a little under the window should not be punished for the same mistake twice.
-        if (!process.inBand(temperature))
+        if (!process.inBand(new Tu(temperature)))
             return;
 
         // Climbing too fast is the one failure with no visible cause, and therefore the one an
         // instrument genuinely fixes. It is also what makes a bigger vessel necessary rather than
         // merely nicer -- a small crucible on a full fire cannot satisfy a 25 Tu/t limit at all.
-        if (lastDelta > process.maxHeatingTuPerTick()) {
+        if (lastDelta > process.maxHeatingTuPerTick().tuPerTick()) {
             holdTicks = 0;
             return;
         }
+
+        // Tempering's shape: in-band is not enough, the body has to be cooling to count. Same
+        // "nothing lost" treatment as the in-band check above -- a flat or rising tick just
+        // doesn't advance the hold, it doesn't undo what was already accumulated.
+        if (process.requireCooling() && lastDelta >= 0)
+            return;
 
         if (++holdTicks < process.holdTicks())
             return;
@@ -263,10 +348,18 @@ public class CrucibleBlockEntity extends BlockEntity implements ThermalBody {
             contents.get(slot).shrink(1);
         cleanEmpties();
 
-        ItemStack result = process.result().copy();
-        if (level != null)
-            ItemHeat.set(result, new Tu(temperature), level);
-        place(result);
+        // A melt: the input is gone, and what it was carries into the tank rather than a slot.
+        // Overflow past the tank's capacity is silently lost, the same as an item result dropped
+        // in the world when every slot is full -- see #place. Worth a second look once anything
+        // can actually overflow this by more than a sliver.
+        if (process.hasFluidResult())
+            tank.fill(process.resultFluid().copy(), IFluidHandler.FluidAction.EXECUTE);
+        else {
+            ItemStack result = process.result().copy();
+            if (level != null)
+                ItemHeat.set(result, new Tu(temperature), level);
+            place(result);
+        }
 
         holdTicks = 0;
         sync();
@@ -320,6 +413,17 @@ public class CrucibleBlockEntity extends BlockEntity implements ThermalBody {
         return Math.min(FTuning.INSULATION_MAX_BLOCKS, found);
     }
 
+    private int countOpenDampers() {
+        if (level == null)
+            return 0;
+        int found = 0;
+        for (Direction face : Direction.values())
+            if (level.getBlockEntity(worldPosition.relative(face)) instanceof DamperBlockEntity damper
+                    && damper.isEngaged())
+                found++;
+        return Math.min(FTuning.DAMPER_MAX_BLOCKS, found);
+    }
+
     public void sync() {
         setChanged();
         if (level != null && !level.isClientSide)
@@ -333,6 +437,19 @@ public class CrucibleBlockEntity extends BlockEntity implements ThermalBody {
         tag.putFloat("Temperature", temperature);
         tag.putInt("HoldTicks", holdTicks);
         tag.putInt("Insulation", insulation);
+        tag.putInt("Dampers", dampers);
+        tank.writeToNBT(registries, tag);
+
+        // Only one concrete SidedFitting exists yet, so this stays a direct check rather than a
+        // registry lookup -- see fitting/UpgradeFitting's own doc on why generalizing early is
+        // guessing at a shape instead of finding one.
+        for (Direction side : Direction.values()) {
+            if (fittings[side.get3DDataValue()] instanceof TemperatureSensorFitting sensor) {
+                CompoundTag sensorTag = new CompoundTag();
+                sensor.writeNbt(sensorTag);
+                tag.put("Sensor" + side.get3DDataValue(), sensorTag);
+            }
+        }
     }
 
     @Override
@@ -345,6 +462,17 @@ public class CrucibleBlockEntity extends BlockEntity implements ThermalBody {
                 : FTuning.AMBIENT_TU.value();
         holdTicks = tag.getInt("HoldTicks");
         insulation = tag.getInt("Insulation");
+        dampers = tag.getInt("Dampers");
+        tank.readFromNBT(registries, tag);
+
+        for (Direction side : Direction.values()) {
+            String key = "Sensor" + side.get3DDataValue();
+            if (tag.contains(key)) {
+                TemperatureSensorFitting sensor = new TemperatureSensorFitting(this, side);
+                sensor.readNbt(tag.getCompound(key));
+                fittings[side.get3DDataValue()] = sensor;
+            }
+        }
     }
 
     @Override

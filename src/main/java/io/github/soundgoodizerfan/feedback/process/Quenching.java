@@ -81,7 +81,7 @@ public class Quenching {
         float tu = ItemHeat.get(stack, level).value();
 
         Optional<Quench> maybe = QuenchTable.get().find(stack);
-        if (maybe.isPresent() && tu >= maybe.get().minTemperature()) {
+        if (maybe.isPresent() && tu >= maybe.get().minTemperature().value()) {
             ItemStack hardened = maybe.get().result().copyWithCount(stack.getCount());
             item.setItem(hardened);
         } else {

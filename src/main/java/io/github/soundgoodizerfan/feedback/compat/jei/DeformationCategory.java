@@ -128,7 +128,7 @@ public class DeformationCategory implements IRecipeCategory<Deformation> {
         ItemStack[] accepted = recipe.input().getItems();
         row(graphics, font, 18, "feedback.jei.input", quantity(accepted.length == 0 ? ItemStack.EMPTY : accepted[0]));
         row(graphics, font, 30, "feedback.jei.work", recipe.work() + " Fu");
-        row(graphics, font, 42, "feedback.jei.hardness", Readout.number(recipe.hardness()));
+        row(graphics, font, 42, "feedback.jei.hardness", Readout.number(recipe.hardness().value()));
         row(graphics, font, 54, "feedback.jei.output", quantity(recipe.result()));
     }
 

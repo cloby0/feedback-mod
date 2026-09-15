@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "open=false": { "model": "feedback:block/damper_closed" },
+    "open=true":  { "model": "feedback:block/damper_open" }
+  }
+}

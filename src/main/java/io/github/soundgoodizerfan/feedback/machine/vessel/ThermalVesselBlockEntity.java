@@ -33,6 +33,7 @@ import io.github.soundgoodizerfan.feedback.core.unit.TuRate;
 import io.github.soundgoodizerfan.feedback.machine.bellows.Blown;
 import io.github.soundgoodizerfan.feedback.process.Fuel;
 import io.github.soundgoodizerfan.feedback.process.FuelTable;
+import io.github.soundgoodizerfan.feedback.process.MoltenVessel;
 import io.github.soundgoodizerfan.feedback.process.ThermalProcess;
 import io.github.soundgoodizerfan.feedback.process.ThermalProcessTable;
 import io.github.soundgoodizerfan.feedback.process.VanillaFallback;
@@ -62,6 +63,8 @@ import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 
 /**
  * A self-fired thermal vessel with nine generic workpiece slots and one fuel slot -- the
@@ -87,13 +90,19 @@ import net.minecraft.world.level.block.state.BlockState;
  * vessel actually is, physically.
  */
 public class ThermalVesselBlockEntity extends BlockEntity
-        implements Container, MenuProvider, ThermalBody, HeatSource, Blown {
+        implements Container, MenuProvider, ThermalBody, HeatSource, Blown, MoltenVessel {
 
     public static final int SLOTS = 9;
     public static final int SLOT_FUEL = SLOTS;
     private static final int TOTAL_SLOTS = SLOTS + 1;
 
     private final NonNullList<ItemStack> items = NonNullList.withSize(TOTAL_SLOTS, ItemStack.EMPTY);
+    private final FluidTank tank = new FluidTank(FTuning.VESSEL_TANK_CAPACITY_MB) {
+        @Override
+        protected void onContentsChanged() {
+            setChanged();
+        }
+    };
     private final float[] work = new float[SLOTS];
     private int holdTicks;
     private float lastDelta;
@@ -124,6 +133,11 @@ public class ThermalVesselBlockEntity extends BlockEntity
 
     public ContainerData getContainerData() {
         return data;
+    }
+
+    @Override
+    public FluidTank getTank() {
+        return tank;
     }
 
     // --- thermal --------------------------------------------------------------------------
@@ -226,7 +240,7 @@ public class ThermalVesselBlockEntity extends BlockEntity
         // Rolled once and held for the whole burn -- see FireboxBlockEntity for why per-tick
         // noise would be the same variance with nothing in it to learn.
         float roll = 1f + (level.random.nextFloat() * 2f - 1f) * burning.spread();
-        flameRollTu = burning.temperature() * roll;
+        flameRollTu = burning.temperature().value() * roll;
 
         fuelStack.shrink(1);
         if (fuelStack.isEmpty() && fuelStack.hasCraftingRemainingItem())
@@ -277,18 +291,22 @@ public class ThermalVesselBlockEntity extends BlockEntity
 
     /** The {@link ThermalProcessTable} path, run exactly the way the crucible runs one. */
     private void advanceProcess(ThermalProcess process, List<ItemStack> contents) {
-        if (process.spoilsAt(temperature)) {
+        if (process.spoilsAt(new Tu(temperature))) {
             spoilProcess(process, contents);
             return;
         }
-        if (!process.inBand(temperature)) {
+        if (!process.inBand(new Tu(temperature))) {
             holdTicks = 0;
             return;
         }
-        if (Math.abs(lastDelta) > process.maxHeatingTuPerTick()) {
+        if (Math.abs(lastDelta) > process.maxHeatingTuPerTick().tuPerTick()) {
             holdTicks = 0;
             return;
         }
+        // Tempering's shape -- see CrucibleBlockEntity#advanceProcess. In-band alone isn't
+        // enough; a flat or rising tick just stalls the hold rather than resetting it.
+        if (process.requireCooling() && lastDelta >= 0)
+            return;
         if (++holdTicks < process.holdTicks())
             return;
 
@@ -303,7 +321,12 @@ public class ThermalVesselBlockEntity extends BlockEntity
         for (int slot : assignment)
             contents.get(slot).shrink(1);
 
-        place(process.result().copy());
+        // A melt: see CrucibleBlockEntity#complete for why overflow past the tank is silently
+        // lost rather than handled specially.
+        if (process.hasFluidResult())
+            tank.fill(process.resultFluid().copy(), IFluidHandler.FluidAction.EXECUTE);
+        else
+            place(process.result().copy());
         setChanged();
     }
 
@@ -409,6 +432,7 @@ public class ThermalVesselBlockEntity extends BlockEntity
         tag.putInt("HoldTicks", holdTicks);
         for (int slot = 0; slot < SLOTS; slot++)
             tag.putFloat("Work" + slot, work[slot]);
+        tank.writeToNBT(registries, tag);
     }
 
     @Override
@@ -424,6 +448,7 @@ public class ThermalVesselBlockEntity extends BlockEntity
         holdTicks = tag.getInt("HoldTicks");
         for (int slot = 0; slot < SLOTS; slot++)
             work[slot] = tag.getFloat("Work" + slot);
+        tank.readFromNBT(registries, tag);
     }
 
     @Override

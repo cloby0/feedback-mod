@@ -31,6 +31,7 @@ import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.recipe.IFocusGroup;
+import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 
@@ -40,6 +41,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 /**
  * A process card: what a fire does to a set of materials, stated in exact units.
@@ -63,6 +65,15 @@ import net.minecraft.world.item.crafting.Ingredient;
  * row is left off instead of printing a number nobody measured, and its temperature band is often
  * open-ended ({@link ThermalProcess#maxTemperature()} of {@code Float.MAX_VALUE}, drawn as
  * {@code "800+"}) because a bare floor is all §15's two constants ever promised.
+
+ *
+ * <h2>Melting is this card too, not a new one</h2>
+ * A melt is a {@link ThermalProcess} whose {@link ThermalProcess#resultFluid()} is set instead of
+ * {@link ThermalProcess#result()} -- min temperature is the melt point, everything else at its
+ * ordinary defaults. It was tempting to give melting its own category the way the first cut of
+ * the pooled-recipe merge did: wrong for the same reason that was. Band, hold and spoil are
+ * per-entry fields already, not a type distinction, and the only thing that actually differs is
+ * the output slot's ingredient type -- so that is the only thing {@link #setRecipe} branches on.
  */
 public class ThermalProcessCategory implements IRecipeCategory<ThermalProcess> {
 
@@ -119,22 +130,33 @@ public class ThermalProcessCategory implements IRecipeCategory<ThermalProcess> {
         List<Ingredient> inputs = recipe.inputs();
         for (int i = 0; i < inputs.size() && i < 3; i++)
             builder.addInputSlot(1, 13 + i * 18).setStandardSlotBackground().addIngredients(inputs.get(i));
-        builder.addOutputSlot(1, 69).setOutputSlotBackground().addItemStack(recipe.result());
+
+        // A melt's output is a fluid, not an item -- see ThermalProcess#resultFluid. Same slot,
+        // whichever ingredient type actually applies; never both.
+        if (recipe.hasFluidResult()) {
+            FluidStack fluid = recipe.resultFluid();
+            builder.addSlot(RecipeIngredientRole.OUTPUT, 1, 69).setOutputSlotBackground()
+                    .addFluidStack(fluid.getFluid(), fluid.getAmount());
+        } else {
+            builder.addOutputSlot(1, 69).setOutputSlotBackground().addItemStack(recipe.result());
+        }
     }
 
     @Override
     public void draw(ThermalProcess recipe, IRecipeSlotsView slots, GuiGraphics graphics, double mouseX, double mouseY) {
         Font font = Minecraft.getInstance().font;
-        graphics.drawString(font, recipe.result().getHoverName().getString().toUpperCase(Locale.ROOT),
-                1, 1, TITLE_COLOUR, false);
+        String title = recipe.hasFluidResult()
+                ? recipe.resultFluid().getHoverName().getString()
+                : recipe.result().getHoverName().getString();
+        graphics.drawString(font, title.toUpperCase(Locale.ROOT), 1, 1, TITLE_COLOUR, false);
         graphics.fill(1, 11, WIDTH - 1, 12, RULE_COLOUR);
 
         int y = 18;
         row(graphics, font, y, "feedback.jei.inputs", inputNames(recipe), VALUE_COLOUR);
         y += 12;
-        String band = recipe.maxTemperature() < Float.MAX_VALUE
-                ? Readout.number(recipe.minTemperature()) + "-" + Readout.number(recipe.maxTemperature()) + " Tu"
-                : Readout.number(recipe.minTemperature()) + "+ Tu";
+        String band = recipe.maxTemperature().value() < Float.MAX_VALUE
+                ? Readout.number(recipe.minTemperature().value()) + "-" + Readout.number(recipe.maxTemperature().value()) + " Tu"
+                : Readout.number(recipe.minTemperature().value()) + "+ Tu";
         row(graphics, font, y, "feedback.jei.temperature", band, VALUE_COLOUR);
         y += 12;
         // Both, always: the philosophy's own convention for showing time, because ticks are what
@@ -146,13 +168,13 @@ public class ThermalProcessCategory implements IRecipeCategory<ThermalProcess> {
                     recipe.holdTicks() + " t (" + Readout.number(recipe.holdTicks() / 20f) + " s)", VALUE_COLOUR);
             y += 12;
         }
-        if (recipe.maxHeatingTuPerTick() < Float.MAX_VALUE) {
+        if (recipe.maxHeatingTuPerTick().tuPerTick() < Float.MAX_VALUE) {
             row(graphics, font, y, "feedback.jei.max_heating",
-                    Readout.number(recipe.maxHeatingTuPerTick()) + " Tu/t", VALUE_COLOUR);
+                    Readout.number(recipe.maxHeatingTuPerTick().tuPerTick()) + " Tu/t", VALUE_COLOUR);
             y += 12;
         }
-        if (recipe.spoilTemperature() < Float.MAX_VALUE)
-            row(graphics, font, y, "feedback.jei.spoils", "> " + Readout.number(recipe.spoilTemperature()) + " Tu",
+        if (recipe.spoilTemperature().value() < Float.MAX_VALUE)
+            row(graphics, font, y, "feedback.jei.spoils", "> " + Readout.number(recipe.spoilTemperature().value()) + " Tu",
                     SPOIL_COLOUR);
     }
 

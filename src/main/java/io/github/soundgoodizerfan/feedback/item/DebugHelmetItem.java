@@ -43,8 +43,8 @@ import net.minecraft.world.level.Level;
  * <p>
  * This replaces all of it. Wear it and every qualitative readout -- Jade lines, the workpiece
  * tooltip -- turns into the figure the simulation actually holds. It is a cheat, deliberately, and
- * it is shaped like one: creative-only, out of the mod's creative tab, obtainable only by somebody
- * who already knows it exists.
+ * it is shaped like one: creative-only, out of the mod's own tab, living in vanilla's Operator
+ * Utilities tab instead -- see {@code FCreativeTabs}.
  *
  * <h2>Why it is not a thermometer</h2>
  * Instruments are a real progression axis (§8: range, resolution, accuracy, response). This is not

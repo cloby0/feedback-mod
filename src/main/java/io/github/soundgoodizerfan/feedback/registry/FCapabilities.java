@@ -19,6 +19,7 @@
  */
 package io.github.soundgoodizerfan.feedback.registry;
 
+import io.github.soundgoodizerfan.feedback.machine.boiler.BoilerFluidHandler;
 import io.github.soundgoodizerfan.feedback.machine.crucible.CrucibleItemHandler;
 import io.github.soundgoodizerfan.feedback.machine.hammer.HammerItemHandler;
 
@@ -53,5 +54,13 @@ public class FCapabilities {
         // first rather than a sensor that knows when the steel is ready.
         event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, FBlockEntities.CRUCIBLE.get(),
                 (crucible, side) -> new CrucibleItemHandler(crucible));
+
+        // Both sides of the thermal-to-rotation bridge, so a bucket, a hopper, or a future pipe
+        // already works against either block without either of them knowing the other exists --
+        // see FTuning's "--- the boiler ---" section.
+        event.registerBlockEntity(Capabilities.FluidHandler.BLOCK, FBlockEntities.BOILER.get(),
+                (boiler, side) -> new BoilerFluidHandler(boiler));
+        event.registerBlockEntity(Capabilities.FluidHandler.BLOCK, FBlockEntities.STEAM_ENGINE.get(),
+                (engine, side) -> engine.getTank());
     }
 }

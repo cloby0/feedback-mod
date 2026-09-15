@@ -27,6 +27,8 @@ import java.util.stream.Stream;
 
 import io.github.soundgoodizerfan.feedback.Feedback;
 import io.github.soundgoodizerfan.feedback.core.FTuning;
+import io.github.soundgoodizerfan.feedback.core.unit.Tu;
+import io.github.soundgoodizerfan.feedback.core.unit.TuRate;
 import io.github.soundgoodizerfan.feedback.process.ClientDeformations;
 import io.github.soundgoodizerfan.feedback.process.ClientThermalProcesses;
 import io.github.soundgoodizerfan.feedback.process.Deformation;
@@ -54,6 +56,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.AbstractCookingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 /**
  * Puts the deformation table and the thermal process table in the recipe browser without
@@ -259,9 +262,9 @@ public class FeedbackJeiPlugin implements IModPlugin {
             // No real floor -- food cooks at any heat and is destroyed outright above the
             // ceiling, with nothing named to replace it, so both the band and the destination
             // are printed plainly rather than invented.
-            return new ThermalProcess(inputs, 0f, FTuning.FOOD_MAX_TU.value(), ThermalProcess.NO_HOLD,
-                    Float.MAX_VALUE, result, FTuning.FOOD_MAX_TU.value(), ItemStack.EMPTY);
-        return new ThermalProcess(inputs, FTuning.METAL_MIN_TU.value(), Float.MAX_VALUE, ThermalProcess.NO_HOLD,
-                Float.MAX_VALUE, result, Float.MAX_VALUE, ItemStack.EMPTY);
+            return new ThermalProcess(inputs, new Tu(0f), FTuning.FOOD_MAX_TU, ThermalProcess.NO_HOLD,
+                    new TuRate(Float.MAX_VALUE), result, FTuning.FOOD_MAX_TU, ItemStack.EMPTY, FluidStack.EMPTY, false);
+        return new ThermalProcess(inputs, FTuning.METAL_MIN_TU, new Tu(Float.MAX_VALUE), ThermalProcess.NO_HOLD,
+                new TuRate(Float.MAX_VALUE), result, new Tu(Float.MAX_VALUE), ItemStack.EMPTY, FluidStack.EMPTY, false);
     }
 }

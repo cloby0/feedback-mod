@@ -249,9 +249,9 @@ That is the progression moment, and no recipe unlocked. The player gained *infor
 
 The Crude Blast Furnace is sealed, and everything good about it follows from being closed (§15).
 
-**Built differently from this draft, and the change is worth keeping — twice now.** The thermometer is *not* a cover — it is a carried instrument, exactly like the calipers, because reading is passive and costs no hands (§3). The wall was first enforced from the other side: a vessel declares whether it can be got at, through `ThermalBody.hasThermowell()`, and a sealed one refused to be read by **any** instrument, full stop.
+**Built differently from this draft, and the change is worth keeping — twice now.** The thermometer is *not* a fitting — it is a carried instrument, exactly like the calipers, because reading is passive and costs no hands (§3). The wall was first enforced from the other side: a vessel declares whether it can be got at, through `ThermalBody.hasThermowell()`, and a sealed one refused to be read by **any** instrument, full stop.
 
-That first version was tempting because it made "sealed" and "measurable" the same fact asked two ways, and it was wrong for conflating two actions that cost two different things. Watching a gauge is free and continuous; sticking a thermometer through the door for one reading is a real, costed action — the same distinction the calipers already draw between reading an item in hand and reading a machine you have to walk up and touch (§8). A sealed vessel can still be dipped into by hand. What it refuses is being *watched*: no ambient reading, no HUD card, no cover ever auto-attaching a sensor to it. That is exactly what a controller needs and a one-off dip cannot give it.
+That first version was tempting because it made "sealed" and "measurable" the same fact asked two ways, and it was wrong for conflating two actions that cost two different things. Watching a gauge is free and continuous; sticking a thermometer through the door for one reading is a real, costed action — the same distinction the calipers already draw between reading an item in hand and reading a machine you have to walk up and touch (§8). A sealed vessel can still be dipped into by hand. What it refuses is being *watched*: no ambient reading, no HUD card, no sensor fitting ever auto-attaching itself to it. That is exactly what a controller needs and a one-off dip cannot give it.
 
 **This is the wall the slice is actually built around**, and it survives the correction, just narrower than first stated. The player's best thermal vessel and their first *automated loop* are mutually exclusive, and no amount of iron fixes it. They can check the thing that works, by hand, whenever they're standing in front of it. They cannot leave it running unattended and trust a reading. They cannot automate the thing they can watch for free.
 
@@ -295,7 +295,7 @@ Thermometer → Controller → Bellows
 
 There is **no controller in this slice.** There does not need to be one, and putting one here would waste it.
 
-Beat 2 has exactly one condition to watch, and a single condition needs no logic. A **bimetallic strip** — a sensor cover that trips at one fixed temperature — wired straight to the bellows is a thermostat, and it closes the loop with no programmable block anywhere:
+Beat 2 has exactly one condition to watch, and a single condition needs no logic. A **bimetallic strip** — a sensor fitting that trips at one fixed temperature — wired straight to the bellows is a thermostat, and it closes the loop with no programmable block anywhere:
 
 ```
 below its trip point   →  bellows on
@@ -397,11 +397,11 @@ That belongs to slice 2. It is named here only so the slice is built to arrive a
 
 Three things arrive together, and each one makes the others necessary. That is why none of them are here.
 
-**Tempering.** Hardened steel is brittle and the fix is a third controlled thermal step — but tempering is not a *hold*, it is a **controlled cool**. The player needs to bring a temperature down deliberately, at a rate, which is the first thing in the game they have no way to ask for.
+**Tempering.** Hardened steel is brittle and the fix is a third controlled thermal step — but tempering is not a *hold*, it is a **controlled cool**. The player needs to bring a temperature down deliberately, at a rate, which is the first thing in the game they have no way to ask for. **First pass built** (`TODO.md` §5): `ThermalProcess` gained one boolean, `requireCooling`, rather than a rate field — philosophy 13 leaves no continuous rate anywhere to store, so the only lever is the Damper's timing, not a number.
 
-**The damper.** Which is the way to ask for it. A vent that bleeds heat off on demand, and the slice's one-way bellows finally gets an opposite.
+**The damper.** Which is the way to ask for it. A vent that bleeds heat off on demand, and the slice's one-way bellows finally gets an opposite. **First pass built**, crucible-only (matches Insulation's scope), unverified by eye — see `TODO.md` §5.
 
-**The controller.** Because a bellows and a damper are two actuators and two conditions — *heat when low, vent when high* — and a bimetallic strip cannot express that. One condition has stopped being enough, which is exactly the moment §13 says a controller should arrive.
+**The controller.** Because a bellows and a damper are two actuators and two conditions — *heat when low, vent when high* — and a bimetallic strip cannot express that. One condition has stopped being enough, which is exactly the moment §13 says a controller should arrive. Tier 1 built; the Damper above needed no controller-side change, since its generic actuator card already targets any `Switchable`.
 
 Slice 1 earns all three by withholding them. The player ends it able to hold a temperature and unable to steer one, and they should feel precisely which of those they are missing.
 
@@ -513,7 +513,7 @@ That is §14's difficulty curve in one component. The new material did not deman
 
 The draft counted "Crucible (small/large/insulated)" as one machine. It is three blocks — two crucibles and an insulation block — and that is the right shape rather than padding: §4 wants an upgrade to be a physical component you could point at, and insulation is the most literal possible case. You build it *around* the vessel, the vessel counts its neighbours, and how well it works depends on how much of it you covered. There is no upgrade slot, no tier and no percentage.
 
-The Bimetallic Strip was a cover in the draft and is a block here, for the same reason the thermometer stopped being one: covers are a system the slice does not otherwise have, and inventing one to hold two items would be a system built for its own sake.
+The Bimetallic Strip was a fitting in the draft and is a block here, for the same reason the thermometer stopped being one: fittings are a system the slice does not otherwise have, and inventing one to hold two items would be a system built for its own sake.
 
 Within §20's budget as drafted, and seven blocks over it as built. Nothing in it exists to pad the tech tree.
 

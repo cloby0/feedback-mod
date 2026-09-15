@@ -20,12 +20,14 @@
 package io.github.soundgoodizerfan.feedback.registry;
 
 import io.github.soundgoodizerfan.feedback.Feedback;
+import io.github.soundgoodizerfan.feedback.control.programmer.ProgrammerMenu;
 import io.github.soundgoodizerfan.feedback.machine.vessel.ThermalVesselMenu;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.inventory.MenuType;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -38,6 +40,11 @@ public class FMenus {
     public static final DeferredHolder<MenuType<?>, MenuType<ThermalVesselMenu>> THERMAL_VESSEL =
             MENUS.register("thermal_vessel",
                     () -> new MenuType<>(ThermalVesselMenu::new, FeatureFlags.VANILLA_SET));
+
+    /** Extended, not plain -- the client needs the Programmer's {@code BlockPos} to open at. */
+    public static final DeferredHolder<MenuType<?>, MenuType<ProgrammerMenu>> PROGRAMMER =
+            MENUS.register("programmer",
+                    () -> IMenuTypeExtension.create((id, inv, buf) -> new ProgrammerMenu(id, inv, buf.readBlockPos())));
 
     private FMenus() {
     }

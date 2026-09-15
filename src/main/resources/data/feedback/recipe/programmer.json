@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "W": { "tag": "minecraft:planks" },
+    "P": { "item": "minecraft:paper" },
+    "S": { "item": "feedback:shaft" }
+  },
+  "pattern": [
+    "WPW",
+    "WSW",
+    "WWW"
+  ],
+  "result": {
+    "count": 1,
+    "id": "feedback:programmer"
+  }
+}

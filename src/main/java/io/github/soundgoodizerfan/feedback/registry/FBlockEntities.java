@@ -21,10 +21,15 @@ package io.github.soundgoodizerfan.feedback.registry;
 
 import io.github.soundgoodizerfan.feedback.Feedback;
 import io.github.soundgoodizerfan.feedback.control.bimetallic.BimetallicStripBlockEntity;
+import io.github.soundgoodizerfan.feedback.control.controller.ControllerBlockEntity;
+import io.github.soundgoodizerfan.feedback.control.debug.DebugControllerBlockEntity;
+import io.github.soundgoodizerfan.feedback.control.programmer.ProgrammerBlockEntity;
 import io.github.soundgoodizerfan.feedback.control.timer.TimerBlockEntity;
 import io.github.soundgoodizerfan.feedback.machine.bellows.BellowsBlockEntity;
+import io.github.soundgoodizerfan.feedback.machine.boiler.BoilerBlockEntity;
 import io.github.soundgoodizerfan.feedback.machine.clutch.ClutchBlockEntity;
 import io.github.soundgoodizerfan.feedback.machine.crucible.CrucibleBlockEntity;
+import io.github.soundgoodizerfan.feedback.machine.damper.DamperBlockEntity;
 import io.github.soundgoodizerfan.feedback.machine.firebox.FireboxBlockEntity;
 import io.github.soundgoodizerfan.feedback.machine.cog.CogBlockEntity;
 import io.github.soundgoodizerfan.feedback.machine.crank.HandCrankBlockEntity;
@@ -32,6 +37,7 @@ import io.github.soundgoodizerfan.feedback.machine.gearbox.GearboxBlockEntity;
 import io.github.soundgoodizerfan.feedback.machine.hammer.MechanicalHammerBlockEntity;
 import io.github.soundgoodizerfan.feedback.machine.linkage.CrankLinkageBlockEntity;
 import io.github.soundgoodizerfan.feedback.machine.shaft.ShaftBlockEntity;
+import io.github.soundgoodizerfan.feedback.machine.steamengine.SteamEngineBlockEntity;
 import io.github.soundgoodizerfan.feedback.machine.vessel.ThermalVesselBlock;
 import io.github.soundgoodizerfan.feedback.machine.vessel.ThermalVesselBlockEntity;
 import io.github.soundgoodizerfan.feedback.machine.vessel.VesselKind;
@@ -94,6 +100,16 @@ public class FBlockEntities {
                     .of(TimerBlockEntity::new, FBlocks.TIMER.get())
                     .build(null));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ControllerBlockEntity>> CONTROLLER =
+            BLOCK_ENTITIES.register("controller", () -> BlockEntityType.Builder
+                    .of(ControllerBlockEntity::new, FBlocks.CONTROLLER.get())
+                    .build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ProgrammerBlockEntity>> PROGRAMMER =
+            BLOCK_ENTITIES.register("programmer", () -> BlockEntityType.Builder
+                    .of(ProgrammerBlockEntity::new, FBlocks.PROGRAMMER.get())
+                    .build(null));
+
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FireboxBlockEntity>> FIREBOX =
             BLOCK_ENTITIES.register("firebox", () -> BlockEntityType.Builder
                     .of(FireboxBlockEntity::new, FBlocks.FIREBOX.get())
@@ -115,6 +131,25 @@ public class FBlockEntities {
                     .of(BimetallicStripBlockEntity::new, FBlocks.BIMETALLIC_STRIP.get())
                     .build(null));
 
+    /** The Bellows' opposite -- see {@code DamperBlockEntity}'s own doc. */
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<DamperBlockEntity>> DAMPER =
+            BLOCK_ENTITIES.register("damper", () -> BlockEntityType.Builder
+                    .of(DamperBlockEntity::new, FBlocks.DAMPER.get())
+                    .build(null));
+
+    /** Thermal -> Steam. See {@code FTuning}'s {@code --- the boiler ---} section for why this
+     * is not the same block as {@link #STEAM_ENGINE}. */
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<BoilerBlockEntity>> BOILER =
+            BLOCK_ENTITIES.register("boiler", () -> BlockEntityType.Builder
+                    .of(BoilerBlockEntity::new, FBlocks.BOILER.get())
+                    .build(null));
+
+    /** Steam -> rotation. */
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SteamEngineBlockEntity>> STEAM_ENGINE =
+            BLOCK_ENTITIES.register("steam_engine", () -> BlockEntityType.Builder
+                    .of(SteamEngineBlockEntity::new, FBlocks.STEAM_ENGINE.get())
+                    .build(null));
+
     /**
      * One type for all three vessels -- {@link VesselKind} is read off the block at the
      * position, not the type, the same way the crucible's two sizes share one type.
@@ -125,6 +160,11 @@ public class FBlockEntities {
                                     state.getBlock() instanceof ThermalVesselBlock block
                                             ? block.getKind() : VesselKind.FURNACE),
                             FBlocks.FURNACE.get(), FBlocks.SMOKER.get(), FBlocks.BLAST_FURNACE.get())
+                    .build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<DebugControllerBlockEntity>> DEBUG_CONTROLLER =
+            BLOCK_ENTITIES.register("debug_controller", () -> BlockEntityType.Builder
+                    .of(DebugControllerBlockEntity::new, FBlocks.DEBUG_CONTROLLER.get())
                     .build(null));
 
     private FBlockEntities() {

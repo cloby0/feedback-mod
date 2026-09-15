@@ -19,6 +19,13 @@
  */
 package io.github.soundgoodizerfan.feedback.instrument;
 
+import com.mojang.serialization.Codec;
+
+import io.netty.buffer.ByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.util.StringRepresentable;
+
 /**
  * Something a player might want a number for.
  *
@@ -27,17 +34,22 @@ package io.github.soundgoodizerfan.feedback.instrument;
  * fast a shaft turns. Precision is not a property a player accumulates — it is bought one
  * quantity at a time, and owning one instrument must never quietly sharpen every readout in the
  * game.
+ * <p>
+ * {@link StringRepresentable} plus the two codecs below exist for
+ * {@code control.program.SensorNode} -- a controller program has to know which quantity a wired
+ * sensor reads, so a comparator can refuse to compare Su against Tu instead of silently mixing
+ * them (controller spec §2.3's typed ports, one level more specific than Number/Boolean).
  */
-public enum Quantity {
+public enum Quantity implements StringRepresentable {
 
     /** Mechanical work beaten into a workpiece, in Fu. */
-    WORK,
+    WORK("work"),
     /** How fast a run is turning, in RPM. */
-    SPEED,
+    SPEED("speed"),
     /** What a network is carrying, in Su. */
-    LOAD,
+    LOAD("load"),
     /** How hot something is, in Tu. */
-    TEMPERATURE,
+    TEMPERATURE("temperature"),
     /**
      * How sound a machine still is, as a fraction of as-built.
      *
@@ -47,5 +59,21 @@ public enum Quantity {
      * too, and 0.05 means "to the nearest five per cent" rather than to the nearest anything.
      * Nobody should mint {@code Wu} for it.
      */
-    CONDITION
+    CONDITION("condition");
+
+    private final String key;
+
+    Quantity(String key) {
+        this.key = key;
+    }
+
+    @Override
+    public String getSerializedName() {
+        return key;
+    }
+
+    public static final Codec<Quantity> CODEC = StringRepresentable.fromEnum(Quantity::values);
+
+    public static final StreamCodec<ByteBuf, Quantity> STREAM_CODEC =
+            ByteBufCodecs.idMapper(i -> Quantity.values()[i], Quantity::ordinal);
 }

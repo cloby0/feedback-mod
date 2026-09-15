@@ -1,0 +1,10 @@
+{
+  "neoforge:conditions": [
+    { "type": "neoforge:false" }
+  ],
+  "type": "minecraft:smelting",
+  "ingredient": { "item": "minecraft:deepslate_gold_ore" },
+  "result": { "id": "minecraft:gold_ingot" },
+  "experience": 0,
+  "cookingtime": 200
+}

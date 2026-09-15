@@ -406,6 +406,24 @@ public final class FTuning {
     public static final int CRUCIBLE_SLOTS = 2;
 
     /**
+     * Invented. Capacity of the internal tank every crucible and thermal vessel gets once a
+     * {@code ThermalProcess} can melt something into a fluid, in mB.
+     * <p>
+     * Not yet a unit (§17's {@code mB} has no {@code core/unit} type -- see TODO's own open item
+     * on retyping the datapack records), so this stays a plain int the same way {@code Fuel}'s
+     * duration does.
+     */
+    public static final int VESSEL_TANK_CAPACITY_MB = 1296;
+
+    /**
+     * What one mold holds -- one ingot's worth. Not invented: 144 mB/ingot (so 16 mB/nugget, 9
+     * nuggets or 1296 mB to a block) is the de facto standard across the modded-Minecraft fluid
+     * ecosystem, and matching it costs nothing and buys free interop with anything that already
+     * assumes it.
+     */
+    public static final int MOLD_CAPACITY_MB = 144;
+
+    /**
      * Invented. What one block of insulation packed against a vessel multiplies its leak by, and
      * how many are counted.
      *
@@ -417,6 +435,167 @@ public final class FTuning {
      */
     public static final float INSULATION_LEAK_FACTOR = 0.8f;
     public static final int INSULATION_MAX_BLOCKS = 4;
+
+    /**
+     * Invented. Extra leak each open Damper adds, additive on top of the insulated base -- a
+     * vent bypasses the insulating layer rather than negating it, so it adds where insulation
+     * multiplies. Same dimension as {@link #VESSEL_LEAK} by construction (Work/t/Tu).
+     */
+    public static final Conductance DAMPER_LEAK_BONUS = new Conductance(0.05f);
+    public static final int DAMPER_MAX_BLOCKS = 4;
+
+    // --- the boiler (thermal -> steam) -------------------------------------------------------
+
+    /**
+     * Invented. First bridge between two energy types (philosophy §10, §14): fire in, Steam out
+     * -- and nothing else, deliberately, because the whole point of the split below is that this
+     * block has no idea rotation exists.
+     *
+     * <h2>Two blocks, not one, and that is the design decision this section records</h2>
+     * The first draft of this was one block, boiler and turbine in the same body, on the theory
+     * that {@code ThermalVesselBlockEntity} already makes exactly that simplification over the
+     * crucible-plus-firebox pair. That is wrong here in a way it is not there: a furnace is
+     * always its own fire, but "what makes the heat" is precisely the axis philosophy §10 says
+     * must stay open. A single fused block can only ever be fired by whatever the class author
+     * imagined, and this system exists so the *player* answers that question -- a firebox, a
+     * geothermal vent, a resistive coil wired to a generator that is itself downstream of this
+     * same engine, run backwards, badly, on purpose. Nothing should stop that chain except its
+     * own thermodynamics telling the player it is a bad idea. A fused block forecloses it by
+     * construction; two blocks joined only by a real, physical fluid do not.
+     * <p>
+     * So {@link io.github.soundgoodizerfan.feedback.machine.boiler.BoilerBlockEntity} is a
+     * {@link ThermalBody} and nothing else -- it does not know a
+     * {@link io.github.soundgoodizerfan.feedback.core.rotation.RotationNode} exists -- and
+     * {@link io.github.soundgoodizerfan.feedback.machine.steamengine.SteamEngineBlockEntity} is a
+     * {@code RotationNode} and nothing else -- it does not know what a Tu is. Steam, a registered
+     * {@link io.github.soundgoodizerfan.feedback.registry.FFluids#STEAM Fluid} with a real tank
+     * on each side, is the only thing that crosses between them, exactly the way {@code Work}
+     * crosses a {@link Conductance} boundary and neither side needs to know what is on the other.
+     *
+     * <h3>Read GregTech CEu Modern's boiler and turbine first (LGPL-3.0, design only)</h3>
+     * `../GregTech-Modern-7.5.3`, `1.21.1`-targeting branch checked out. See
+     * `THIRD-PARTY-LICENSES.md` for the full account; briefly:
+     * <ul>
+     *   <li><b>Taken, and why it now matters more than it first looked like it would:</b> GTCEu
+     *       already keeps its boiler and turbine as separate multiblocks joined only by a Steam
+     *       fluid moving through hatches. That split was read once for "how do I make steam a
+     *       real thing" and is the reason this is two blocks rather than one -- the puzzle-piece
+     *       argument above is Feedback's own reason for keeping the split, not GTCEu's, but GTCEu
+     *       is proof the split is buildable rather than a nice idea that falls apart on contact
+     *       with a tick loop.</li>
+     *   <li><b>Taken:</b> a boiler is a {@code ThermalBody} whose temperature gates steam
+     *       production -- {@code LargeBoilerMachine#updateCurrentTemperature} drains water and
+     *       fills steam only once its own temperature clears a floor, the same shape
+     *       {@link #BOILER_WORKING_TU} enforces here.</li>
+     *   <li><b>Taken:</b> a turbine's rotor ramps speed up and down rather than snapping to it --
+     *       {@code RotorHolderPartMachine}'s asymmetric accel/decel is the same shape this
+     *       codebase already has in {@link io.github.soundgoodizerfan.feedback.core.rotation.RotationNetwork}'s
+     *       inertia, so nothing new had to be invented for the engine side, only wired up.</li>
+     *   <li><b>Taken, and deferred:</b> the rotor as a physical, damageable, swappable item
+     *       ({@code TurbineRotorBehaviour}) rather than a machine stat -- philosophy's "upgrades
+     *       are physical components" arriving independently in their design too. Not built this
+     *       pass; {@link #STEAM_ENGINE_CAPACITY_SU} stands in for a rotor that does not exist
+     *       yet, the same way {@link #HAND_CRANK_CAPACITY_SU} once stood in for gearing.</li>
+     *   <li><b>Not taken: EU as the output.</b> GTCEu's turbine produces electricity because
+     *       everything in GTCEu eventually does. Feedback's point of departure (§10) is that
+     *       Mechanical never has to become Electrical, so the engine's output is {@link Su}/
+     *       {@link Rpm} on a plain {@code RotationNode}, full stop -- a flywheel and a belt, not
+     *       a generator. Nothing stops a later Electrical-to-Thermal adapter feeding this same
+     *       boiler, which is exactly the loop-back the class doc above names.</li>
+     *   <li><b>Not taken: the exploding boiler.</b> `feedback_philosophy.md` §14 already names
+     *       this as good precedent for a genuine hard-gate consequence at the top of a tech
+     *       ladder. Left out because there is no failure state to explode into yet -- this boiler
+     *       cannot currently be over-restricted -- and adding one now would be inventing a
+     *       punishment for a mistake the player cannot make. Worth revisiting once pressure, not
+     *       just presence, of steam is modelled; see `TODO.md` §5a.</li>
+     * </ul>
+     */
+    public static final Tu BOILER_WORKING_TU = new Tu(120f);
+
+    /**
+     * Invented. Work required to raise the boiler by one Tu.
+     * <p>
+     * Between the two crucible masses ({@link #CRUCIBLE_SMALL_MASS}, {@link #CRUCIBLE_LARGE_MASS})
+     * on purpose: a boiler's whole point is to be far easier to bring into its working band than
+     * a smelting vessel is -- {@link #BOILER_WORKING_TU} sits below even {@link #FOOD_MAX_TU},
+     * nowhere near {@link #METAL_MIN_TU} -- so it should climb like the small crucible, not the
+     * large one.
+     */
+    public static final ThermalMass BOILER_MASS = new ThermalMass(40f);
+
+    /**
+     * Invented. How fast the boiler bleeds heat to the room when it is not making steam, in the
+     * same {@code Work/t/Tu} every other leak is in. An ordinary vessel leak, {@link #VESSEL_LEAK}
+     * -- the boiler is not an engine and has nothing analogous to an engine's exhaust; venting
+     * heat as work happens explicitly, below, as mB of Steam, never through this figure.
+     */
+    public static final Conductance BOILER_LEAK = VESSEL_LEAK;
+
+    /**
+     * Invented. mB of Steam produced per tick once the boiler clears {@link #BOILER_WORKING_TU},
+     * flat rather than scaled by how far past the threshold it sits -- the same "threshold, not a
+     * curve" choice {@link #STEAM_ENGINE_CAPACITY_SU} makes on the consuming end, for the same
+     * reason: a continuously variable rate is real future work once pressure is modelled, not
+     * this pass's.
+     * <p>
+     * Consumes the same amount of water from the boiler's own tank -- 1 mB water to 1 mB steam,
+     * which is wrong (real steam expands roughly 1600:1) and known to be wrong, the same way
+     * TerraFirmaCraft's per-material heat capacity was known and declined for the same reason:
+     * expansion ratio only matters once tank *size* is a real constraint the player is managing,
+     * and right now {@link #BOILER_WATER_TANK_MB} and {@link #BOILER_STEAM_TANK_MB} are both
+     * placeholders anyway. 1:1 is the honest way to say "this is a rate, not yet a volume."
+     */
+    public static final int BOILER_STEAM_PER_TICK_MB = 10;
+
+    /** Invented. Placeholder tank sizes -- see {@link #BOILER_STEAM_PER_TICK_MB}'s doc on why
+     * the 1:1 ratio does not yet try to make these mean anything. */
+    public static final int BOILER_WATER_TANK_MB = 4000;
+    public static final int BOILER_STEAM_TANK_MB = 4000;
+
+    // --- the steam engine (steam -> rotation) ------------------------------------------------
+
+    /**
+     * Invented. mB of Steam the engine draws per tick while it has that much buffered, and the
+     * threshold for {@link #STEAM_ENGINE_CAPACITY_SU}/{@link #STEAM_ENGINE_RPM} switching on.
+     * <p>
+     * Matched to {@link #BOILER_STEAM_PER_TICK_MB} so one boiler at working temperature keeps
+     * exactly one engine fed with nothing banked -- the number every future recipe/rebalance
+     * pass is free to pull apart once there is a reason to want two boilers per engine or the
+     * reverse.
+     */
+    public static final int STEAM_ENGINE_MB_PER_TICK = BOILER_STEAM_PER_TICK_MB;
+
+    /** Invented. Placeholder input tank -- lets the engine coast a few ticks on a stutter in
+     * supply rather than stalling the instant a boiler undershoots by one tick's worth. */
+    public static final int STEAM_ENGINE_TANK_MB = 200;
+
+    /**
+     * Invented. What the engine supplies while it has {@link #STEAM_ENGINE_MB_PER_TICK} of Steam
+     * to draw on, in Su -- flat, not scaled by how much is buffered.
+     * <p>
+     * Flat rather than continuous on purpose, the same choice the Water Wheel already makes with
+     * its flowing-side count: {@link io.github.soundgoodizerfan.feedback.core.rotation.RotationNetwork}
+     * only re-reads a source's numbers on an explicit rebuild, never every tick, so a source whose
+     * output tracked buffered Steam continuously would need a rebuild every tick it moved -- the
+     * one thing the whole propagator is built to never do (see its own class doc: a rebuild
+     * visits every node once, which is only affordable because it does not happen constantly). A
+     * genuinely continuous throttle is real future work -- GTCEu's turbine does exactly that --
+     * but it wants the rotor-as-upgrade-item this section's other doc explicitly defers. Starved
+     * of Steam: philosophy §7's genuine hard gate, not enough pressure, and not a precision
+     * problem at all.
+     */
+    public static final Su STEAM_ENGINE_CAPACITY_SU = new Su(64f);
+
+    /** Invented. Flat output speed once working -- see {@link #STEAM_ENGINE_CAPACITY_SU}'s doc
+     * on why this is a threshold and not a curve. */
+    public static final Rpm STEAM_ENGINE_RPM = new Rpm(16f);
+
+    /**
+     * Invented. A flywheel, and a real one -- heavier than a shaft or a cog, lighter than the
+     * Water Wheel's slab of timber. See {@link #SHAFT_INERTIA}'s doc for how the inertia figures
+     * are meant to be read against the Su figures they pair with.
+     */
+    public static final Inertia STEAM_ENGINE_INERTIA = new Inertia(150f);
 
     // --- vanilla vessels (§15) --------------------------------------------------------------
 
@@ -665,6 +844,15 @@ public final class FTuning {
     public static final float THERMOMETER_RESOLUTION_TU = 25f;
 
     /**
+     * SLICE: a fitted temperature sensor resolves finer than the carried thermometer.
+     * <p>
+     * It is bolted to one vessel rather than carried everywhere, so the trade for that loss of
+     * flexibility is a number a purpose-built fixture can actually hold. Still not zero -- §8's
+     * noise floor applies here exactly as it does to every other instrument.
+     */
+    public static final float TEMPERATURE_SENSOR_RESOLUTION_TU = 10f;
+
+    /**
      * SLICE: the crude calipers resolve a machine's condition to five per cent.
      *
      * <h3>Coarse on purpose, and coarser than the adjective in one place</h3>
@@ -767,4 +955,15 @@ public final class FTuning {
      * <em>where to look</em> without handing over the Su figures that calipers are for.
      */
     public static final float STRAINING_LOAD_FRACTION = 0.9f;
+
+    // --- controller -------------------------------------------------------------------------
+
+    /** A Controller's flat draw while turning -- reading and switching costs a little Su. */
+    public static final Su CONTROLLER_LOAD_SU = new Su(2f);
+
+    /**
+     * A printed card's node cap. Not tuned to anything yet -- same honesty as
+     * {@code DataNode.getMaxNodeLinks()}'s own comment.
+     */
+    public static final int CONTROLLER_MAX_NODES = 16;
 }

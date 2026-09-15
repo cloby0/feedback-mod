@@ -22,8 +22,11 @@ package io.github.soundgoodizerfan.feedback.registry;
 import io.github.soundgoodizerfan.feedback.Feedback;
 import io.github.soundgoodizerfan.feedback.core.FTuning;
 import io.github.soundgoodizerfan.feedback.item.CalipersItem;
+import io.github.soundgoodizerfan.feedback.item.DataConnectorItem;
 import io.github.soundgoodizerfan.feedback.item.DebugHelmetItem;
 import io.github.soundgoodizerfan.feedback.item.HandHammerItem;
+import io.github.soundgoodizerfan.feedback.item.MoldItem;
+import io.github.soundgoodizerfan.feedback.item.TemperatureSensorItem;
 import io.github.soundgoodizerfan.feedback.item.ThermometerItem;
 
 import net.minecraft.world.item.BlockItem;
@@ -48,6 +51,19 @@ public class FItems {
 
     public static final DeferredItem<BlockItem> CLUTCH = ITEMS.registerSimpleBlockItem(FBlocks.CLUTCH);
     public static final DeferredItem<BlockItem> TIMER = ITEMS.registerSimpleBlockItem(FBlocks.TIMER);
+    public static final DeferredItem<BlockItem> CONTROLLER = ITEMS.registerSimpleBlockItem(FBlocks.CONTROLLER);
+    public static final DeferredItem<BlockItem> PROGRAMMER = ITEMS.registerSimpleBlockItem(FBlocks.PROGRAMMER);
+
+    /**
+     * Blank until printed by a Programmer. No default {@code PROGRAM_GRAPH} component is set
+     * here -- setting one via {@code Item.Properties#component} would resolve
+     * {@code FDataComponents.PROGRAM_GRAPH.get()} while {@code FItems}'s own static fields are
+     * still initialising, before the data component registry has bound it. Every read site
+     * already uses {@code ItemStack#getOrDefault(..., ProgramGraph.EMPTY)}, so an absent
+     * component reads the same as an explicit empty one.
+     */
+    public static final DeferredItem<Item> PUNCH_CARD =
+            ITEMS.registerItem("punch_card", Item::new, new Item.Properties().stacksTo(1));
 
     /**
      * The one route to a plate that needs no machine, and the reason there is one at all.
@@ -80,8 +96,12 @@ public class FItems {
     public static final DeferredItem<BlockItem> SMALL_CRUCIBLE = ITEMS.registerSimpleBlockItem(FBlocks.SMALL_CRUCIBLE);
     public static final DeferredItem<BlockItem> LARGE_CRUCIBLE = ITEMS.registerSimpleBlockItem(FBlocks.LARGE_CRUCIBLE);
     public static final DeferredItem<BlockItem> INSULATION = ITEMS.registerSimpleBlockItem(FBlocks.INSULATION);
+    public static final DeferredItem<BlockItem> DAMPER = ITEMS.registerSimpleBlockItem(FBlocks.DAMPER);
     public static final DeferredItem<BlockItem> BELLOWS = ITEMS.registerSimpleBlockItem(FBlocks.BELLOWS);
     public static final DeferredItem<BlockItem> BIMETALLIC_STRIP = ITEMS.registerSimpleBlockItem(FBlocks.BIMETALLIC_STRIP);
+
+    public static final DeferredItem<BlockItem> BOILER = ITEMS.registerSimpleBlockItem(FBlocks.BOILER);
+    public static final DeferredItem<BlockItem> STEAM_ENGINE = ITEMS.registerSimpleBlockItem(FBlocks.STEAM_ENGINE);
 
     /**
      * The slice's second instrument, and the one that reveals rather than refines.
@@ -98,10 +118,13 @@ public class FItems {
     public static final DeferredItem<Item> STEEL_INGOT = ITEMS.registerSimpleItem("steel_ingot");
     public static final DeferredItem<Item> BURNT_IRON = ITEMS.registerSimpleItem("burnt_iron");
     public static final DeferredItem<Item> HARDENED_STEEL = ITEMS.registerSimpleItem("hardened_steel");
+    /** Tempering's result -- brittle no longer. See {@code data/feedback/thermal_process/tempered_steel.json}. */
+    public static final DeferredItem<Item> TEMPERED_STEEL = ITEMS.registerSimpleItem("tempered_steel");
     public static final DeferredItem<Item> STEEL_PLATE = ITEMS.registerSimpleItem("steel_plate");
 
     /**
-     * Perfect instrumentation, and deliberately absent from {@link FCreativeTabs#MAIN}.
+     * Perfect instrumentation, and deliberately absent from {@link FCreativeTabs#MAIN} --
+     * lives in vanilla's Operator Utilities tab instead, alongside the command block.
      * <p>
      * It is a development cheat, not the top of the instrument ladder -- see
      * {@link DebugHelmetItem}. Anything reachable from the mod's own tab reads as content.
@@ -112,6 +135,25 @@ public class FItems {
     public static final DeferredItem<BlockItem> FURNACE = ITEMS.registerSimpleBlockItem(FBlocks.FURNACE);
     public static final DeferredItem<BlockItem> SMOKER = ITEMS.registerSimpleBlockItem(FBlocks.SMOKER);
     public static final DeferredItem<BlockItem> BLAST_FURNACE = ITEMS.registerSimpleBlockItem(FBlocks.BLAST_FURNACE);
+
+    /** One shape, an ingot -- see {@link MoldItem}'s own doc for why a second shape waits. */
+    public static final DeferredItem<MoldItem> INGOT_MOLD =
+            ITEMS.register("ingot_mold", () -> new MoldItem(new Item.Properties().stacksTo(1)));
+
+    // --- fitting / data link tech demo --------------------------------------------------------
+
+    /** The mod's first fitting. See {@code fitting.sensor.TemperatureSensorFitting}. */
+    public static final DeferredItem<Item> TEMPERATURE_SENSOR =
+            ITEMS.register("temperature_sensor", () -> new TemperatureSensorItem(new Item.Properties().stacksTo(1)));
+
+    public static final DeferredItem<Item> DATA_CONNECTOR =
+            ITEMS.register("data_connector", () -> new DataConnectorItem(new Item.Properties().stacksTo(1)));
+
+    /**
+     * A development cheat, like {@link DebugHelmetItem} -- deliberately absent from
+     * {@link FCreativeTabs#MAIN}; see that class for where it actually lives.
+     */
+    public static final DeferredItem<BlockItem> DEBUG_CONTROLLER = ITEMS.registerSimpleBlockItem(FBlocks.DEBUG_CONTROLLER);
 
     private FItems() {
     }

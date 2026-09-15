@@ -165,7 +165,7 @@ public class FireboxBlockEntity extends BlockEntity implements HeatSource, Blown
         // Rolled once, here, and held for the whole burn. See the class note on why per-tick
         // noise would be the same variance with nothing in it to learn.
         float roll = 1f + (level.random.nextFloat() * 2f - 1f) * burning.spread();
-        burnTu = burning.temperature() * roll;
+        burnTu = burning.temperature().value() * roll;
         fuel.shrink(1);
         setLit(true);
         setChanged();

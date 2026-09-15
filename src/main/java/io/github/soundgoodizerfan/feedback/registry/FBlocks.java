@@ -21,12 +21,17 @@ package io.github.soundgoodizerfan.feedback.registry;
 
 import io.github.soundgoodizerfan.feedback.Feedback;
 import io.github.soundgoodizerfan.feedback.control.bimetallic.BimetallicStripBlock;
+import io.github.soundgoodizerfan.feedback.control.controller.ControllerBlock;
+import io.github.soundgoodizerfan.feedback.control.debug.DebugControllerBlock;
+import io.github.soundgoodizerfan.feedback.control.programmer.ProgrammerBlock;
 import io.github.soundgoodizerfan.feedback.control.timer.TimerBlock;
 import io.github.soundgoodizerfan.feedback.core.FTuning;
 import io.github.soundgoodizerfan.feedback.machine.bellows.BellowsBlock;
+import io.github.soundgoodizerfan.feedback.machine.boiler.BoilerBlock;
 import io.github.soundgoodizerfan.feedback.machine.clutch.ClutchBlock;
 import io.github.soundgoodizerfan.feedback.machine.crucible.CrucibleBlock;
 import io.github.soundgoodizerfan.feedback.machine.crucible.InsulationBlock;
+import io.github.soundgoodizerfan.feedback.machine.damper.DamperBlock;
 import io.github.soundgoodizerfan.feedback.machine.firebox.FireboxBlock;
 import io.github.soundgoodizerfan.feedback.machine.cog.CogBlock;
 import io.github.soundgoodizerfan.feedback.machine.gearbox.GearboxBlock;
@@ -34,6 +39,7 @@ import io.github.soundgoodizerfan.feedback.machine.crank.HandCrankBlock;
 import io.github.soundgoodizerfan.feedback.machine.hammer.MechanicalHammerBlock;
 import io.github.soundgoodizerfan.feedback.machine.linkage.CrankLinkageBlock;
 import io.github.soundgoodizerfan.feedback.machine.shaft.ShaftBlock;
+import io.github.soundgoodizerfan.feedback.machine.steamengine.SteamEngineBlock;
 import io.github.soundgoodizerfan.feedback.machine.vessel.ThermalVesselBlock;
 import io.github.soundgoodizerfan.feedback.machine.vessel.VesselKind;
 import io.github.soundgoodizerfan.feedback.machine.waterwheel.WaterWheelBlock;
@@ -127,6 +133,20 @@ public class FBlocks {
                     .sound(SoundType.WOOD)
                     .noOcclusion()));
 
+    public static final DeferredBlock<ControllerBlock> CONTROLLER = BLOCKS.register("controller",
+            () -> new ControllerBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.METAL)
+                    .strength(3.0f)
+                    .sound(SoundType.COPPER)
+                    .noOcclusion()));
+
+    public static final DeferredBlock<ProgrammerBlock> PROGRAMMER = BLOCKS.register("programmer",
+            () -> new ProgrammerBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.WOOD)
+                    .strength(2.5f)
+                    .sound(SoundType.WOOD)
+                    .noOcclusion()));
+
     // --- beat 2: heat -----------------------------------------------------------------------
 
     public static final DeferredBlock<FireboxBlock> FIREBOX = BLOCKS.register("firebox",
@@ -135,6 +155,23 @@ public class FBlocks {
                     .strength(3.5f)
                     .sound(SoundType.STONE)
                     .lightLevel(state -> state.getValue(FireboxBlock.LIT) ? 13 : 0)
+                    .noOcclusion()));
+
+    /** Thermal -> Steam. See {@link FTuning}'s {@code --- the boiler ---} section for why this
+     * is a separate block from {@link #STEAM_ENGINE} rather than one fused machine. */
+    public static final DeferredBlock<BoilerBlock> BOILER = BLOCKS.register("boiler",
+            () -> new BoilerBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.METAL)
+                    .strength(3.5f)
+                    .sound(SoundType.METAL)
+                    .noOcclusion()));
+
+    /** Steam -> rotation. */
+    public static final DeferredBlock<SteamEngineBlock> STEAM_ENGINE = BLOCKS.register("steam_engine",
+            () -> new SteamEngineBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.METAL)
+                    .strength(3.5f)
+                    .sound(SoundType.METAL)
                     .noOcclusion()));
 
     /**
@@ -165,6 +202,14 @@ public class FBlocks {
                     .mapColor(MapColor.TERRACOTTA_WHITE)
                     .strength(1.5f)
                     .sound(SoundType.WOOL)));
+
+    /** The Bellows' opposite -- a vent, stacked against a crucible the same way insulation is. */
+    public static final DeferredBlock<DamperBlock> DAMPER = BLOCKS.register("damper",
+            () -> new DamperBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.METAL)
+                    .strength(3.0f)
+                    .sound(SoundType.METAL)
+                    .noOcclusion()));
 
     public static final DeferredBlock<BellowsBlock> BELLOWS = BLOCKS.register("bellows",
             () -> new BellowsBlock(BlockBehaviour.Properties.of()
@@ -208,6 +253,17 @@ public class FBlocks {
                     .sound(SoundType.METAL)
                     .lightLevel(state -> state.getValue(ThermalVesselBlock.LIT) ? 13 : 0),
                     VesselKind.BLAST_FURNACE));
+
+    /**
+     * The data-link tech demo's sink -- a development cheat like {@code DebugHelmetItem}, not
+     * real content. See {@code FItems.DEBUG_CONTROLLER} for why it stays out of the mod's tab.
+     */
+    public static final DeferredBlock<DebugControllerBlock> DEBUG_CONTROLLER = BLOCKS.register("debug_controller",
+            () -> new DebugControllerBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.COLOR_LIGHT_GRAY)
+                    .strength(1.0f)
+                    .sound(SoundType.METAL)
+                    .noOcclusion()));
 
     private FBlocks() {
     }

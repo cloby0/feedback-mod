@@ -24,6 +24,8 @@ import io.github.soundgoodizerfan.feedback.registry.FCapabilities;
 import io.github.soundgoodizerfan.feedback.registry.FBlocks;
 import io.github.soundgoodizerfan.feedback.registry.FCreativeTabs;
 import io.github.soundgoodizerfan.feedback.registry.FDataComponents;
+import io.github.soundgoodizerfan.feedback.registry.FFluidTypes;
+import io.github.soundgoodizerfan.feedback.registry.FFluids;
 import io.github.soundgoodizerfan.feedback.registry.FMenus;
 import io.github.soundgoodizerfan.feedback.registry.FRecipes;
 import io.github.soundgoodizerfan.feedback.registry.FItems;
@@ -32,8 +34,11 @@ import com.mojang.logging.LogUtils;
 
 import org.slf4j.Logger;
 
+import io.github.soundgoodizerfan.feedback.control.data.DataLinkManager;
+import io.github.soundgoodizerfan.feedback.control.programmer.ProgrammerActionPayload;
 import io.github.soundgoodizerfan.feedback.net.DeformationSyncPayload;
 import io.github.soundgoodizerfan.feedback.net.ThermalProcessSyncPayload;
+import io.github.soundgoodizerfan.feedback.process.CastingTable;
 import io.github.soundgoodizerfan.feedback.process.DeformationTable;
 import io.github.soundgoodizerfan.feedback.process.FuelTable;
 import io.github.soundgoodizerfan.feedback.process.QuenchTable;
@@ -43,6 +48,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.event.OnDatapackSyncEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.bus.api.IEventBus;
@@ -57,6 +63,8 @@ public class Feedback {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public Feedback(IEventBus modBus, ModContainer container) {
+        FFluidTypes.register(modBus);
+        FFluids.register(modBus);
         FBlocks.register(modBus);
         FItems.register(modBus);
         FBlockEntities.register(modBus);
@@ -68,7 +76,13 @@ public class Feedback {
 
         NeoForge.EVENT_BUS.addListener(Feedback::onAddReloadListeners);
         NeoForge.EVENT_BUS.addListener(Feedback::onDatapackSync);
+        NeoForge.EVENT_BUS.addListener(Feedback::onPlayerLoggedOut);
         modBus.addListener(Feedback::registerPayloads);
+    }
+
+    /** Drops a half-made data link rather than let it outlive the session. */
+    private static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        DataLinkManager.get().clear(event.getEntity());
     }
 
     /**
@@ -81,6 +95,7 @@ public class Feedback {
         event.addListener(ThermalProcessTable.get());
         event.addListener(QuenchTable.get());
         event.addListener(FuelTable.get());
+        event.addListener(CastingTable.get());
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {
@@ -88,7 +103,9 @@ public class Feedback {
                 .playToClient(DeformationSyncPayload.TYPE, DeformationSyncPayload.STREAM_CODEC,
                         DeformationSyncPayload::handle)
                 .playToClient(ThermalProcessSyncPayload.TYPE, ThermalProcessSyncPayload.STREAM_CODEC,
-                        ThermalProcessSyncPayload::handle);
+                        ThermalProcessSyncPayload::handle)
+                .playToServer(ProgrammerActionPayload.TYPE, ProgrammerActionPayload.STREAM_CODEC,
+                        ProgrammerActionPayload::handle);
     }
 
     /**

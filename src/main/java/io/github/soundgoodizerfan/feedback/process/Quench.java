@@ -22,8 +22,10 @@ package io.github.soundgoodizerfan.feedback.process;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
+import io.github.soundgoodizerfan.feedback.core.unit.Tu;
+import io.github.soundgoodizerfan.feedback.core.unit.Units;
+
 import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -53,17 +55,17 @@ import net.minecraft.world.item.crafting.Ingredient;
  *                       progress, which is the safe direction again (§6).
  * @param result         what it becomes.
  */
-public record Quench(Ingredient input, float minTemperature, ItemStack result) {
+public record Quench(Ingredient input, Tu minTemperature, ItemStack result) {
 
     public static final Codec<Quench> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Ingredient.CODEC.fieldOf("input").forGetter(Quench::input),
-            Codec.FLOAT.fieldOf("min_temperature").forGetter(Quench::minTemperature),
+            Units.codec(Tu::new).fieldOf("min_temperature").forGetter(Quench::minTemperature),
             ItemStack.CODEC.fieldOf("result").forGetter(Quench::result)
     ).apply(instance, Quench::new));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, Quench> STREAM_CODEC = StreamCodec.composite(
             Ingredient.CONTENTS_STREAM_CODEC, Quench::input,
-            ByteBufCodecs.FLOAT, Quench::minTemperature,
+            Units.streamCodec(Tu::new), Quench::minTemperature,
             ItemStack.STREAM_CODEC, Quench::result,
             Quench::new);
 }

@@ -1,0 +1,10 @@
+{
+  "neoforge:conditions": [
+    { "type": "neoforge:false" }
+  ],
+  "type": "minecraft:blasting",
+  "ingredient": { "item": "minecraft:raw_gold" },
+  "result": { "id": "minecraft:gold_ingot" },
+  "experience": 0,
+  "cookingtime": 200
+}

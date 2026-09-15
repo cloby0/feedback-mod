@@ -1,0 +1,12 @@
+{
+  "inputs": [
+    [
+      { "item": "minecraft:copper_ore" },
+      { "item": "minecraft:deepslate_copper_ore" },
+      { "item": "minecraft:raw_copper" }
+    ]
+  ],
+  "min_temperature": 1000,
+  "hold_ticks": 0,
+  "result_fluid": { "id": "feedback:molten_copper", "amount": 144 }
+}

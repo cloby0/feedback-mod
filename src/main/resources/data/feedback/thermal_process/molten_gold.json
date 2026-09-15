@@ -1,0 +1,13 @@
+{
+  "inputs": [
+    [
+      { "item": "minecraft:gold_ore" },
+      { "item": "minecraft:deepslate_gold_ore" },
+      { "item": "minecraft:nether_gold_ore" },
+      { "item": "minecraft:raw_gold" }
+    ]
+  ],
+  "min_temperature": 950,
+  "hold_ticks": 0,
+  "result_fluid": { "id": "feedback:molten_gold", "amount": 144 }
+}

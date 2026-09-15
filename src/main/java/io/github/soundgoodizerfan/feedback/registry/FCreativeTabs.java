@@ -24,8 +24,10 @@ import io.github.soundgoodizerfan.feedback.Feedback;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -50,6 +52,9 @@ public class FCreativeTabs {
                         output.accept(FItems.MECHANICAL_HAMMER.get());
                         output.accept(FItems.CLUTCH.get());
                         output.accept(FItems.TIMER.get());
+                        output.accept(FItems.CONTROLLER.get());
+                        output.accept(FItems.PROGRAMMER.get());
+                        output.accept(FItems.PUNCH_CARD.get());
                         output.accept(FItems.CALIPERS.get());
                         output.accept(FItems.COPPER_PLATE.get());
                         output.accept(FItems.COPPER_FOIL.get());
@@ -58,16 +63,24 @@ public class FCreativeTabs {
                         output.accept(FItems.SMALL_CRUCIBLE.get());
                         output.accept(FItems.LARGE_CRUCIBLE.get());
                         output.accept(FItems.INSULATION.get());
+                        output.accept(FItems.DAMPER.get());
                         output.accept(FItems.BELLOWS.get());
                         output.accept(FItems.BIMETALLIC_STRIP.get());
+                        output.accept(FItems.BOILER.get());
+                        output.accept(FItems.STEAM_ENGINE.get());
                         output.accept(FItems.THERMOMETER.get());
                         output.accept(FItems.STEEL_INGOT.get());
                         output.accept(FItems.BURNT_IRON.get());
                         output.accept(FItems.HARDENED_STEEL.get());
+                        output.accept(FItems.TEMPERED_STEEL.get());
                         output.accept(FItems.STEEL_PLATE.get());
                         output.accept(FItems.FURNACE.get());
                         output.accept(FItems.SMOKER.get());
                         output.accept(FItems.BLAST_FURNACE.get());
+                        output.accept(FItems.INGOT_MOLD.get());
+                        output.accept(FItems.TEMPERATURE_SENSOR.get());
+                        output.accept(FItems.DATA_CONNECTOR.get());
+                        // DEBUG_CONTROLLER stays out, same as DEBUG_HELMET -- see buildOperatorTab below.
                     })
                     .build());
 
@@ -76,5 +89,18 @@ public class FCreativeTabs {
 
     public static void register(IEventBus modBus) {
         TABS.register(modBus);
+        modBus.addListener(FCreativeTabs::buildOperatorTab);
+    }
+
+    /**
+     * Development cheats belong with vanilla's own -- a command block and a barrier already
+     * live here, and "obtainable only by someone who already knows it exists" is exactly what
+     * this tab is for. Neither item is in {@link #MAIN}; this is their only creative-menu home.
+     */
+    private static void buildOperatorTab(BuildCreativeModeTabContentsEvent event) {
+        if (event.getTabKey() == CreativeModeTabs.OP_BLOCKS) {
+            event.accept(FItems.DEBUG_HELMET.get());
+            event.accept(FItems.DEBUG_CONTROLLER.get());
+        }
     }
 }

@@ -111,7 +111,7 @@ public final class Deforming {
         // answer, because a hammer has no way to tell. The heat is wasted and the material is
         // intact, matching beat 2's asymmetry: the player loses a trip to the fire, not the steel.
         if (deformation.isHotWorking()
-                && !deformation.worksAt(ItemHeat.get(workpiece, level).value()))
+                && !deformation.worksAt(ItemHeat.get(workpiece, level)))
             return new Blow(workpiece, Outcome.WRONG_TEMPERATURE);
 
         // How much a blow accomplishes is the material's business, not the machine's. Below the
@@ -119,7 +119,7 @@ public final class Deforming {
         // impossibility rather than a slower version of the process. It is also what keeps a hand
         // hammer out of steel without anyone writing a rule about hand hammers: 3 St against
         // hardness 15 is not a long afternoon, it is nothing at all.
-        int delivered = deformation.workFrom(strength.value());
+        int delivered = deformation.workFrom(strength);
         if (delivered <= 0)
             return new Blow(workpiece, Outcome.TOO_SOFT);
 

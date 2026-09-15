@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "P": { "item": "minecraft:paper" }
+  },
+  "pattern": [
+    "PP"
+  ],
+  "result": {
+    "count": 4,
+    "id": "feedback:punch_card"
+  }
+}

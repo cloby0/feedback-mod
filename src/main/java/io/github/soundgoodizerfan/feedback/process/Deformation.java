@@ -22,6 +22,10 @@ package io.github.soundgoodizerfan.feedback.process;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
+import io.github.soundgoodizerfan.feedback.core.unit.St;
+import io.github.soundgoodizerfan.feedback.core.unit.Tu;
+import io.github.soundgoodizerfan.feedback.core.unit.Units;
+
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -62,24 +66,27 @@ import net.minecraft.world.item.crafting.Ingredient;
  * @param input     what is being worked. An Ingredient, so tags work and identity need not be
  *                  named -- "any copper ingot" is a property, "this exact item" is not.
  * @param work      cumulative Fu required to complete the change.
- * @param hardness  how stubborn the material is. Both the minimum force that does anything --
- *                  philosophy 7's hard gate, a real impossibility rather than a slow version --
- *                  and how little of a bigger blow actually lands.
+ * @param hardness  how stubborn the material is, in St -- the same unit a blow is delivered in,
+ *                  since a blow lands or fails by direct comparison against this figure and what
+ *                  it delivers is that comparison's quotient (see {@link #workFrom}). Both the
+ *                  minimum force that does anything -- philosophy 7's hard gate, a real
+ *                  impossibility rather than a slow version -- and how little of a bigger blow
+ *                  actually lands.
  * @param result    what it becomes.
  * @param minTemperature  how hot the workpiece must be for a blow to do anything, in Tu. Zero for
  *                  everything cold-workable, which is most things.
  * @param maxTemperature  how hot it may be. Unbounded unless a material says otherwise.
  */
-public record Deformation(Ingredient input, int work, float hardness, ItemStack result,
-                          float minTemperature, float maxTemperature) {
+public record Deformation(Ingredient input, int work, St hardness, ItemStack result,
+                          Tu minTemperature, Tu maxTemperature) {
 
     public static final Codec<Deformation> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Ingredient.CODEC.fieldOf("input").forGetter(Deformation::input),
             Codec.INT.fieldOf("work").forGetter(Deformation::work),
-            Codec.FLOAT.optionalFieldOf("hardness", 1f).forGetter(Deformation::hardness),
+            Units.codec(St::new).optionalFieldOf("hardness", new St(1f)).forGetter(Deformation::hardness),
             ItemStack.CODEC.fieldOf("result").forGetter(Deformation::result),
-            Codec.FLOAT.optionalFieldOf("min_temperature", 0f).forGetter(Deformation::minTemperature),
-            Codec.FLOAT.optionalFieldOf("max_temperature", Float.MAX_VALUE).forGetter(Deformation::maxTemperature)
+            Units.codec(Tu::new).optionalFieldOf("min_temperature", new Tu(0f)).forGetter(Deformation::minTemperature),
+            Units.codec(Tu::new).optionalFieldOf("max_temperature", new Tu(Float.MAX_VALUE)).forGetter(Deformation::maxTemperature)
     ).apply(instance, Deformation::new));
 
     /**
@@ -93,10 +100,10 @@ public record Deformation(Ingredient input, int work, float hardness, ItemStack 
     public static final StreamCodec<RegistryFriendlyByteBuf, Deformation> STREAM_CODEC = StreamCodec.composite(
             Ingredient.CONTENTS_STREAM_CODEC, Deformation::input,
             ByteBufCodecs.VAR_INT, Deformation::work,
-            ByteBufCodecs.FLOAT, Deformation::hardness,
+            Units.streamCodec(St::new), Deformation::hardness,
             ItemStack.STREAM_CODEC, Deformation::result,
-            ByteBufCodecs.FLOAT, Deformation::minTemperature,
-            ByteBufCodecs.FLOAT, Deformation::maxTemperature,
+            Units.streamCodec(Tu::new), Deformation::minTemperature,
+            Units.streamCodec(Tu::new), Deformation::maxTemperature,
             Deformation::new);
 
     /**
@@ -115,18 +122,18 @@ public record Deformation(Ingredient input, int work, float hardness, ItemStack 
      * so the distance between the crucible and the anvil became a decision without anybody
      * installing one.
      */
-    public boolean worksAt(float tu) {
-        return tu >= minTemperature && tu <= maxTemperature;
+    public boolean worksAt(Tu tu) {
+        return tu.value() >= minTemperature.value() && tu.value() <= maxTemperature.value();
     }
 
     /** Whether this material cares about temperature at all. Most do not. */
     public boolean isHotWorking() {
-        return minTemperature > 0 || maxTemperature < Float.MAX_VALUE;
+        return minTemperature.value() > 0 || maxTemperature.value() < Float.MAX_VALUE;
     }
 
-    public int workFrom(float blowForce) {
-        if (blowForce < hardness)
+    public int workFrom(St blowForce) {
+        if (blowForce.value() < hardness.value())
             return 0;
-        return Math.max(1, Math.round(blowForce / hardness));
+        return Math.max(1, Math.round(blowForce.value() / hardness.value()));
     }
 }

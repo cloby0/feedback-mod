@@ -22,11 +22,13 @@ package io.github.soundgoodizerfan.feedback.registry;
 import com.mojang.serialization.Codec;
 
 import io.github.soundgoodizerfan.feedback.Feedback;
+import io.github.soundgoodizerfan.feedback.control.program.ProgramGraph;
 
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.fluids.SimpleFluidContent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -82,6 +84,27 @@ public class FDataComponents {
             COMPONENTS.register("heated_at", () -> DataComponentType.<Long>builder()
                     .persistent(Codec.LONG)
                     .networkSynchronized(ByteBufCodecs.VAR_LONG)
+                    .build());
+
+    /**
+     * What a mold is currently holding -- see {@code MoldItem}. Absent or empty means the mold
+     * is empty; the mold's own {@link #TEMPERATURE}/{@link #HEATED_AT} pair (it is a workpiece
+     * like any other) says whether its contents have cooled enough to cast.
+     */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<SimpleFluidContent>> MOLTEN_CONTENT =
+            COMPONENTS.register("molten_content", () -> DataComponentType.<SimpleFluidContent>builder()
+                    .persistent(SimpleFluidContent.CODEC)
+                    .networkSynchronized(SimpleFluidContent.STREAM_CODEC)
+                    .build());
+
+    /**
+     * A printed Punch Card's whole program -- see {@code control/program}. Empty on a blank
+     * card; printing writes the finished graph here once (spec's hard-rewrite tier).
+     */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<ProgramGraph>> PROGRAM_GRAPH =
+            COMPONENTS.register("program_graph", () -> DataComponentType.<ProgramGraph>builder()
+                    .persistent(ProgramGraph.CODEC)
+                    .networkSynchronized(ProgramGraph.STREAM_CODEC)
                     .build());
 
     private FDataComponents() {

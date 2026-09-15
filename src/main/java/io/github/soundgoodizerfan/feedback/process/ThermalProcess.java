@@ -24,11 +24,16 @@ import java.util.List;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
+import io.github.soundgoodizerfan.feedback.core.unit.Tu;
+import io.github.soundgoodizerfan.feedback.core.unit.TuRate;
+import io.github.soundgoodizerfan.feedback.core.unit.Units;
+
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 /**
  * What a set of materials becomes when held in a temperature band for long enough.
@@ -57,35 +62,58 @@ import net.minecraft.world.item.crafting.Ingredient;
  *       crucible on a full fire climbs at 29 Tu/t and can never satisfy a 25 Tu/t limit.</li>
  * </ul>
  *
+ * <h2>Tempering: a hold that only counts on the way down</h2>
+ * {@code requireCooling} is the one thing tempering needed that carburizing did not. Philosophy 13
+ * says an actuator is a switch, never a dial, so there is no rate to store here -- the only lever
+ * a Damper gives the player is on/off, timed by hand or by a controller, exactly like the Bellows/
+ * Bimetallic-Strip thermostat. So the process asks for a direction instead of a rate: while this is
+ * true, a tick where the body is flat or heating does not advance {@code holdTicks}, the same
+ * "safe direction, nothing lost" treatment the out-of-band case above already gets -- it simply
+ * does not count until the body is actually cooling in-band. The player still has to get it there
+ * by reheating past the band first and then shutting the fire off or opening a Damper; nothing new
+ * is needed for that half, it falls out of the existing fire/leak model.
+ *
  * @param inputs              everything that must be present. Ingredients, so tags work and no
  *                            identity is ever named.
- * @param minTemperature      bottom of the band, in Tu.
+ * @param minTemperature      bottom of the band, in Tu. For a melt, this is the melt point and
+ *                            the only number that matters -- see the class doc.
  * @param maxTemperature      top of the band, in Tu.
  * @param holdTicks           how long the contents must stay inside the band, cumulatively.
  * @param maxHeatingTuPerTick fastest the vessel may be climbing while the hold accumulates.
- * @param result              what the inputs become.
+ * @param result              what the inputs become, if it is an item. Empty for a melt, where
+ *                            {@link #resultFluid} is the real output instead.
  * @param spoilTemperature    above this the batch is ruined. Same as {@code maxTemperature} would
  *                            make the safe direction unsafe, so it always sits well above it.
  * @param spoiled             what is left when it is.
+ * @param resultFluid         what the inputs become, if it is a fluid -- a melt. Empty for every
+ *                            ordinary process. Never both this and {@link #result} at once.
+ * @param requireCooling      tempering's flag -- see above. False for every ordinary process.
  */
 public record ThermalProcess(List<Ingredient> inputs,
-                             float minTemperature,
-                             float maxTemperature,
+                             Tu minTemperature,
+                             Tu maxTemperature,
                              int holdTicks,
-                             float maxHeatingTuPerTick,
+                             TuRate maxHeatingTuPerTick,
                              ItemStack result,
-                             float spoilTemperature,
-                             ItemStack spoiled) {
+                             Tu spoilTemperature,
+                             ItemStack spoiled,
+                             FluidStack resultFluid,
+                             boolean requireCooling) {
 
     public static final Codec<ThermalProcess> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Ingredient.CODEC.listOf().fieldOf("inputs").forGetter(ThermalProcess::inputs),
-            Codec.FLOAT.fieldOf("min_temperature").forGetter(ThermalProcess::minTemperature),
-            Codec.FLOAT.fieldOf("max_temperature").forGetter(ThermalProcess::maxTemperature),
+            Units.codec(Tu::new).fieldOf("min_temperature").forGetter(ThermalProcess::minTemperature),
+            // Open by default -- a melt has a floor and nothing else, the same open-ended shape
+            // the pooled vanilla-fallback cards already draw as "800+ Tu" (see
+            // ThermalProcessCategory). An ordinary band-and-hold process still states both ends.
+            Units.codec(Tu::new).optionalFieldOf("max_temperature", new Tu(Float.MAX_VALUE)).forGetter(ThermalProcess::maxTemperature),
             Codec.INT.fieldOf("hold_ticks").forGetter(ThermalProcess::holdTicks),
-            Codec.FLOAT.optionalFieldOf("max_heating", Float.MAX_VALUE).forGetter(ThermalProcess::maxHeatingTuPerTick),
-            ItemStack.CODEC.fieldOf("result").forGetter(ThermalProcess::result),
-            Codec.FLOAT.optionalFieldOf("spoil_temperature", Float.MAX_VALUE).forGetter(ThermalProcess::spoilTemperature),
-            ItemStack.OPTIONAL_CODEC.optionalFieldOf("spoiled", ItemStack.EMPTY).forGetter(ThermalProcess::spoiled)
+            Units.codec(TuRate::new).optionalFieldOf("max_heating", new TuRate(Float.MAX_VALUE)).forGetter(ThermalProcess::maxHeatingTuPerTick),
+            ItemStack.OPTIONAL_CODEC.optionalFieldOf("result", ItemStack.EMPTY).forGetter(ThermalProcess::result),
+            Units.codec(Tu::new).optionalFieldOf("spoil_temperature", new Tu(Float.MAX_VALUE)).forGetter(ThermalProcess::spoilTemperature),
+            ItemStack.OPTIONAL_CODEC.optionalFieldOf("spoiled", ItemStack.EMPTY).forGetter(ThermalProcess::spoiled),
+            FluidStack.OPTIONAL_CODEC.optionalFieldOf("result_fluid", FluidStack.EMPTY).forGetter(ThermalProcess::resultFluid),
+            Codec.BOOL.optionalFieldOf("require_cooling", false).forGetter(ThermalProcess::requireCooling)
     ).apply(instance, ThermalProcess::new));
 
     /**
@@ -105,34 +133,38 @@ public record ThermalProcess(List<Ingredient> inputs,
                 public ThermalProcess decode(RegistryFriendlyByteBuf buffer) {
                     return new ThermalProcess(
                             INPUTS.decode(buffer),
-                            buffer.readFloat(),
-                            buffer.readFloat(),
+                            new Tu(buffer.readFloat()),
+                            new Tu(buffer.readFloat()),
                             buffer.readVarInt(),
-                            buffer.readFloat(),
-                            ItemStack.STREAM_CODEC.decode(buffer),
-                            buffer.readFloat(),
-                            ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer));
+                            new TuRate(buffer.readFloat()),
+                            ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer),
+                            new Tu(buffer.readFloat()),
+                            ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer),
+                            FluidStack.OPTIONAL_STREAM_CODEC.decode(buffer),
+                            buffer.readBoolean());
                 }
 
                 @Override
                 public void encode(RegistryFriendlyByteBuf buffer, ThermalProcess process) {
                     INPUTS.encode(buffer, process.inputs());
-                    buffer.writeFloat(process.minTemperature());
-                    buffer.writeFloat(process.maxTemperature());
+                    buffer.writeFloat(process.minTemperature().value());
+                    buffer.writeFloat(process.maxTemperature().value());
                     buffer.writeVarInt(process.holdTicks());
-                    buffer.writeFloat(process.maxHeatingTuPerTick());
-                    ItemStack.STREAM_CODEC.encode(buffer, process.result());
-                    buffer.writeFloat(process.spoilTemperature());
+                    buffer.writeFloat(process.maxHeatingTuPerTick().tuPerTick());
+                    ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, process.result());
+                    buffer.writeFloat(process.spoilTemperature().value());
                     ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, process.spoiled());
+                    FluidStack.OPTIONAL_STREAM_CODEC.encode(buffer, process.resultFluid());
+                    buffer.writeBoolean(process.requireCooling());
                 }
             };
 
-    public boolean inBand(float tu) {
-        return tu >= minTemperature && tu <= maxTemperature;
+    public boolean inBand(Tu tu) {
+        return tu.value() >= minTemperature.value() && tu.value() <= maxTemperature.value();
     }
 
-    public boolean spoilsAt(float tu) {
-        return tu > spoilTemperature;
+    public boolean spoilsAt(Tu tu) {
+        return tu.value() > spoilTemperature.value();
     }
 
     /**
@@ -146,5 +178,10 @@ public record ThermalProcess(List<Ingredient> inputs,
 
     public boolean hasHold() {
         return holdTicks >= 0;
+    }
+
+    /** Whether this entry is a melt -- its output is a fluid rather than an item. */
+    public boolean hasFluidResult() {
+        return !resultFluid.isEmpty();
     }
 }
