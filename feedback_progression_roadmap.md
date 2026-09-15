@@ -25,6 +25,13 @@ Only implement Established decisions and explicitly approved proposals. When a p
 move the relevant content out of this document and into document 2 or document 3 (once it exists),
 and mark it Established there — don't leave it dangling here.
 
+**Slices are soft-ordered, not hard-gated.** Confirmed by the user: most slices aren't hard
+prerequisites of the ones after them. As a rule of thumb, skipping roughly one tier ahead is fine and
+expected — you can get into brass and bronze before steel — but skip further and a real (soft) gate
+starts to bite: you definitely need steel by the time you're making copper wire. Slice numbering below
+is a rough sequence, not a dependency chain; don't read "Slice 9 comes after Slice 8" as "Slice 9
+requires Slice 8" unless a slice says so explicitly.
+
 ### 0.2 Ask before implementing
 
 Before implementing any item, recipe, machine, progression gate, world-generation rule, or
@@ -83,6 +90,11 @@ below — see §0.2.
 
 ### Slice 1 — Primitive Industry
 
+**Why this roster is bigger than §20's 10-20 item guidance for a real slice:** it's essentially the
+already-implemented content, laid out here because it's the easiest slice to enumerate precisely — it's
+not speculative. Expect the other 17 slices to end up just as populated once each is actually built;
+this isn't Slice 1 breaking the sizing guidance, it's Slice 1 being first and already real.
+
 - **Core materials:** copper, iron, coal, charcoal, clay, limestone, quartz, gold, redstone, nether
   quartz, amethyst, blaze rod, obsidian.
 - **Manufactured materials:** copper ingot/plate/sheet/foil, iron ingot, cast iron, steel, glass,
@@ -90,8 +102,10 @@ below — see §0.2.
 - **Machines/tooling:** forge, furnace, crucible, anvil, hammer, basic shaft, flywheel, clutch,
   bellows, casting molds.
 - **Processes:** smelting, casting, hammering, hot working, steelmaking, glassmaking, ceramic firing.
-- **Minecraft-native observations (not yet useful):** redstone behaves strangely; amethyst has unusual
-  resonant behavior; blaze material produces extreme heat; nether quartz appears unusually pure /
+- **Minecraft-native observations (not yet useful):** redstone behaves strangely; **amethyst has
+  unusual resonant behavior — first of only two touches this material gets in the roadmap now (the
+  other is Slice 8's real piezoelectric payoff; see the note under Slice 8 for why the other five
+  mentions were cut)**; blaze material produces extreme heat; nether quartz appears unusually pure /
   thermally useful; ender pearls are anomalous but poorly understood.
 - **Milestone:** steel becomes the first major machine-construction material.
 
@@ -100,7 +114,8 @@ below — see §0.2.
 - **Materials:** firebrick, high-purity clay/kaolinite-like material, graphite, cast iron, brass,
   bronze, lead, zinc, refractory ceramic, high-temperature glass/tubing, copper tubing.
 - **Minecraft-native:** blaze rods as a high-temperature experimental fuel/source; nether quartz enters
-  refractory/optical/high-purity-silica experiments; amethyst becomes a resonance-experiment material.
+  refractory/optical/high-purity-silica experiments. (Amethyst removed — see Slice 8's note; this was a
+  7th mention the earlier consistency pass missed when it counted six.)
 - **Machines:** improved furnace, kiln, annealing furnace, blast furnace, smoker, heat exchanger,
   thermometer, pressure vessel, boiler.
 - **Processes:** tempering, annealing, controlled cooling, brass/bronze alloying, glass tubing, ceramic
@@ -115,32 +130,71 @@ below — see §0.2.
 - **Machines:** lathe, drill press, mechanical press, rolling mill, wire drawer, grinding wheel, saw,
   gear cutter.
 - **Processes:** turning, drilling, wire drawing, rolling, grinding, precision boring.
-- **Minecraft-native:** amethyst as a primitive resonant material — tuning fork, resonant rod, crude
-  vibration sensor, limited immediate utility.
 - **Milestone:** fine copper wire becomes possible.
 
 ### Slice 4 — Electricity Exists
 
 Electricity becomes observable and measurable before it becomes a practical factory-wide energy
-system.
+system — and it's deliberately allowed to sit there a while.
 
-- **Materials:** copper, gold, zinc, lead, tin, glass, ceramic, redstone, amethyst.
+**Confirmed: this is a pre-viability novelty, and that's intentional, not a sequencing mistake.**
+Electricity exists here, observably, long before it's useful for anything — mirroring real history,
+where things tend to be novelties before anyone finds out what's useful about them. A galvanic cell is
+NOT an industrial current source; it's a curiosity that proves electricity is real. The actual
+industrial-scale electrochemistry that needs real current moved to Slice 5, now placed after Slice 6
+(Steam) — see the note there for why.
+
+- **Materials:** copper, gold, zinc, lead, tin, glass, ceramic, redstone.
 - **Phenomena:** static electricity, conductivity, potential difference, electromagnetic behavior,
-  redstone anomalies, amethyst resonance.
+  redstone anomalies.
 - **Machines/items:** electroscope, electrostatic generator, Leyden-jar-like capacitor, galvanometer,
-  electromagnet apparatus, electroplating bath, primitive galvanic cell.
+  electromagnet apparatus, primitive galvanic cell. (The electroplating bath moved to Slice 5 — a
+  single-item novelty demo here and an "industrial" process there was the same object twice; Slice 5
+  is where electroplating actually belongs now that it needs real current.)
 - **Key principle:** the player can run electrical experiments without a convenient grid yet.
-- **Milestone:** a galvanic cell provides continuous electrical potential.
+- **Milestone:** a galvanic cell provides continuous electrical potential — at novelty scale, not
+  industrial scale.
+
+### Slice 6 — Steam Industry
+
+Steam becomes the first serious industrial prime mover.
+
+- **Materials:** steel, copper, brass, bronze, graphite, refractory ceramics.
+- **Machines:** boiler, steam engine, condenser, pump, pressure regulator, centrifugal overspeed trip,
+  steam valve, flywheel.
+- **Power chain:** `fuel → boiler → steam → engine → shaft`.
+- **Mechanical specialization:** steam is a large, robust, relatively slow power source; a mechanical
+  network can drive crushers, rollers, pumps, hammers, generators simultaneously subject to load.
+- **Speed behavior (confirmed):** the engine has no active speed regulation — a real governor is
+  continuous proportional throttle control, which the switch-only controller rule (`feedback_philosophy.md`
+  §13) bans as a built-in machine feature. What the engine gets for free is a flywheel-style **physical
+  damping** from its own rotating mass — a real property (heavy things resist sudden speed changes),
+  not an active dial, so it doesn't violate §13. This is likely the same mechanism as `core/unit/Inertia`
+  (`Su·t/RPM`), already in the codebase, though confirm against the actual class before building on that
+  assumption. Beyond that free damping, the only other built-in behavior is a hard **centrifugal
+  overspeed trip** — a safety cutoff, not regulation. Real steady-state speed control is the player's
+  job: a sensor + comparator + on/off actuator deadband loop, which will always wobble in a band rather
+  than hold dead steady.
+- **Minecraft-native:** blaze material as an unusually hot thermal source, ahead of its deeper uses.
+- **Milestone:** industrial-scale mechanical power becomes practical.
 
 ### Slice 5 — Electrochemistry and Industrial Refining
 
+**Sequenced after Slice 6 despite the lower number** — a deliberate exception to the usual rough
+ordering, not an error. Slice 4's galvanic cell is a novelty-scale source, not an industrial current
+source; real electrolysis at scale needs current Slice 4 can't provide. Steam-driven generation (Slice
+6) is the first point a viable industrial current source exists, so that's when electrochemistry
+actually becomes an *industrial* process rather than a lab curiosity. The slice keeps its "5" label for
+continuity with the rest of the roster, but reads as coming after Slice 6.
+
 Chemistry has existed since the beginning; this slice makes it deliberate, measurable, and useful at
+scale — the electrochemistry lab becomes the electrochemistry plant once there's power to run it at
 scale.
 
 - **Materials:** copper, zinc, lead, tin, sulfur, salt, limestone, charcoal, quartz, redstone.
 - **Fluids:** brine, acidic/alkaline solutions, electrolytes.
-- **Machines:** electrolytic cell, chemical bath, distillation apparatus, reaction vessel, filter
-  press, condenser.
+- **Machines:** electrolytic cell, electroplating bath (moved here from Slice 4 — see that slice's
+  note), chemical bath, distillation apparatus, reaction vessel, filter press, condenser.
 - **Processes:** electrolysis, electroplating, acid leaching, precipitation, distillation, metal
   purification.
 - **Outputs:** high-purity copper/zinc/lead, sulfur compounds.
@@ -148,22 +202,15 @@ scale.
   chemical/electrical properties.
 - **Milestone:** pure, controlled feedstock becomes available for advanced metallurgy and electronics.
 
-### Slice 6 — Steam Industry
-
-Steam becomes the first serious industrial prime mover.
-
-- **Materials:** steel, copper, brass, bronze, graphite, refractory ceramics.
-- **Machines:** boiler, steam engine, condenser, pump, pressure regulator, governor, steam valve,
-  flywheel.
-- **Power chain:** `fuel → boiler → steam → engine → shaft`.
-- **Mechanical specialization:** steam is a large, robust, relatively slow power source; a mechanical
-  network can drive crushers, rollers, pumps, hammers, generators simultaneously subject to load.
-- **Minecraft-native:** blaze material as an unusually hot thermal source, ahead of its deeper uses.
-- **Milestone:** industrial-scale mechanical power becomes practical.
-
 ### Slice 7 — Petrochemistry
 
 Petroleum as a major system, not decorative fuel.
+
+**[OPEN] — oil worldgen vs. ore-vein geology are not reconciled.** §4's ore-family geology is solid,
+zoned deposits (surface indicators → peripheral → primary → richer core). Oil reservoirs are
+fundamentally different — fluid-filled sedimentary basins, not solid zoned bodies. This hasn't actually
+been thought through as one geology system with two deposit shapes; confirmed genuinely open, not
+quietly solved. Don't assume the ore-vein generator can also place oil without a real answer here.
 
 - **Geology:** hydrocarbons in large sedimentary basins/reservoirs; possible associated resources
   (crude oil, natural gas, sulfur, salt, limestone, shale); surface seeps through deep reservoirs.
@@ -184,16 +231,41 @@ Target point for the first genuinely recognizable electronic circuit.
   batteries, electromagnets, precision machine tools, polymer insulation, basic electrical
   measurement.
 - **Components:** wire, insulated wire, electrode, resistor, capacitor, relay, diode-like component,
-  transistor-like component, circuit substrate, solder alloy.
+  **point-contact semiconductor device** (a cat's-whisker-style primitive contact device — historically
+  real, and it predates a doped transistor; this is NOT the doped Slice 10/15 transistor, since silicon
+  purification/doping doesn't exist yet at this point in the roster — that was a real physical-dependency
+  contradiction in an earlier pass, now resolved by being explicit about which device this is), circuit
+  substrate, solder alloy.
 - **Machine:** circuit assembly station, plus wire bonder, soldering station, component tester, signal
   generator, oscilloscope-like instrument.
 - **Major item — Basic Electronic Circuit:** ceramic/polymer substrate + copper traces + passive
   components + switching component + soldered connections.
 - **Minecraft-native:** redstone evolves from strange material to deliberately exploitable electrical
-  material; amethyst for precise oscillation/resonance; glowstone in optical/electrical experiments.
+  material; **amethyst's real payoff — the second and last of its two confirmed appearances in this
+  roster (the first is Slice 1's initial observation).** Amethyst/quartz-family piezoelectricity is real
+  (grounded against real α-quartz piezoelectricity, cross-referenced in `speculative_physics_inspo_doc.md`
+  §1.4/§5.2) and gives a genuine piezoelectric resonator/oscillator component here — a real payoff, not
+  another vague mention. **Conditionally open to a third appearance as an instrument**, but only if a
+  resonant-frequency-based *measurement* use is identified where the resonance actually tracks a real
+  physical quantity — the kind of thing a real quartz crystal microbalance does (resonant frequency
+  shifts under mass loading, used to measure deposited mass/thickness). "Detecting hollowness" was
+  considered and explicitly rejected as not a meaningful observation. Absent a real quantity like that,
+  amethyst stays at two appearances; glowstone in optical/electrical experiments.
 - **Milestone:** controlled electronics becomes manufacturable.
 
+**Why amethyst needed cutting from 7 mentions (slices 1, 2, 3, 4, 5, 10, 14 plus this one — Slice 15 also
+had a stray mention, also removed) down to these two:** it had become a default "something
+Minecraft-native goes here" filler reached for
+repeatedly across slices without each appearance earning a distinct payoff — and the document even
+flagged its own uncertainty about what amethyst actually does, at the end, after listing it eight times.
+That combination (spammed, then hedged) is the tell that it was overused rather than under-specified.
+
 ### Slice 9 — Industrial Chemical Engineering
+
+**Ordering note:** real heavy industrial chemistry (contact process, Haber-Bosch) historically predates
+electronics by decades and doesn't need it. Slice 9 doesn't hard-depend on Slice 8 — the general
+one-tier-skip principle in §0.1 covers this; the numbering here is organizational, not a prerequisite
+chain.
 
 - **Materials:** sulfur, sodium compounds, chlorine, hydrogen, oxygen, nitrogen, silicon-bearing
   feedstock, carbon, phosphates, nitrates.
@@ -207,16 +279,19 @@ Target point for the first genuinely recognizable electronic circuit.
 
 ### Slice 10 — Advanced Materials
 
-- **Materials:** aluminum, nickel, chromium, silicon, graphite, titanium, tungsten, cobalt, manganese,
-  rare-earth materials.
-- **Products:** aluminum alloys, stainless steel, nichrome, high-speed steel, tungsten carbide, tool
-  carbide, titanium alloys, graphite electrodes, silicon wafers.
+- **Materials:** aluminum, nickel, chromium, silicon, graphite, titanium, tungsten, cobalt, manganese.
+  (Rare-earth materials cut — no ore family, no application, nothing cashing them in later; dropped
+  rather than left as an unanchored placeholder. Re-add only with a stated purpose, e.g. magnets,
+  phosphors, catalysts.)
+- **Products:** aluminum alloys, stainless steel, nichrome, high-speed steel, tungsten carbide,
+  titanium alloys, graphite electrodes, silicon wafers.
 - **Machines:** vacuum furnace, arc furnace, induction furnace, crystal-growth system,
   powder-metallurgy press, sintering furnace, vacuum pump.
 - **Processes:** vacuum treatment, high-purity refining, crystal growth, advanced alloying, powder
   metallurgy, sintering, surface treatment.
-- **Minecraft-native:** nether quartz as silica/silicon feedstock; amethyst and redstone gain
-  specialized material-science applications.
+- **Minecraft-native:** nether quartz as silica/silicon feedstock; redstone gains specialized
+  material-science applications. (Amethyst dropped from this slice — see Slice 8's note; it's down to
+  two confirmed appearances in the whole roster.)
 - **Milestone:** high-purity materials and engineered material properties become practical.
 
 ### Slice 11 — Radiation Is Discovered
@@ -230,6 +305,12 @@ Uranium and related materials appear *before* nuclear power is useful.
 - **Products:** refined uranium compounds, sealed radioactive source, radiation shielding.
 - **Core principle:** the player discovers some materials are intrinsically unstable/radioactive —
   another instance of measurable-before-useful.
+- **Hazard character (confirmed, distinct from other failure shapes):** radiation exposure/contamination
+  *lingers* — it persists in materials or an area rather than triggering one discrete on/off event.
+  Explicitly NOT modeled on a containment-failure template (a creature that escapes a cage on
+  mismanagement) — that mechanic is cut from `feedback_philosophy.md` entirely (it was Create's Blaze
+  Burner shape specifically), and the mod isn't converging on that shape a second time for radiation
+  either.
 - **Minecraft-native (speculative):** whether Ender-related materials respond unusually to
   high-energy/radioactive conditions. Not locked.
 - **Milestone:** radiation becomes a measurable physical phenomenon.
@@ -244,9 +325,21 @@ Uranium and related materials appear *before* nuclear power is useful.
   electricity`. The reactor produces heat, never directly electricity.
 - **Design principle:** nuclear power is another energy-conversion chain, so it participates in Work
   conservation (`feedback_philosophy.md` §10).
+- **Control depth (confirmed):** control-rod positions are discrete player inputs (withdrawn / inserted
+  / SCRAM), correctly matching the switch-only controller rule. But the reactor's underlying reaction
+  rate/thermal state is a real, continuously-simulated value underneath those discrete inputs — it can
+  actually climb toward a meltdown between player actions if mismanaged. This is not a teleport between
+  three fixed bands with nothing happening in between; genuine near-misses are possible.
 - **Milestone:** extremely high energy-density thermal power becomes practical.
 
-### Slice 13 — Nuclear / Ender Coupling
+### Slice 13 — Nuclear / Ender Coupling (aspect, not a standalone tier)
+
+**Reframed:** the user is attached to the IDEA here — letting Ender phenomena interact with nuclear
+physics, as a way to bridge Minecraft-native materials into the mod's science model — but not to it
+being its own dedicated tier. This is now an *aspect* that should fold into a broader "nuclear-science"
+tier (alongside Slice 11/12's radiation and fission content) rather than a standalone Slice 13. Kept
+under its own heading here for now since the broader tier isn't drawn up yet, but treat it structurally
+as part of that tier, not a separate one.
 
 The first deliberately high-concept fusion of "ordinary" and Minecraft-native physics.
 
@@ -267,14 +360,17 @@ The first deliberately high-concept fusion of "ordinary" and Minecraft-native ph
 
 Sculk as a scientific subject, not a final-tier magic resource.
 
-- **Materials:** sculk, echo shards, amethyst, redstone, quartz, experience-derived materials if
-  desired.
+- **Materials:** sculk, echo shards, redstone, quartz, experience-derived materials if desired.
 - **Phenomena to investigate:** vibration sensing, signal propagation, experience interaction, energy
   absorption, resonance, memory-like behavior.
+- **Confirmed:** vibration/signal sensing is the *lore justification* for sculk enabling better sensors
+  — it is explicitly NOT a separate parallel sensing pathway. Those sensors feed into the existing
+  `control/data` (`DataNode`/`DataLinkManager`) infrastructure as a new sensor type, same as any other
+  instrument.
 - **Candidate machines:** sculk analyzer, resonance transducer, experience accumulator, sculk sensor
   package, echo memory device.
-- **Candidate outputs:** vibration sensor, resonant transducer, experience-storage component,
-  echo-memory component.
+- **Candidate outputs:** vibration sensor (a `DataNode` source), resonant transducer, experience-storage
+  component, echo-memory component.
 - **IMPORTANT — Unknown.** The physical interpretation of XP, Sculk, and Echo Shards is not finalized.
   Ask before implementation.
 - **Milestone:** sculk becomes an engineered information/energy material.
@@ -282,16 +378,22 @@ Sculk as a scientific subject, not a final-tier magic resource.
 ### Slice 15 — Advanced Electronics
 
 - **Materials:** high-purity silicon, germanium/other semiconductor materials if desired, copper,
-  gold, aluminum, ceramics, polymers, redstone, amethyst, rare-earth materials.
+  gold, aluminum, ceramics, polymers, redstone, rare-earth materials. (Amethyst removed — see Slice 8's
+  note; down to two confirmed appearances in the whole roster.)
 - **Processes:** semiconductor purification, doping, oxidation, lithography-like patterning,
   deposition, etching, wafer processing.
 - **Products:** diode, transistor, integrated circuit, memory chip, sensor chip, power transistor,
   oscillator, microcontroller.
 - **Machines:** semiconductor fabrication station, doping apparatus, lithography apparatus, wafer
   processing tools, advanced electronic tester.
-- **Controller progression (Strong direction — consistent with `feedback_philosophy.md` §13/§1.3's
-  "old technology keeps its niche"):** `mechanical/punch card → relay logic → electronic logic →
-  programmable controller`, with the older forms staying viable for appropriate applications.
+- **Controller progression:** defers entirely to `feedback_controller_spec.md` §4's actual four-tier
+  medium progression — Punch Card (Early, built) → Circuit Board (Mid) → Floppy Disk (Late) → USB
+  Drive/internal storage/ender-networked (End) — rather than inventing separate terminology here. (An
+  earlier pass in this document had its own competing "mechanical/punch card → relay logic → electronic
+  logic → programmable controller" progression; that was a stray duplicate that didn't get fully
+  removed when this slice was reconciled against the spec doc, now corrected.) Slice 15's electronics
+  are the material precondition for the Mid tier (Circuit Board), consistent with §1.3's "old technology
+  keeps its niche" — Punch Card stays viable for appropriate applications.
 - **Milestone:** compact programmable electronics become manufacturable.
 
 ### Slice 16 — Ender Engineering
@@ -303,19 +405,39 @@ The Ender phenomenon becomes industrial technology only after long observation a
 - **Machines:** ender analyzer, spatial stabilizer, ender relay, spatial transmitter/receiver,
   dimensional anchor, ender pump/transport apparatus.
 - **Application progression:** information transmission → small-item transport → fluid transport →
-  larger logistics. Normal belts/pipes stay useful for cheap, high-throughput transport (§1.3); spatial
-  transport needs a real niche — distance, precision, immediacy — not blanket superiority. This is the
-  same shape as the existing spatial energy type in `feedback_philosophy.md` §10.
+  larger logistics. **Confirmed: "larger" means bigger than the tiny starting trickle, never means
+  out-scaling conventional logistics.** `feedback_philosophy.md` §10's hard cap on Spatial transport
+  stands as written — "a small, hard-capped trickle of items or fluid... deliberately not enough to
+  replace belts and pipes." Normal belts/pipes stay useful for cheap, high-throughput transport (§1.3);
+  spatial transport needs a real niche — distance, precision, immediacy — not blanket superiority or a
+  path to eventually replacing belts. This is the same shape as the existing spatial energy type in
+  `feedback_philosophy.md` §10.
 - **Milestone:** distance itself becomes an engineering variable.
 
 ### Slice 17 — Exotic Materials / Netherite Engineering
 
-- **Materials:** ancient debris, netherite components, advanced alloys, blaze-derived materials,
-  redstone/amethyst/ender composites.
-- **Candidate interpretation:** netherite is not "better steel" — an exotic engineered material with
-  unusual thermal, mechanical, or energy properties. Candidate chain (Unknown, confirm before
-  implementing): `ancient debris → chemical extraction → refractory component → gold/alloy processing
-  → controlled pressure/thermal treatment → netherite`.
+**Rewritten per user decision, canon-first reasoning:** netherite itself is NOT hard to make — piglins
+made it, canonically, so it can't be some absurdly demanding synthesis. The gate is specifically on
+making it *without* someone else's ancient debris/scrap, not on making it at all.
+
+- **Foraging path (free, vanilla-adjacent):** finding and smelting ancient debris is "using the world's
+  existing netherite-precursor material" — stays as the cheap, no-infrastructure route, same standing as
+  finding any other ore.
+- **Synthesis path — easy inside the Nether:** the Nether's own ambient conditions are what make
+  netherite synthesis easy there, canonically (piglins do it casually). Actually producing new netherite
+  from raw materials (not found scrap) should be easy *if done in the Nether*.
+- **Synthesis path — hard outside the Nether:** two options, both genuinely harder: (a) physically set
+  up a production line in the Nether — a real cost specifically for this mod, since Feedback is
+  infrastructure-heavy and dragging a whole line into the Nether is expensive; or (b) engineer a way to
+  recreate the Nether's advantageous conditions elsewhere — a real, harder synthesis chain.
+- **Composition/mechanism:** draw from `speculative_physics_inspo_doc.md` rather than inventing new
+  chemistry here — that document is the parts bin for exactly this kind of Minecraft-exotic material
+  question.
+- **[OPEN] — vanilla's smithing-table upgrade:** vanilla still lets you smith diamond gear into
+  netherite for free at a smithing table, same category of problem the furnace recipes solved via
+  removal (`CLAUDE.md`'s "Vanilla Is Not Exempt", §15). The *making* question above is answered, but
+  whether vanilla's free smithing-table upgrade needs removing, restricting, or is fine left alone was
+  not reached in this round — genuinely open, not decided.
 - **Milestone:** minecraft-native materials become deliberately engineered rather than merely
   harvested.
 
@@ -331,6 +453,19 @@ Only after a mature industrial, electrical, thermal, and materials base exists.
   electricity`.
 - **Ender interaction (Unknown):** Ender materials providing anomalous confinement/stabilization
   conventional materials can't. Proposal only — confirm the fictional physics before implementing.
+- **What actually distinguishes fusion from a maxed-out fission reactor (confirmed, three answers, not
+  just "bigger number" — though that's also true and fine):**
+  1. **Genuinely higher power ceiling** than any achievable fission reactor. True, and allowed to just be
+     bigger — that's not a cop-out on its own, just not the *only* answer.
+  2. **No waste byproduct**, in explicit contrast to fission's waste-handling mechanic — a real point of
+     engineering difference, not flavor.
+  3. **Meaningfully simpler/smoother control-loop requirements than fission.** Never literally
+     "set-and-forget," but noticeably less finicky — an earned reward for reaching the last tier, in
+     contrast to fission's real continuous-reaction-rate risk (Slice 12).
+  - **Rejected idea, worth recording why:** fusion producing new/heavier elements — breeding into the
+    island of stability, feeding later tiers with new materials — was considered and genuinely liked,
+    but rejected specifically because fusion is currently the terminal/last tier: there's no later tier
+    for such materials to feed into. If a tier is ever added after fusion, revisit this.
 - **Milestone:** the player engineers an extreme energy-density system combining ordinary and
   minecraft-native physics.
 
@@ -339,37 +474,37 @@ Only after a mature industrial, electrical, thermal, and materials base exists.
 ## 3. Energy / power progression
 
 Not a straight "better generator" ladder — different sources keep different engineering niches
-(`feedback_philosophy.md` §1.3/§14). Candidate progression, overlapping rather than a strict
-replacement chain:
+(`feedback_philosophy.md` §1.3/§14). **Redrawn as overlapping bands, not a single-arrow chain** — the
+old version was one strict top-to-bottom sequence sitting right next to prose insisting it wasn't a
+ladder, which visually contradicted its own caption. Bands run in parallel; a lower band doesn't end
+where a higher one begins:
 
 ```
-manual mechanical power
-    ↓
-water / wind / primitive mechanical sources
-    ↓
-steam
-    ↓
-combustion engines
-    ↓
-mechanical transmission
-    ↓
-generators
-    ↓
-electricity
-    ↓
-gas turbines / advanced engines
-    ↓
-nuclear heat
-    ↓
-high-efficiency electrical generation
-    ↓
-exotic nuclear / ender coupling
-    ↓
-fusion
+Mechanical band:    manual power → water/wind → mechanical transmission ───────────────────────▶
+                                                                                (stays useful throughout)
+
+Thermal/chemical:            steam ─────────────▶ combustion engines ──────────▶ nuclear heat ──▶ fusion
+                                     \                                  \
+Electrical band:                     galvanic cell (novelty, Slice 4)   generators → electricity
+                                      ...................................│................▶ gas turbines /
+                                      (idle until Slice 5's industrial     │                 advanced engines
+                                       electrochemistry, after Steam)      │
+                                                                            ▼
+                                                              high-efficiency electrical generation
+
+Exotic band:                                                          exotic nuclear/ender coupling ▶
+                                                                       (aspect of nuclear-science tier,
+                                                                        see Slice 13)
 ```
+
+Read top-to-bottom within a band as rough sequence; read left-to-right across bands as "roughly the
+same era, running in parallel," not "must happen in this order." The galvanic cell's dotted line marks
+it as a novelty sitting idle until Slice 6 (Steam) makes the electrical band industrially viable — see
+Slice 4/5's notes for why.
 
 Work conservation across this whole chain is already Established — see `feedback_philosophy.md` §10.
-No new principle here, only the candidate slice order above.
+No new principle here, only the candidate slice order above. This is still a Proposal-tier
+illustration — it doesn't claim more precision than the slices it summarizes.
 
 ### 3.1 Fuel
 
@@ -387,6 +522,11 @@ Direction: large, irregular, geologically meaningful deposits instead of isolate
 (`feedback_philosophy.md` §14, "Geology should matter", **[OPEN]**).
 
 ### 4.1 Candidate ore families (Proposal — mineral names, associations, and sizes all unconfirmed)
+
+**Confirmed:** where a metal lists two mineral variants (e.g. copper's chalcopyrite vs. malachite),
+they're meant to genuinely diverge in processing route and byproducts, per §12's rule that different
+routes must have different byproducts — not just be a worldgen reskin of the same recipe. Exact routes
+and byproducts are still unconfirmed (see §7), but the *intent* that they diverge for real is settled.
 
 | Metal | Candidate ore mineral(s) |
 | --- | --- |
@@ -418,29 +558,39 @@ surface indicators
 
 Different deposit types may have different geometries and associated resources.
 
-### 4.3 Prospecting progression (Proposal)
+### 4.3 Prospecting progression (Proposal — simplified per user feedback)
+
+**The previous 7-step "model deposit" ladder over-engineered this.** User's own words: "I don't really
+want this to be significantly more complex than GregTech's ore system." Simplified to roughly
+GTCEu-style scale: a vein/cluster of ore generates as one geological unit; the player uses a
+scanning/prospecting tool near a candidate deposit to reveal what's there (metal, rough size) without
+digging it all out blind; better tools narrow the estimate, per the mod's own noise-floor rule (§8 of
+`feedback_philosophy.md`) rather than adding more abstract pipeline stages. This is a plain description
+at the scale the user asked for, not a citation-accurate account of GTCEu's actual prospecting
+tool/UI — that hasn't been verified firsthand against the real mod, and shouldn't be assumed precise
+without checking (`../GregTech-Modern-7.5.3` per `CLAUDE.md`'s prior-art rule).
 
 ```
-find visible indicator
-→ crude prospecting
-→ estimate deposit existence
-→ estimate size
-→ estimate grade
-→ assay composition
-→ model deposit
+find deposit (surface indicator or scan)
+→ scan/prospect it (tool-based, one action)
+→ tool reports rough metal + size, noisier on cheaper tools
 ```
 
 ---
 
 ## 5. Concrete cross-domain milestones
 
-Candidate "big moments," Proposal-level pacing markers rather than locked content:
+Candidate "big moments," Proposal-level pacing markers rather than locked content. **Added: control-
+system milestones**, missing from an earlier pass despite `feedback_philosophy.md` §13 calling
+controllers "the heart of automation" and saying they mark eras as much as materials do:
 
 first steel · first controlled high-temperature process · first fine copper wire · first electrical
-experiment · first galvanic cell · first steam engine · first large ore-processing plant · first
-refinery · first basic electronic circuit · first radiation measurement · first nuclear reactor · first
-successful ender-material experiment · first integrated exotic system (an ordinary physical system and
-a minecraft-native system deliberately combined into one engineered process).
+experiment · first galvanic cell · **first automated on/off control loop** · first steam engine · **first
+multi-sensor program-graph** (Punch Card tier) · first large ore-processing plant · first refinery ·
+first basic electronic circuit · **first deadband loop holding a process in band unattended** · first
+radiation measurement · first nuclear reactor · first successful ender-material experiment · first
+integrated exotic system (an ordinary physical system and a minecraft-native system deliberately
+combined into one engineered process).
 
 ---
 
@@ -464,11 +614,20 @@ Ask the user rather than deciding silently:
 6. Exact radiation model (slice 11).
 7. Exact nuclear fuel-cycle complexity (slice 12).
 8. Exact relationship between nuclear phenomena and Ender phenomena (slice 13).
-9. Exact physical interpretation of Redstone, Sculk/XP, and Amethyst's useful properties (slices 4, 8,
-   14, 15).
-10. Exact Netherite metallurgy (slice 17).
-11. Exact fusion implementation (slice 18).
-12. Whether any proposed slice 9+ system should exist in the final mod at all.
+9. Exact physical interpretation of Redstone and Sculk/XP's useful properties (slices 8, 14, 15).
+   Amethyst is narrower now — confirmed down to two appearances (Slice 1 observation, Slice 8
+   piezoelectric payoff), with only a conditional third (a real resonant-frequency measurement use)
+   still open; see Slice 8's note.
+10. Exact Netherite metallurgy — narrowed to the specific synthesis chain inside vs. outside the Nether
+    (slice 17); whether vanilla's smithing-table diamond→netherite upgrade needs addressing is a
+    separate, still-fully-open sub-question, also flagged at Slice 17.
+11. Exact fusion implementation (slice 18) — the three distinguishers (power ceiling, no waste, simpler
+    control) are now confirmed; exact numbers/mechanics under them are still open.
+12. ~~Whether any proposed slice 9+ system should exist in the final mod at all.~~ **Answered:** all of
+    it — every idea in slices 9-18 stays in some form. What's still open is *shape*, not existence: many
+    won't be standalone tiers, may shrink, grow, or fold into aspects of a broader tier (see Slice 13's
+    reframe as the first concrete instance of this). Don't read a slice's current size or standalone
+    status as fixed.
 
 (Mechanical-network behavior at splits/joins with momentum/inertia, and TPu's rate equation/decay/
 monotonicity, are tracked in `feedback_mechanics.md` and `tpu_spec_doc.md` respectively — not
